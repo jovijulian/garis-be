@@ -1,6 +1,7 @@
 const userRepository = require('../repositories/user.repository');
 const { formatDateTime } = require("../helpers/dataHelpers");
 const { knexConnection } = require('../../config/database');
+const bcrypt = require('bcryptjs');
 class UserService {
 
     async getAll(request) {
@@ -9,7 +10,6 @@ class UserService {
     }
 
     async detail(id) {
-        // const data = await userRepository.findByIdWithRelations(id, '[]'); if relation
         const data = await userRepository.findById(id)
         if (!data) {
             const error = new Error('User not found.');
@@ -22,7 +22,10 @@ class UserService {
     async create(request) {
         const payload = request.body;
         return knexConnection.transaction(async (trx) => {
-
+            const password = "12345678" //default
+            const hashedPassword = await bcrypt.hash(password, 10);
+            payload.role = payload.role ? payload.role : 2; // default user role
+            payload.password = hashedPassword;
             payload.created_at = formatDateTime();
             payload.updated_at = formatDateTime();
 
@@ -45,8 +48,7 @@ class UserService {
     async delete(id) {
         await this.detail(id);
         return knexConnection.transaction(async (trx) => {
-            // const data = await userRepository.update(id, { is_active: 0, updated_at: formatDateTime() }, trx); if softdelete
-            const data = await userRepository.delete(id, trx);
+            const data = await userRepository.update(id, { deleted_at: formatDateTime() }, trx); 
 
             if (!data) {
                 const error = new Error('Failed to delete user.');

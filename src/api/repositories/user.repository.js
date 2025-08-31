@@ -13,22 +13,14 @@ class UserRepository extends BaseRepository {
 
         const query = User.query()
             .select('*')
-            // .withGraphFetched('[relation_name]')
-            // .modifyGraph('[relation_name]', builder => {
-            //     builder.select('[field_name]', '[field_name]');
-            // }) if relation
-            .where('is_active', 1)
+            .whereNull('deleted_at')
+
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
 
         if (search) {
-            query.where(builder => {
-                builder.where('agent_station', 'like', `%${search}%`)
-                // .orWhereExists(
-                //     User.relatedQuery('[relation_name]')
-                //         .where('[field_name]', 'like', `%${search}%`)
-                // ); if relation
-            });
+            query.where('name', 'like', `%${search}%`),
+                query.orWhere('email', 'like', `%${search}%`);
         }
 
         const paginatedResult = await query;
@@ -46,6 +38,10 @@ class UserRepository extends BaseRepository {
             return this.findById(id);
         }
         return User.query().findById(id).withGraphFetched(relations);
+    }
+
+    async findByEmail(email) {
+        return User.query().where({ email }).first();
     }
 
 

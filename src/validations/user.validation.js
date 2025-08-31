@@ -4,7 +4,7 @@ const createUserSchema = z.object({
   body: z.object({
     name: z.string({ required_error: 'Name is required' }).min(3),
     email: z.string({ required_error: 'Email is required' }).email({ message: 'Not a valid email' }),
-    password: z.string({ required_error: 'Password is required' }).min(8, 'Password must be at least 8 characters long'),
+    phone: z.string().optional(),
   }),
 });
 

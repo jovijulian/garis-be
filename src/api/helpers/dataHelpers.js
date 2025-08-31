@@ -16,4 +16,11 @@ function formatRupiah(amount = number) {
     }).format(amount);
 }
 
-module.exports = { formatDateTime, formatRupiah };
+function getUserId(request) {
+    if (!request.user || !request.user.id) {
+        throw new Error("User ID not found in request user.");
+    }
+    return request.user.id;
+}
+
+module.exports = { formatDateTime, formatRupiah, getUserId };
