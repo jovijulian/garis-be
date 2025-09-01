@@ -1,14 +1,16 @@
 require('dotenv').config();
 
 module.exports = {
-    development: {
-        client: process.env.DB_CLIENT,
-        connection: {
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
-        },
-        pool: { min: 2, max: 10 }
-    },
+  development: {
+    client: 'mysql2',
+    connection: process.env.DATABASE_URL, // <-- CUKUP SATU BARIS INI
+    pool: { min: 2, max: 10 }
+  },
+
+  // SANGAT DISARANKAN: Tambahkan juga environment untuk production
+  production: {
+    client: 'mysql2',
+    connection: process.env.DATABASE_URL, // <-- Variabel yang sama
+    pool: { min: 2, max: 10 }
+  }
 };
