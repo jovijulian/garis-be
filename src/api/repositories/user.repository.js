@@ -44,6 +44,14 @@ class UserRepository extends BaseRepository {
         return User.query().where({ email }).first();
     }
 
+    async findByUserId(id_user) {
+        return User.query().where({ id_user }).first();
+    }
+
+    async updateUser(id, data, trx = null) {
+        return this.model.query(trx).update(data).where('id_user', id);
+    }
+
 
 }
 

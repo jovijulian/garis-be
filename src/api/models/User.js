@@ -1,21 +1,21 @@
-const { Model } = require('../../config/database');
+const { BaseModelHr } = require('../../config/database');
 
-class User extends Model {
+class User extends BaseModelHr {
     static get tableName() {
-        return 'users';
+        return 'tb_user';
     }
 
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['name', 'email', 'password'],
+            required: [],
             properties: {
-                id: { type: 'integer' },
-                name: { type: 'string', minLength: 1, maxLength: 255 },
+                id_user: { type: 'string' },
+                nama_user: { type: 'string', minLength: 1, maxLength: 255 },
                 email: { type: 'string', format: 'email' },
                 password: { type: 'string', minLength: 8 },
                 phone: { type: 'string', maxLength: 20, nullable: true },
-                role: { type: 'integer', enum: [1, 2] },
+                role_garis: { type: 'integer', enum: [1, 2, 3] },
             }
         };
     }

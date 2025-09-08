@@ -1,11 +1,19 @@
 const { Model } = require('objection');
 const knex = require('knex');
-const config = require('../config/knexfile');
+const config = require('./knexfile');
 
-const knexConnection = knex(config.development);
+const knexBooking = knex(config.booking);
+const knexHr = knex(config.hr);
 
-Model.knex(knexConnection);
+class BaseModelBooking extends Model {}
+BaseModelBooking.knex(knexBooking);
 
-console.log('Objection.js configured with Knex.');
+class BaseModelHr extends Model {}
+BaseModelHr.knex(knexHr);
 
-module.exports = { Model, knexConnection };
+module.exports = {
+  knexBooking,
+  knexHr,
+  BaseModelBooking,
+  BaseModelHr,
+};

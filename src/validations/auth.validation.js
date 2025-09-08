@@ -2,7 +2,7 @@ const { z } = require('zod');
 
 const loginSchema = z.object({
   body: z.object({
-    email: z.string().email({ message: 'Not a valid email' }),
+    id_user: z.string(),
     password: z.string().min(8, { message: 'Password must be at least 8 characters long' }),
   }),
 });

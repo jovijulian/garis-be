@@ -15,7 +15,7 @@ class AuthController {
 
     async logout(req, res) {
         try {
-            const userId = req.user.id;
+            const userId = req.user.id_user;
             await authService.logout(userId);
             return success(res, 200, null, 'Logout successfully');
         } catch (err) {
@@ -25,7 +25,7 @@ class AuthController {
 
     async me(req, res) {
         try {
-            const userId = req.user.id;
+            const userId = req.user.id_user;
             const data = await authService.me(userId);
             return success(res, 200, data, 'User data retrieved successfully');
         } catch (err) {

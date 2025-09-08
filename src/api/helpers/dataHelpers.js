@@ -17,10 +17,10 @@ function formatRupiah(amount = number) {
 }
 
 function getUserId(request) {
-    if (!request.user || !request.user.id) {
+    if (!request.user || !request.user.id_user) {
         throw new Error("User ID not found in request user.");
     }
-    return request.user.id;
+    return request.user.id_user;
 }
 
 module.exports = { formatDateTime, formatRupiah, getUserId };
