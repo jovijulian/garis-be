@@ -7,6 +7,7 @@ module.exports = {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
+      port: 3306
     },
     pool: { min: 2, max: 10 }
   },
@@ -18,6 +19,7 @@ module.exports = {
       user: process.env.DB_SECOND_USER,
       password: process.env.DB_SECOND_PASSWORD,
       database: process.env.DB_SECOND_NAME,
+      port: 3306
     },
     pool: { min: 2, max: 10 }
   },
