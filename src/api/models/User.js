@@ -5,6 +5,10 @@ class User extends BaseModelHr {
         return 'tb_user';
     }
 
+    static get idColumn() {
+        return 'id_user';
+    }
+
     static get jsonSchema() {
         return {
             type: 'object',
@@ -16,6 +20,20 @@ class User extends BaseModelHr {
                 password: { type: 'string', minLength: 8 },
                 phone: { type: 'string', maxLength: 20, nullable: true },
                 role_garis: { type: 'integer', enum: [1, 2, 3] },
+            }
+        };
+    }
+
+    static get relationMappings() {
+        const UserPermission = require('./UserPermission');
+        return {
+            permissions: {
+                relation: BaseModelHr.HasManyRelation,
+                modelClass: UserPermission,
+                join: {
+                    from: 'tb_user.id_user',
+                    to: 'tb_user_permissions_garis.user_id'
+                }
             }
         };
     }
