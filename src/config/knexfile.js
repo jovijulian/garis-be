@@ -1,7 +1,7 @@
 require('dotenv').config();
 module.exports = {
   booking: {
-    client: process.env.DB_CLIENT,
+    client: process.env.DB_CLIENT || 'mysql2',
     connection: {
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
@@ -12,7 +12,7 @@ module.exports = {
   },
 
   hr: {
-    client: process.env.DB_SECOND_CLIENT,
+    client: process.env.DB_SECOND_CLIENT || 'mysql2',
     connection: {
       host: process.env.DB_SECOND_HOST,
       user: process.env.DB_SECOND_USER,
