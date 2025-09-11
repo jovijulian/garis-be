@@ -1,16 +1,16 @@
-const roomRepository = require('../repositories/room.repository');
+const amenityRepository = require('../repositories/amenity.repository');
 const { formatDateTime } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
-class RoomService {
+class AmenityService {
 
     async getAll(queryParams) {
-        return roomRepository.findAllWithFilters(queryParams);
+        return amenityRepository.findAllWithFilters(queryParams);
     }
 
     async detail(id) {
-        const data = await roomRepository.findByIdWithRelations(id, '[cabang]');
+        const data = await amenityRepository.findById(id);
         if (!data) {
-            const error = new Error('Room not found.');
+            const error = new Error('Amenity not found.');
             error.statusCode = 404;
             throw error;
         }
@@ -23,7 +23,7 @@ class RoomService {
                 payload.created_at = formatDateTime();
                 payload.updated_at = formatDateTime();
 
-                const data = await roomRepository.create(payload, trx);
+                const data = await amenityRepository.create(payload, trx);
                 return data;
             });
         } catch (error) {
@@ -37,7 +37,7 @@ class RoomService {
             return knexBooking.transaction(async (trx) => {
                 payload.updated_at = formatDateTime();
 
-                const data = await roomRepository.update(id, payload, trx);
+                const data = await amenityRepository.update(id, payload, trx);
                 return data;
             });
         } catch (error) {
@@ -49,27 +49,27 @@ class RoomService {
         await this.detail(id);
         try {
             return knexBooking.transaction(async (trx) => {
-                const data = await roomRepository.update(id, { is_active: 0 }, trx);
-    
+                const data = await amenityRepository.delete(id)
+
                 if (!data) {
-                    const error = new Error('Failed to deleted room.');
+                    const error = new Error('Failed to deleted amenity.');
                     error.statusCode = 500;
                     throw error;
                 }
-    
-                return { message: 'Room has been deleted successfully.' };
+
+                return { message: 'Amenity has been deleted successfully.' };
             });
         } catch (error) {
             throw error;
         }
-        
+
     }
 
     async options(params) {
-        const data = await roomRepository.options(params);
+        const data = await amenityRepository.options(params);
 
         if (!data || data.length === 0) {
-            const error = new Error('No Rooms found.');
+            const error = new Error('No Amenities found.');
             error.statusCode = 404;
             throw error;
         }
@@ -78,4 +78,4 @@ class RoomService {
     }
 }
 
-module.exports = new RoomService();
+module.exports = new AmenityService();

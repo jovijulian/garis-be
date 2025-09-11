@@ -1,26 +1,44 @@
-// const { Model } = require('../../config/database');
+const { BaseModelBooking } = require('../../config/database');
 
-// class Room extends Model {
-//     static get tableName() {
-//         return 'rooms';
-//     }
+class Room extends BaseModelBooking {
+    static get tableName() {
+        return 'rooms';
+    }
 
-//     static get jsonSchema() {
-//         return {
-//             type: 'object',
-//             required: ['name'],
-//             properties: {
-//                 id: { type: 'integer' },
-//                 name: { type: 'string' },
-//                 description: { type: 'string' },
-//             }
-//         };
-//     }
+    static get jsonSchema() {
+        return {
+            type: 'object',
+            required: ['name'],
+            properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' },
+                cab_id: { type: 'integer' },
+                capacity: { type: 'integer' },
+                description: { type: 'string' },
+                location: { type: 'string' },
+                is_active: { type: 'integer' }
+            }
+        };
+    }
 
-//     $formatJson(json) {
-//         json = super.$formatJson(json);
-//         return json;
-//     }
-// }
+    static get relationMappings() {
+        const Site = require('./Site');
+        return {
+            cabang: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: Site,
+                join: {
+                    from: 'rooms.cab_id',
+                    to: 'tb_cab.id_cab'
+                }
+            },
+        };
+    }
 
-// module.exports = Room;
+    $formatJson(json) {
+        json = super.$formatJson(json);
+        return json;
+    }
+}
+
+module.exports = Room;

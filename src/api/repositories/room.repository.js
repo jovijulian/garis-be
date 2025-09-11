@@ -1,5 +1,6 @@
 const BaseRepository = require('./base.repository');
 const Room = require('../models/Room');
+const Site = require('../models/Site');
 
 class RoomRepository extends BaseRepository {
     constructor() {
@@ -13,12 +14,22 @@ class RoomRepository extends BaseRepository {
 
         const query = Room.query()
             .select('*')
-            .whereNull('deleted_at')
+            .withGraphFetched('[cabang]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id', 'nama_cab');
+            })
+            .where('is_active', 1)
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
 
         if (search) {
-            query.where('name', 'like', `%${search}%`);
+            query.where('name', 'like', `%${search}%`)
+                .orWhere('location', 'like', `%${search}%`)
+                .orWhere('description', 'like', `%${search}%`)
+                .orWhereExists(
+                    Site.relatedQuery('cabang')
+                        .where('nama_cab', 'like', `%${search}%`)
+                )
         }
 
         const paginatedResult = await query;
@@ -33,16 +44,32 @@ class RoomRepository extends BaseRepository {
 
     async options(params) {
         const query = Room.query()
-            .select('id', 'name')
-            .whereNull('deleted_at')
+            .select('id', 'name', 'capacity', 'location', 'cab_id')
+            .withGraphFetched('[cabang]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id', 'nama_cab');
+            })
+            .where('is_active', 1)
 
         if (params) {
-            query.where('name', 'like', `%${params}%`);
+            query.where('name', 'like', `%${params}%`)
+                .orWhere('location', 'like', `%${params}%`)
+                .orWhereExists(
+                    Site.relatedQuery('cabang')
+                        .where('nama_cab', 'like', `%${params}%`)
+                )
         }
 
         const data = await query;
 
         return data;
+    }
+
+    async findByIdWithRelations(id, relations) {
+        if (!relations) {
+            return this.findById(id);
+        }
+        return Room.query().findById(id).withGraphFetched(relations);
     }
 
 }
