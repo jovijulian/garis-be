@@ -7,30 +7,34 @@ class BookingService {
     async createBooking(request) {
         const userId = await getUserId(request);
         const payload = request.body;
-        const { roomId, bookingDate, startTime, durationMinutes } = payload;
+        try {
+            const conflicts = await bookingRepository.findConflicts(payload.room_id, payload.start_time, payload.end_time);
+            return knexConnection.transaction(async (trx) => {
+                const insertPayload = {
+                    id_user: userId,
+                    room_id: payload.room_id,
+                    purpose: payload.purpose,
+                    start_time: payload.start_time,
+                    end_time: payload.end_time,
+                    duration_minutes: moment(payload.end_time, 'HH:mm:ss').diff(moment(payload.start_time, 'HH:mm:ss'), 'minutes'),
+                    notes: payload.notes,
+                    status: 'Submit',
+                    is_conflicting: conflicts.length > 0
+                };
+                const newBooking = await bookingRepository.create(insertPayload, trx);
 
-        const endTime = calculateEndTime(startTime, durationMinutes);
-
-        const conflicts = await bookingRepository.findApprovedConflicts(roomId, bookingDate, startTime, endTime);
-        if (conflicts && conflicts.length > 0) {
-            const error = new Error('Booking conflict: The room is already booked and approved for the selected time.');
-            error.statusCode = 409;
-            throw error;
+                if (payload.amenity_ids && payload.amenity_ids.length > 0) {
+                    const amenityPayload = payload.amenity_ids.map(id => ({
+                        booking_id: newBooking.id,
+                        amenity_id: id
+                    }));
+                    await bookingRepository.createAmenities(amenityPayload, trx);
+                }
+                return newBooking;
+            });
+        } catch (err) {
+            throw err;
         }
-
-        return knexConnection.transaction(async (trx) => {
-            const insertPayload = {
-                user_id: userId,
-                room_id: payload.roomId,
-                booking_date: payload.bookingDate,
-                start_time: payload.startTime,
-                duration_minutes: payload.durationMinutes,
-                purpose: payload.purpose,
-                status: 'Submit'
-            };
-            const newBooking = await bookingRepository.create(insertPayload, trx);
-            return newBooking;
-        });
     }
 
     async getAll(queryParams) {

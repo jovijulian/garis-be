@@ -16,7 +16,7 @@ class RoomRepository extends BaseRepository {
             .select('*')
             .withGraphFetched('[cabang]')
             .modifyGraph('cabang', builder => {
-                builder.select('id', 'nama_cab');
+                builder.select('id_cab', 'nama_cab');
             })
             .where('is_active', 1)
             .page(page - 1, per_page)
