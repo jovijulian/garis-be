@@ -14,7 +14,7 @@ class RoomController {
 
     async getAll(req, res) {
         try {
-            const paginatedData = await bookingService.getAll(req.query);
+            const paginatedData = await bookingService.getAll(req.query, req);
             return paginated(res, 200, paginatedData, 'Bookings retrieved successfully');
         } catch (err) {
             return error(res, 500, err);
@@ -66,7 +66,7 @@ class RoomController {
             const id = req.params.id;
             const payload = req.body;
 
-            const data = await bookingService.updateBookingStatus(id, payload);
+            const data = await bookingService.updateBookingStatus(id, req);
             return success(res, 200, data, 'Room updated successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);

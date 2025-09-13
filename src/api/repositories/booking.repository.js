@@ -1,49 +1,42 @@
 const BaseRepository = require('./base.repository');
 const Booking = require('../models/Booking');
 const { knexConnection } = require('../../config/database');
+const User = require('../models/User');
+const Room = require('../models/Room');
+const OrderAmenity = require('../models/OrderAmenity');
 
 class BookingRepository extends BaseRepository {
     constructor() {
         super(Booking);
     }
 
-    async findAllWithFilters(queryParams = {}) {
+    async findAllWithFilters(queryParams = {}, siteId = null) {
         const page = queryParams.page || 1;
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
 
         const query = Booking.query()
-            .select(
-                '*',
-                knexConnection.raw(`
-                    EXISTS (
-                        SELECT 1
-                        FROM bookings as b2
-                        WHERE
-                            b2.id != bookings.id AND
-                            b2.room_id = bookings.room_id AND
-                            b2.booking_date = bookings.booking_date AND
-                            b2.status IN ('Approved', 'Submit') AND
-                            (
-                                bookings.start_time < ADDTIME(b2.start_time, SEC_TO_TIME(b2.duration_minutes * 60)) AND
-                                ADDTIME(bookings.start_time, SEC_TO_TIME(bookings.duration_minutes * 60)) > b2.start_time
-                            )
-                    ) as is_conflicting
-                `)
-            )
-            .withGraphFetched('[user(selectName), room(selectName)]')
+            .select('*')
+            .withGraphFetched('[user(selectUsername), room(selectRoomName)]')
             .modifiers({
-                selectName: builder => builder.select('id', 'name')
+                selectUsername: builder => builder.select('id_user', 'nama_user'),
+                selectRoomName: builder => builder.select('id', 'name')
             })
             .page(page - 1, per_page)
-            .orderBy('booking_date', 'DESC');
-
+            .orderBy('start_time', 'DESC');
+        
+        if (siteId) {
+            query.whereExists(
+                Booking.relatedQuery('room')
+                    .where('cab_id', siteId)
+            );
+        }
         if (search) {
             query.where(builder => {
                 builder.where('purpose', 'like', `%${search}%`)
                     .orWhereExists(
                         Booking.relatedQuery('user')
-                            .where('name', 'like', `%${search}%`)
+                            .where('nama_user', 'like', `%${search}%`)
                     )
                     .orWhereExists(
                         Booking.relatedQuery('room')
@@ -54,21 +47,29 @@ class BookingRepository extends BaseRepository {
 
         const paginatedResult = await query;
 
-        const resultsWithBooleanConflict = paginatedResult.results.map(booking => ({
-            ...booking,
-            is_conflicting: !!booking.is_conflicting
-        }));
+        // const resultsWithBooleanConflict = paginatedResult.results.map(booking => ({
+        //     ...booking,
+        //     is_conflicting: !!booking.is_conflicting
+        // }));
 
         return {
-            results: resultsWithBooleanConflict,
+            results: paginatedResult.results,
             total: paginatedResult.total,
             page: page,
             per_page: per_page,
         };
     }
 
+    async createAmenities(payload, trx) {
+        if (!payload || payload.length === 0) return;
+        return OrderAmenity.query(trx).insert(payload);
+    }
 
-    async findAllWithFiltersByUserId(queryParams = {}, user_id) {
+    async deleteAmenitiesByBookingId(bookingId, trx) {
+        return OrderAmenity.query(trx).where('booking_id', bookingId).delete();
+    }
+
+    async findAllWithFiltersByUserId(queryParams = {}, id_user) {
         const page = queryParams.page || 1;
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
@@ -77,23 +78,23 @@ class BookingRepository extends BaseRepository {
             .select('*')
             .withGraphFetched('[user, room]')
             .modifyGraph('user', builder => {
-                builder.select('id', 'name');
+                builder.select('id_user', 'nama_user');
             })
             .modifyGraph('room', builder => {
                 builder.select('id', 'name');
             })
-            .where('user_id', user_id)
+            .where('id_user', id_user)
             .page(page - 1, per_page)
-            .orderBy('booking_date', 'DESC');
+            .orderBy('start_time', 'DESC');
 
         if (search) {
             query.where(builder => {
-                builder.where('user_id', 'like', `%${search}%`)
+                builder.where('id_user', 'like', `%${search}%`)
                     .orWhere('room_id', 'like', `%${search}%`)
 
                     .orWhereExists(
                         User.relatedQuery('user')
-                            .where('name', 'like', `%${search}%`)
+                            .where('nama_user', 'like', `%${search}%`)
                     )
 
                     .orWhereExists(
@@ -113,34 +114,33 @@ class BookingRepository extends BaseRepository {
         };
     }
 
-    async findApprovedConflicts(roomId, date, startTime, endTime, trx) {
+  
+
+    // async findApprovedConflicts(roomId, date, startTime, endTime, trx) {
+    //     const query = Booking.query(trx)
+    //         .where('room_id', roomId)
+    //         .andWhere('booking_date', date)
+    //         .andWhere('status', 'Approved')
+    //         .andWhere(builder => {
+    //             builder.where('start_time', '<', endTime)
+    //                 .andWhereRaw('ADDTIME(start_time, SEC_TO_TIME(duration_minutes * 60)) > ?', [startTime]);
+    //         });
+    //     return query;
+    // }
+
+    async findConflicts(roomId, startTime, endTime, bookingIdToExclude = null, trx) {
         const query = Booking.query(trx)
-        .where('room_id', roomId)
-        .andWhere('booking_date', date)
-        .andWhere('status', 'Approved')
-        .andWhere(builder => {
-            // --- LOGIKA PERBAIKAN ---
-            // SEBELUMNYA (SALAH):
-            // builder.whereRaw('? < ADDTIME(start_time, SEC_TO_TIME(duration_minutes * 60))', [startTime])
-            //        .andWhereRaw('? > start_time', [endTime]);
-
-            // SESUDAHNYA (BENAR):
-            // Logika: WaktuMulai_Baru < WaktuSelesai_Lama DAN WaktuSelesai_Baru > WaktuMulai_Lama
-            builder.where('start_time', '<', endTime)
-                   .andWhereRaw('ADDTIME(start_time, SEC_TO_TIME(duration_minutes * 60)) > ?', [startTime]);
-        });
-        return query;
-    }
-
-    async findPendingConflicts(roomId, date, startTime, endTime, trx) {
-        return Booking.query(trx)
             .where('room_id', roomId)
-            .andWhere('booking_date', date)
-            .andWhere('status', 'Submit')
-            .andWhere(builder => {
-                builder.whereRaw('? < ADDTIME(start_time, SEC_TO_TIME(duration_minutes * 60))', [startTime])
-                    .andWhereRaw('? > start_time', [endTime]);
+            .where(builder => {
+                builder.where('start_time', '<', endTime)
+                    .andWhere('end_time', '>', startTime);
             });
+
+        if (bookingIdToExclude) {
+            query.where('id', '!=', bookingIdToExclude);
+        }
+
+        return query;
     }
 
     async updateStatus(bookingId, status, trx) {

@@ -30,6 +30,7 @@ class AuthService {
             name: user.nama_lengkap,
             email: user.email,
             role: user.role_garis,
+            sites: user.permissions.length > 0 ? user.permissions[0].cab_id : null,
         };
 
         const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
@@ -63,6 +64,7 @@ class AuthService {
             name: user.nama_lengkap,
             email: user.email,
             role: user.role_garis,
+            sites: user.permissions.length > 0 ? user.permissions[0].cab_id : null,
         };
     }
 

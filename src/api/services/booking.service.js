@@ -1,6 +1,6 @@
 const bookingRepository = require('../repositories/booking.repository');
-const { knexConnection } = require('../../config/database');
-const { getUserId } = require('../helpers/dataHelpers');
+const { knexBooking } = require('../../config/database');
+const { getUserId, formatDateTime } = require('../helpers/dataHelpers');
 const moment = require('moment');
 
 class BookingService {
@@ -9,17 +9,21 @@ class BookingService {
         const payload = request.body;
         try {
             const conflicts = await bookingRepository.findConflicts(payload.room_id, payload.start_time, payload.end_time);
-            return knexConnection.transaction(async (trx) => {
+            const durationMinutes = moment(payload.end_time).diff(moment(payload.start_time), 'minutes');
+            return knexBooking.transaction(async (trx) => {
                 const insertPayload = {
                     id_user: userId,
                     room_id: payload.room_id,
                     purpose: payload.purpose,
                     start_time: payload.start_time,
                     end_time: payload.end_time,
-                    duration_minutes: moment(payload.end_time, 'HH:mm:ss').diff(moment(payload.start_time, 'HH:mm:ss'), 'minutes'),
+                    duration_minutes: durationMinutes,
                     notes: payload.notes,
                     status: 'Submit',
-                    is_conflicting: conflicts.length > 0
+                    is_conflicting: conflicts.length > 0 ? 1 : 0,
+                    created_at: formatDateTime(),
+                    updated_at: formatDateTime()
+
                 };
                 const newBooking = await bookingRepository.create(insertPayload, trx);
 
@@ -36,10 +40,14 @@ class BookingService {
             throw err;
         }
     }
-
-    async getAll(queryParams) {
-        return bookingRepository.findAllWithFilters(queryParams);
+    async getAll(queryParams, request) {
+        const siteId = request.user.sites ?? null;
+        console.log(request.user)
+        return siteId
+            ? bookingRepository.findAllWithFilters(queryParams, siteId)
+            : bookingRepository.findAllWithFilters(queryParams);
     }
+
 
     async getAllBookingUser(request) {
         const userId = getUserId(request);
@@ -48,7 +56,7 @@ class BookingService {
     }
 
     async getBookingById(bookingId) {
-        const booking = await bookingRepository.findByIdWithRelations(bookingId, '[room, user]');
+        const booking = await bookingRepository.findByIdWithRelations(bookingId, '[room, user, amenities]');
         if (!booking) {
             const error = new Error('Booking not found.');
             error.statusCode = 404;
@@ -68,17 +76,28 @@ class BookingService {
             throw error;
         }
 
-        return knexConnection.transaction(async (trx) => {
+        const conflicts = await bookingRepository.findConflicts(payload.room_id, payload.start_time, payload.end_time, bookingId);
+        const durationMinutes = moment(payload.end_time).diff(moment(payload.start_time), 'minutes');
+        return knexBooking.transaction(async (trx) => {
             const insertPayload = {
-                user_id: existingBooking.user_id,
-                room_id: payload.roomId,
-                booking_date: payload.bookingDate,
-                start_time: payload.startTime,
-                duration_minutes: payload.durationMinutes,
+                room_id: payload.room_id,
+                start_time: payload.start_time,
+                end_time: payload.end_time,
+                duration_minutes: durationMinutes,
                 purpose: payload.purpose,
-                status: payload.status || 'Submit'
+                notes: payload.notes,
+                // status: payload.status || 'Submit',
+                is_conflicting: conflicts.length > 0 ? 1 : 0,
+                updated_at: formatDateTime()
             };
             const updatedBooking = await bookingRepository.update(bookingId, insertPayload, trx);
+            await bookingRepository.deleteAmenitiesByBookingId(bookingId, trx);
+            const amenityPayload = payload.amenity_ids.map(id => ({
+                booking_id: updatedBooking.id,
+                amenity_id: id
+            }));
+            await bookingRepository.createAmenities(amenityPayload, trx);
+
             return updatedBooking;
         });
     }
@@ -92,49 +111,48 @@ class BookingService {
             throw error;
         }
 
-        await bookingRepository.delete(bookingId);
-        return { message: 'Booking has been deleted successfully.' };
+        return knexBooking.transaction(async (trx) => {
+            await bookingRepository.deleteAmenitiesByBookingId(bookingId, trx);
+            await bookingRepository.delete(bookingId, trx);
+            return { message: 'Booking has been deleted successfully.' };
+        });
     }
 
-
-    async updateBookingStatus(bookingId, payload) {
-        const bookingToUpdate = await bookingRepository.findById(bookingId);
-        if (!bookingToUpdate) {
-            const error = new Error('Booking not found.');
-            error.statusCode = 404;
-            throw error;
-        }
-
-        return knexConnection.transaction(async (trx) => {
-            if (payload.status === 'Approved') {
-                const endTime = calculateEndTime(bookingToUpdate.start_time, bookingToUpdate.duration_minutes);
-                const pendingConflicts = await bookingRepository.findPendingConflicts(
-                    bookingToUpdate.room_id,
-                    bookingToUpdate.booking_date,
-                    bookingToUpdate.start_time,
-                    endTime,
-                    trx
-                );
-
-                for (const conflict of pendingConflicts) {
-                    if (conflict.id !== bookingId) {
-                        await bookingRepository.updateStatus(conflict.id, 'Rejected', trx);
-                    }
-                }
+    async updateBookingStatus(bookingId, request) {
+        const payload = request.body
+        return knexBooking.transaction(async (trx) => {
+            const bookingToUpdate = await bookingRepository.findById(bookingId, null, trx);
+            if (!bookingToUpdate) {
+                const error = new Error('Booking not found.');
+                error.statusCode = 404;
+                throw error;
             }
 
-            const updatedBooking = await bookingRepository.updateStatus(bookingId, payload.status, trx);
-            return updatedBooking;
+            // if (payload.status === 'Approved') {
+            //     const approvedConflicts = await bookingRepository.findConflicts(
+            //         bookingToUpdate.room_id, bookingToUpdate.start_time, bookingToUpdate.end_time, bookingId, trx
+            //     ).where('status', 'Approved');
+
+            //     if (approvedConflicts.length > 0) {
+            //         const error = new Error('Cannot approve, this schedule conflicts with another approved booking.');
+            //         error.statusCode = 409;
+            //         throw error;
+            //     }
+
+            //     // const pendingConflicts = await bookingRepository.findConflicts(
+            //     //     bookingToUpdate.room_id, bookingToUpdate.start_time, bookingToUpdate.end_time, bookingId, trx
+            //     // ).where('status', 'Submit');
+
+            //     // for (const conflict of pendingConflicts) {
+            //     //     await bookingRepository.update(conflict.id, { status: 'Rejected' }, trx);
+            //     // }
+            // }
+
+            return bookingRepository.update(bookingId, { status: payload.status, approved_by: getUserId(request), updated_at: formatDateTime() }, trx);
         });
     }
 }
 
-function calculateEndTime(startTime, durationMinutes) {
-    const startMoment = moment(startTime, 'HH:mm:ss');
-    const endMoment = startMoment.add(durationMinutes, 'minutes');
-    const endTime = endMoment.format('HH:mm:ss');
-    return endTime;
-}
 
 
 module.exports = new BookingService();

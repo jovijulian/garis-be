@@ -28,6 +28,8 @@ class Booking extends BaseModelBooking {
     static get relationMappings() {
         const User = require('./User');
         const Room = require('./Room');
+        const Amenity = require('./Amenity');
+
 
         return {
             user: {
@@ -44,6 +46,18 @@ class Booking extends BaseModelBooking {
                 join: {
                     from: 'bookings.room_id',
                     to: 'rooms.id',
+                },
+            },
+            amenities: {
+                relation: BaseModelBooking.ManyToManyRelation,
+                modelClass: require('./Amenity'),
+                join: {
+                    from: 'bookings.id',
+                    through: {
+                        from: 'order_aminities.booking_id',
+                        to: 'order_aminities.amenity_id',
+                    },
+                    to: 'amenities.id',
                 },
             },
         };

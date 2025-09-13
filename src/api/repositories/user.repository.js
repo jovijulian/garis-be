@@ -45,7 +45,9 @@ class UserRepository extends BaseRepository {
     }
 
     async findByUserId(id_user) {
-        return User.query().where({ id_user }).first();
+        return User.query().where({ id_user })
+        .withGraphFetched('[permissions]')
+        .first();
     }
 
     async updateUser(id, data, trx = null) {
