@@ -15,6 +15,7 @@ router.use(verifyToken);
 router.post('/', validate(createSchema), RoomController.create);
 router.get('/', RoomController.getAll);
 router.get('/options', RoomController.options);
+router.get('/site-options', RoomController.optionsSite);
 router.get('/:id', validate(roomIdSchema), RoomController.detail);
 router.put('/:id', validate(updateSchema), RoomController.update);
 router.delete('/:id', validate(roomIdSchema), RoomController.delete);

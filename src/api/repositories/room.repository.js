@@ -26,7 +26,7 @@ class RoomRepository extends BaseRepository {
             query.where('name', 'like', `%${search}%`)
                 .orWhere('location', 'like', `%${search}%`)
                 .orWhere('description', 'like', `%${search}%`)
-                
+
         }
 
         const paginatedResult = await query;
@@ -51,10 +51,10 @@ class RoomRepository extends BaseRepository {
         if (params) {
             query.where('name', 'like', `%${params}%`)
                 .orWhere('location', 'like', `%${params}%`)
-                // .orWhereExists(
-                //     Room.relatedQuery('cabang')
-                //         .where('nama_cab', 'like', `%${params}%`)
-                // )
+            // .orWhereExists(
+            //     Room.relatedQuery('cabang')
+            //         .where('nama_cab', 'like', `%${params}%`)
+            // )
         }
 
         const data = await query;
@@ -67,6 +67,19 @@ class RoomRepository extends BaseRepository {
             return this.findById(id);
         }
         return Room.query().findById(id).withGraphFetched(relations);
+    }
+
+    async optionsSite(params) {
+        const query = Site.query()
+            .select('*')
+
+        if (params) {
+            query.where('nama_cab', 'like', `%${params}%`)
+        }
+
+        const data = await query;
+
+        return data;
     }
 
 }

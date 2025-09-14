@@ -76,6 +76,18 @@ class RoomService {
 
         return data;
     }
+
+    async optionsSite(params) {
+        const data = await roomRepository.optionsSite(params);
+
+        if (!data || data.length === 0) {
+            const error = new Error('No Sites found.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return data;
+    }
 }
 
 module.exports = new RoomService();
