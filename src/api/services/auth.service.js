@@ -27,7 +27,7 @@ class AuthService {
 
         const jwtPayload = {
             id_user: user.id_user,
-            name: user.nama_lengkap,
+            name: user.nama_user,
             email: user.email,
             role: user.role_garis,
             sites: user.permissions.length > 0 ? user.permissions[0].cab_id : null,
@@ -61,7 +61,7 @@ class AuthService {
 
         return {
             id_user: user.id_user,
-            name: user.nama_lengkap,
+            name: user.nama_user,
             email: user.email,
             role: user.role_garis,
             sites: user.permissions.length > 0 ? user.permissions[0].cab_id : null,

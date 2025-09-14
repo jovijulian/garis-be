@@ -26,10 +26,7 @@ class RoomRepository extends BaseRepository {
             query.where('name', 'like', `%${search}%`)
                 .orWhere('location', 'like', `%${search}%`)
                 .orWhere('description', 'like', `%${search}%`)
-                .orWhereExists(
-                    Site.relatedQuery('cabang')
-                        .where('nama_cab', 'like', `%${search}%`)
-                )
+                
         }
 
         const paginatedResult = await query;
@@ -54,10 +51,10 @@ class RoomRepository extends BaseRepository {
         if (params) {
             query.where('name', 'like', `%${params}%`)
                 .orWhere('location', 'like', `%${params}%`)
-                .orWhereExists(
-                    Site.relatedQuery('cabang')
-                        .where('nama_cab', 'like', `%${params}%`)
-                )
+                // .orWhereExists(
+                //     Room.relatedQuery('cabang')
+                //         .where('nama_cab', 'like', `%${params}%`)
+                // )
         }
 
         const data = await query;
