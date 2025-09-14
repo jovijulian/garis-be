@@ -85,6 +85,7 @@ class BookingService {
                 end_time: payload.end_time,
                 duration_minutes: durationMinutes,
                 purpose: payload.purpose,
+                status: payload.status || 'Submit',
                 // status: payload.status || 'Submit',
                 is_conflicting: conflicts.length > 0 ? 1 : 0,
                 updated_at: formatDateTime()
