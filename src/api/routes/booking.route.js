@@ -17,6 +17,7 @@ router.get('/', BookingController.getAll);
 router.get('/user', BookingController.getAllBookingUser);
 router.get('/:id', validate(bookingIdSchema), BookingController.detail);
 router.put('/:id', validate(updateSchema), BookingController.update);
+router.put('/user/:id', validate(updateSchema), BookingController.updateUser);
 router.delete('/:id', validate(bookingIdSchema), BookingController.delete);
 router.put('/status/:id', validate(bookingIdSchema), BookingController.updateBookingStatus);
 

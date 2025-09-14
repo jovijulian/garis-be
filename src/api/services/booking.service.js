@@ -85,6 +85,36 @@ class BookingService {
                 end_time: payload.end_time,
                 duration_minutes: durationMinutes,
                 purpose: payload.purpose,
+                // status: payload.status || 'Submit',
+                is_conflicting: conflicts.length > 0 ? 1 : 0,
+                updated_at: formatDateTime()
+            };
+            const updatedBooking = await bookingRepository.update(bookingId, insertPayload, trx);
+        
+
+            return updatedBooking;
+        });
+    }
+
+    async updateBookingUser(bookingId, request) {
+        const payload = request.body;
+        const existingBooking = await this.getBookingById(bookingId);
+
+        if (existingBooking.status !== 'Submit') {
+            const error = new Error('This booking cannot be edited as it has already been processed.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const conflicts = await bookingRepository.findConflicts(payload.room_id, payload.start_time, payload.end_time, bookingId);
+        const durationMinutes = moment(payload.end_time).diff(moment(payload.start_time), 'minutes');
+        return knexBooking.transaction(async (trx) => {
+            const insertPayload = {
+                room_id: payload.room_id,
+                start_time: payload.start_time,
+                end_time: payload.end_time,
+                duration_minutes: durationMinutes,
+                purpose: payload.purpose,
                 notes: payload.notes,
                 // status: payload.status || 'Submit',
                 is_conflicting: conflicts.length > 0 ? 1 : 0,

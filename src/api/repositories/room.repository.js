@@ -24,6 +24,7 @@ class RoomRepository extends BaseRepository {
 
         if (search) {
             query.where('name', 'like', `%${search}%`)
+                .where('is_active', 1)
                 .orWhere('location', 'like', `%${search}%`)
                 .orWhere('description', 'like', `%${search}%`)
 

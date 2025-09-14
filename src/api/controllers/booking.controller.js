@@ -51,6 +51,17 @@ class RoomController {
         }
     }
 
+    async updateUser(req, res) {
+        try {
+            const id = req.params.id;
+
+            const data = await bookingService.updateBookingUser(id, req);
+            return success(res, 200, data, 'Room updated successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
     async delete(req, res) {
         try {
             const id = req.params.id;

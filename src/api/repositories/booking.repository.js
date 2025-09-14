@@ -34,10 +34,10 @@ class BookingRepository extends BaseRepository {
         if (search) {
             query.where(builder => {
                 builder.where('purpose', 'like', `%${search}%`)
-                    .orWhereExists(
-                        Booking.relatedQuery('user')
-                            .where('nama_user', 'like', `%${search}%`)
-                    )
+                    // .orWhereExists(
+                    //     Booking.relatedQuery('user')
+                    //         .where('nama_user', 'like', `%${search}%`)
+                    // )
                     .orWhereExists(
                         Booking.relatedQuery('room')
                             .where('name', 'like', `%${search}%`)
