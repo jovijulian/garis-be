@@ -41,14 +41,14 @@ class BookingService {
                     }));
                     await bookingRepository.createAmenities(amenityPayload, trx);
                 }
-                if (adminEmails.length > 0) {
-                    const emailDetails = {
-                        ...newBooking,
-                        user: userWhoBooked,
-                        room: roomToBook,
-                    };
-                    await sendNewBookingNotificationEmail(adminEmails, emailDetails);
-                }
+                // if (adminEmails.length > 0) {
+                //     const emailDetails = {
+                //         ...newBooking,
+                //         user: userWhoBooked,
+                //         room: roomToBook,
+                //     };
+                //     await sendNewBookingNotificationEmail(adminEmails, emailDetails);
+                // }
                 return newBooking;
             });
         } catch (err) {
@@ -106,12 +106,12 @@ class BookingService {
             };
             const updatedBooking = await bookingRepository.update(bookingId, insertPayload, trx);
 
-            const emailDetails = {
-                ...updatedBooking,
-                user: existingBooking.user, 
-                room: existingBooking.room, 
-            };
-            await sendRescheduleNotificationEmail(emailDetails);
+            // const emailDetails = {
+            //     ...updatedBooking,
+            //     user: existingBooking.user, 
+            //     room: existingBooking.room, 
+            // };
+            // await sendRescheduleNotificationEmail(emailDetails);
             return updatedBooking;
         });
     }
@@ -147,13 +147,13 @@ class BookingService {
                 amenity_id: id
             }));
             await bookingRepository.createAmenities(amenityPayload, trx);
-            if (adminEmails.length > 0) {
-                const emailDetails = {
-                    ...existingBooking, 
-                    ...updatedBooking,  
-                };
-                await sendBookingUpdatedNotificationEmail(adminEmails, emailDetails);
-            }
+            // if (adminEmails.length > 0) {
+            //     const emailDetails = {
+            //         ...existingBooking, 
+            //         ...updatedBooking,  
+            //     };
+            //     await sendBookingUpdatedNotificationEmail(adminEmails, emailDetails);
+            // }
 
             return updatedBooking;
         });
@@ -185,8 +185,8 @@ class BookingService {
                 throw error;
             }
             const updateBooking = await bookingRepository.update(bookingId, { status: payload.status, approved_by: getUserId(request), updated_at: formatDateTime() }, trx)
-            const bookingDetailsForEmail = { ...bookingToUpdate, status: payload.status };
-            await sendBookingStatusEmail(bookingDetailsForEmail);
+            // const bookingDetailsForEmail = { ...bookingToUpdate, status: payload.status };
+            // await sendBookingStatusEmail(bookingDetailsForEmail);
             return updateBooking;
         });
     }
