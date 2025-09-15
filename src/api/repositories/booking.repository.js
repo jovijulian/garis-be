@@ -85,7 +85,7 @@ class BookingRepository extends BaseRepository {
                 builder.select('id', 'name');
             })
             .modifyGraph('amenities', builder => {
-                builder.select('amenities.id as amenity_id', 'amenities.name');
+                builder.select('amenities.id as id', 'amenities.name');
             })
             
             .where('id_user', id_user)
