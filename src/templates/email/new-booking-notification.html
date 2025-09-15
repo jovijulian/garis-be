@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; color: white; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header { background-color: #007bff; color: white; padding: 10px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: white; }
+        .cta-button { display: inline-block; padding: 12px 25px; margin: 20px 0; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Pengajuan Booking Baru</h2>
+        </div>
+        <div class="content">
+            <p>Halo Admin,</p>
+            <p>Ada pengajuan booking ruangan baru yang membutuhkan persetujuan Anda. Berikut adalah detailnya:</p>
+            
+            <ul>
+                <li><strong>Diajukan Oleh:</strong> {{userName}}</li>
+                <li><strong>Keperluan:</strong> {{bookingPurpose}}</li>
+                <li><strong>Ruangan:</strong> {{roomName}}</li>
+                <li><strong>Waktu:</strong> {{bookingTime}}</li>
+            </ul>
+
+            <p>Silakan tinjau pengajuan ini di panel admin Anda.</p>
+            <a href="{{adminLink}}" class="cta-button">Lihat Detail Booking</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 GARIS | PT. Cisangkan</p>
+        </div>
+    </div>
+</body>
+</html>

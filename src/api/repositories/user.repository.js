@@ -54,6 +54,16 @@ class UserRepository extends BaseRepository {
         return this.model.query(trx).update(data).where('id_user', id);
     }
 
+    async findAdminsBySiteId(siteId) {
+        return this.model.query()
+            .select('email') 
+            .where('role_garis', 2)
+            .whereExists(
+                User.relatedQuery('permissions')
+                    .where('cab_id', siteId)
+            );
+    }
+
 
 }
 

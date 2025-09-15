@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; color: white; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header {background-color: #007bff; color: white; padding: 10px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: #777; }
+        .cta-button { display: inline-block; padding: 12px 25px; margin: 20px 0; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .highlight { background-color: #e9ecef; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Pemberitahuan Penjadwalan Ulang</h2>
+        </div>
+        <div class="content">
+            <p>Halo, <strong>{{userName}}</strong>,</p>
+            <p>Admin telah mengatur ulang jadwal untuk pengajuan booking Anda. Berikut adalah detail jadwal baru yang telah disetujui:</p>
+            
+            <ul>
+                <li><strong>Keperluan:</strong> {{bookingPurpose}}</li>
+                <li><strong>Ruangan:</strong> {{roomName}}</li>
+            </ul>
+
+            <p><strong>Jadwal Baru:</strong></p>
+            <div class="highlight">
+                <p style="font-size: 1.1em; font-weight: bold; margin: 0;">{{bookingTime}}</p>
+            </div>
+
+            <p>Booking Anda dengan jadwal baru ini telah disetujui secara otomatis.</p>
+            <a href="{{userLink}}" class="cta-button">Lihat Booking Saya</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 Aplikasi General Affair</p>
+        </div>
+    </div>
+</body>
+</html>

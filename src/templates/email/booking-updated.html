@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; color: white; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header {background-color: #007bff; color: white; padding: 10px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: #777; }
+        .cta-button { display: inline-block; padding: 12px 25px; margin: 20px 0; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Pembaruan Pengajuan Booking</h2>
+        </div>
+        <div class="content">
+            <p>Halo Admin,</p>
+            <p>Pengajuan booking berikut telah <strong>diperbarui</strong> oleh pengguna dan mungkin memerlukan tinjauan ulang dari Anda. Berikut adalah detail terbarunya:</p>
+            
+            <ul>
+                <li><strong>Diajukan Oleh:</strong> {{userName}}</li>
+                <li><strong>Keperluan:</strong> {{bookingPurpose}}</li>
+                <li><strong>Ruangan:</strong> {{roomName}}</li>
+                <li><strong>Waktu Baru:</strong> {{bookingTime}}</li>
+            </ul>
+
+            <a href="{{adminLink}}" class="cta-button">Lihat Detail Perubahan</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 Aplikasi General Affair</p>
+        </div>
+    </div>
+</body>
+</html>
