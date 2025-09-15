@@ -24,7 +24,7 @@ class BookingRepository extends BaseRepository {
             })
             .page(page - 1, per_page)
             .orderBy('start_time', 'DESC');
-        
+
         if (siteId) {
             query.whereExists(
                 Booking.relatedQuery('room')
@@ -114,7 +114,7 @@ class BookingRepository extends BaseRepository {
         };
     }
 
-  
+
 
     // async findApprovedConflicts(roomId, date, startTime, endTime, trx) {
     //     const query = Booking.query(trx)
@@ -153,6 +153,23 @@ class BookingRepository extends BaseRepository {
             return this.findById(id);
         }
         return Booking.query().findById(id).withGraphFetched(relations);
+    }
+
+    async findFirstApprovedConflict(roomId, startTime, endTime, trx) {
+        const query = this.model.query(trx)
+            .where('room_id', roomId)
+            .andWhere('status', 'Approved')
+            .andWhere(builder => {
+                builder.where('start_time', '<', endTime)
+                    .andWhere('end_time', '>', startTime);
+            })
+            .withGraphFetched('user(selectUsername)')
+            .modifiers({
+                selectUsername: builder => builder.select('nama_user')
+            })
+            .first(); 
+
+        return query;
     }
 }
 

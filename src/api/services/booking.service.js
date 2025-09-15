@@ -42,7 +42,6 @@ class BookingService {
     }
     async getAll(queryParams, request) {
         const siteId = request.user.sites ?? null;
-        console.log(request.user)
         return siteId
             ? bookingRepository.findAllWithFilters(queryParams, siteId)
             : bookingRepository.findAllWithFilters(queryParams);
@@ -181,6 +180,28 @@ class BookingService {
 
             return bookingRepository.update(bookingId, { status: payload.status, approved_by: getUserId(request), updated_at: formatDateTime() }, trx);
         });
+    }
+
+    async checkAvailability(request) {
+        const { room_id, start_time, end_time } = request.query;
+        if (!room_id || !start_time || !end_time) {
+            const error = new Error('room_id, start_time, and end_time are required.');
+            error.statusCode = 400;
+            throw error;
+        }
+        const conflict = await bookingRepository.findFirstApprovedConflict(room_id, start_time, end_time);
+
+        if (conflict) {
+            return {
+                is_available: false,
+                conflictingBooking: {
+                    purpose: conflict.purpose,
+                    booked_by: conflict.user.nama_user 
+                }
+            };
+        }
+    
+        return { is_available: true };
     }
 }
 

@@ -83,6 +83,15 @@ class RoomController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async checkAvailability(req, res) {
+        try {
+            const data = await bookingService.checkAvailability(req);
+            return success(res, 200, data, 'Availability checked successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new RoomController();

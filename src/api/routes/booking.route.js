@@ -15,6 +15,7 @@ router.use(verifyToken);
 router.post('/', validate(createSchema), BookingController.createBooking);
 router.get('/', BookingController.getAll);
 router.get('/user', BookingController.getAllBookingUser);
+router.get('/check-availability', BookingController.checkAvailability);
 router.get('/:id', validate(bookingIdSchema), BookingController.detail);
 router.put('/:id', validate(updateSchema), BookingController.update);
 router.put('/user/:id', validate(updateSchema), BookingController.updateUser);
