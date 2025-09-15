@@ -17,10 +17,11 @@ class BookingRepository extends BaseRepository {
 
         const query = Booking.query()
             .select('*')
-            .withGraphFetched('[user(selectUsername), room(selectRoomName)]')
+            .withGraphFetched('[user(selectUsername), room(selectRoomName), amenities[selectAmenity]]')
             .modifiers({
                 selectUsername: builder => builder.select('id_user', 'nama_user'),
-                selectRoomName: builder => builder.select('id', 'name')
+                selectRoomName: builder => builder.select('id', 'name'),
+                selectAmenity: builder => builder.select('id', 'name')
             })
             .page(page - 1, per_page)
             .orderBy('start_time', 'DESC');
@@ -76,13 +77,17 @@ class BookingRepository extends BaseRepository {
 
         const query = Booking.query()
             .select('*')
-            .withGraphFetched('[user, room]')
+            .withGraphFetched('[user, room, amenities]')
             .modifyGraph('user', builder => {
                 builder.select('id_user', 'nama_user');
             })
             .modifyGraph('room', builder => {
                 builder.select('id', 'name');
             })
+            .modifyGraph('amenities', builder => {
+                builder.select('amenities.id as amenity_id', 'amenities.name');
+            })
+            
             .where('id_user', id_user)
             .page(page - 1, per_page)
             .orderBy('start_time', 'DESC');
