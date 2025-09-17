@@ -7,7 +7,7 @@ const createSchema = z.object({
         start_time: z.string({ required_error: 'Start time is required' }),
         end_time: z.string({ required_error: 'End time is required' }),
         notes: z.string().optional(),
-        amenity_ids: z.array(z.number()).optional(),
+        amenity_ids: z.array(z.number()).optional().nullable(),
     }).refine((data) => new Date(data.start_time) < new Date(data.end_time), {
         message: 'End time must be after start time',
         path: ['end_time'], 
