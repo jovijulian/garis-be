@@ -306,6 +306,42 @@ class BookingService {
             return updatedBooking;
         });
     }
+
+    async forceApproveBooking(bookingId, authUser) {
+        const trx = await knexConnection.transaction();
+        let newApprovedBooking;
+
+        try {
+            const newBooking = await bookingRepository.findByIdWithRelations(bookingId, '[user, room]');
+            if (!newBooking) throw { statusCode: 404, message: 'Booking yang akan disetujui tidak ditemukan.' };
+
+            const oldApprovedConflicts = await bookingRepository.findApprovedConflicts(
+                newBooking.room_id, newBooking.start_time, newBooking.end_time, bookingId, trx
+            )
+
+            for (const conflict of oldApprovedConflicts) {
+                await bookingRepository.update(conflict.id, { status: 'Submit', is_conflicting: 1 }, trx);
+            }
+            
+            const updatePayload = { status: 'Approved', approved_by: authUser.id };
+            newApprovedBooking = await bookingRepository.update(bookingId, updatePayload, trx);
+            
+            await trx.commit();
+        } catch (error) {
+            await trx.rollback();
+            throw error;
+        }
+
+        try {
+            const newBookingDetails = await this.getBookingById(bookingId);
+            await sendBookingStatusEmail(newBookingDetails);
+
+        } catch (emailError) {
+            console.error("Gagal mengirim email notifikasi 'force approve':", emailError);
+        }
+        
+        return newApprovedBooking;
+    }
 }
 
 
