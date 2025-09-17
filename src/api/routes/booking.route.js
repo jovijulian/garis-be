@@ -22,6 +22,6 @@ router.put('/user/:id', validate(updateSchema), BookingController.updateUser);
 router.delete('/:id', validate(bookingIdSchema), BookingController.delete);
 router.put('/status/:id', validate(bookingIdSchema), BookingController.updateBookingStatus);
 router.put('/cancel/:id', validate(bookingIdSchema), BookingController.cancelBooking);
-router.put('/force-approve/:id', validate(bookingIdSchema), BookingController.cancelBooking);
+router.put('/force-approve/:id', validate(bookingIdSchema), BookingController.forceApproveBooking);
 
 module.exports = router;
