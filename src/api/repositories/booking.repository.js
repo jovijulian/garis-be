@@ -91,7 +91,7 @@ class BookingRepository extends BaseRepository {
             .modifyGraph('amenities', builder => {
                 builder.select('amenities.id as id', 'amenities.name');
             })
-            
+
             .where('id_user', id_user)
             .page(page - 1, per_page)
             .orderBy('start_time', 'DESC');
@@ -198,7 +198,7 @@ class BookingRepository extends BaseRepository {
     async findFirstApprovedConflict(roomId, startTime, endTime, trx) {
         const query = this.model.query(trx)
             .where('room_id', roomId)
-            .andWhere('status', 'Approved')
+            .whereIn('status', ['Submit', 'Approved'])
             .andWhere(builder => {
                 builder.where('start_time', '<', endTime)
                     .andWhere('end_time', '>', startTime);
@@ -207,9 +207,17 @@ class BookingRepository extends BaseRepository {
             .modifiers({
                 selectUsername: builder => builder.select('nama_user')
             })
-            .first(); 
+            .first();
 
         return query;
+    }
+
+    async markAsConflicting(bookingIds, trx) {
+        if (!bookingIds || bookingIds.length === 0) return;
+        
+        return this.model.query(trx)
+            .whereIn('id', bookingIds)
+            .patch({ is_conflicting: 1 });
     }
 }
 

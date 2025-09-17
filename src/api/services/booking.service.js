@@ -33,6 +33,10 @@ class BookingService {
 
                 };
                 const newBooking = await bookingRepository.create(insertPayload, trx);
+                if (conflicts.length > 0) {
+                    const conflictIds = conflicts.map(booking => booking.id);
+                    await bookingRepository.markAsConflicting(conflictIds, trx);
+                }
 
                 if (payload.amenity_ids && payload.amenity_ids.length > 0) {
                     const amenityPayload = payload.amenity_ids.map(id => ({
