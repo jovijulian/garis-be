@@ -94,7 +94,7 @@ const sendBookingUpdatedNotificationEmail = async (adminEmails, bookingDetails) 
         htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
 
         const mailOptions = {
-            from: `"Notifikasi GA" <${process.env.SMTP_USERNAME}>`,
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
             to: adminEmails.join(','),
             subject: `[DIUBAH] Pembaruan Booking: ${purpose}`,
             html: htmlContent
@@ -187,7 +187,7 @@ const sendAdminCancellationEmail = async (bookingDetails) => {
         htmlContent = htmlContent.replace(/{{bookingTime}}/g, bookingTime);
 
         const mailOptions = {
-            from: `"Notifikasi GA" <${process.env.SMTP_USERNAME}>`,
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
             to: user.email,
             subject: `[DIBATALKAN] Booking Anda untuk: ${purpose}`,
             html: htmlContent
