@@ -1,6 +1,6 @@
 const BaseRepository = require('./base.repository');
 const Booking = require('../models/Booking');
-const { knexConnection } = require('../../config/database');
+const { knexBooking } = require('../../config/database');
 const User = require('../models/User');
 const Room = require('../models/Room');
 const OrderAmenity = require('../models/OrderAmenity');
@@ -16,20 +16,29 @@ class BookingRepository extends BaseRepository {
         const search = queryParams.search || '';
 
         const query = Booking.query()
-            .select('*')
-            .withGraphFetched('[user, room, amenities]')
-            .modifyGraph('user', builder => {
-                builder.select('id_user', 'nama_user');
-            })
-            .modifyGraph('room', builder => {
-                builder.select('id', 'name');
-            })
-            .modifyGraph('amenities', builder => {
-                builder.select('amenities.id as id', 'amenities.name');
+            .select(
+                'bookings.*', 
+                knexBooking.raw(`
+                    COALESCE(
+                        (SELECT MIN(b2.start_time)
+                         FROM bookings as b2
+                         WHERE
+                            b2.room_id = bookings.room_id AND
+                            b2.status IN ('Submit', 'Approved') AND
+                            (bookings.start_time < b2.end_time AND bookings.end_time > b2.start_time)
+                        ),
+                        bookings.start_time
+                    ) as conflict_group_time
+                `)
+            )
+            .withGraphFetched('[user(selectUsername), room(selectRoomName)]') 
+            .modifiers({
+                selectUsername: builder => builder.select('id_user', 'nama_user'),
+                selectRoomName: builder => builder.select('id', 'name')
             })
             .page(page - 1, per_page)
-            .orderBy('start_time', 'DESC');
-
+            .orderBy('conflict_group_time', 'DESC')
+            .orderBy('start_time', 'ASC');
         if (siteId) {
             query.whereExists(
                 Booking.relatedQuery('room')
@@ -80,29 +89,21 @@ class BookingRepository extends BaseRepository {
         const search = queryParams.search || '';
 
         const query = Booking.query()
-            .select(
-                'bookings.*', 
-                knexConnection.raw(`
-                COALESCE(
-                    (SELECT MIN(b2.start_time)
-                     FROM bookings as b2
-                     WHERE
-                        b2.room_id = bookings.room_id AND
-                        b2.status IN ('Submit', 'Approved') AND
-                        (bookings.start_time < b2.end_time AND bookings.end_time > b2.start_time)
-                    ),
-                    bookings.start_time
-                ) as conflict_group_time
-            `)
-            )
-            .withGraphFetched('[user(selectUsername), room(selectRoomName)]') 
-            .modifiers({
-                selectUsername: builder => builder.select('id_user', 'nama_user'),
-                selectRoomName: builder => builder.select('id', 'name')
+            .select('*')
+            .withGraphFetched('[user, room, amenities]')
+            .modifyGraph('user', builder => {
+                builder.select('id_user', 'nama_user');
             })
+            .modifyGraph('room', builder => {
+                builder.select('id', 'name');
+            })
+            .modifyGraph('amenities', builder => {
+                builder.select('amenities.id as id', 'amenities.name');
+            })
+
+            .where('id_user', id_user)
             .page(page - 1, per_page)
-            .orderBy('conflict_group_time', 'DESC')
-            .orderBy('start_time', 'ASC');
+            .orderBy('start_time', 'DESC');
 
         if (search) {
             query.where(builder => {
