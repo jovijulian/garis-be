@@ -309,11 +309,11 @@ class BookingService {
 
     async forceApproveBooking(bookingId, request) {
         const authUser = getUserId(request);
-        const trx = await knexConnection.transaction();
+        const trx = await knexBooking.transaction();
         let newApprovedBooking;
 
         try {
-            const newBooking = await knexBooking.findByIdWithRelations(bookingId, '[user, room]');
+            const newBooking = await bookingRepository.findByIdWithRelations(bookingId, '[user, room]');
             if (!newBooking) throw { statusCode: 404, message: 'Booking yang akan disetujui tidak ditemukan.' };
 
             const oldApprovedConflicts = await bookingRepository.findApprovedConflicts(
