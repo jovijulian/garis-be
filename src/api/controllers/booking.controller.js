@@ -92,6 +92,17 @@ class RoomController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async cancelBooking(req, res) {
+        try {
+            const id = req.params.id;
+
+            const data = await bookingService.cancelBooking(id);
+            return success(res, 200, data, 'Booking canceled successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new RoomController();

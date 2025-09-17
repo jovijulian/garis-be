@@ -17,7 +17,7 @@ class Booking extends BaseModelBooking {
                 start_time: { type: 'string' },
                 end_time: { type: 'string' },
                 duration_minutes: { type: 'integer' },
-                status: { type: 'string', enum: ['Submit', 'Approved', 'Rejected'], default: 'Submit' },
+                status: { type: 'string', enum: ['Submit', 'Approved', 'Rejected', 'Canceled'], default: 'Submit' },
                 notes: { type: 'string' },
                 approved_by: { type: 'string' },
                 is_conflicting: { type: 'integer', default: 0 },

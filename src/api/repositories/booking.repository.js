@@ -152,6 +152,37 @@ class BookingRepository extends BaseRepository {
         return query;
     }
 
+    async findSubmitConflicts(roomId, startTime, endTime, bookingIdToExclude = null, trx) {
+        const query = Booking.query(trx)
+            .where('room_id', roomId)
+            .where(builder => {
+                builder.where('start_time', '<', endTime)
+                    .andWhere('end_time', '>', startTime);
+            });
+
+        if (bookingIdToExclude) {
+            query.where('id', '!=', bookingIdToExclude);
+        }
+
+        return query;
+    }
+
+    async findApprovedConflicts(roomId, startTime, endTime, bookingIdToExclude = null, trx) {
+        const query = Booking.query(trx)
+            .where('room_id', roomId)
+            .andWhere('status', 'Approved')
+            .where(builder => {
+                builder.where('start_time', '<', endTime)
+                    .andWhere('end_time', '>', startTime);
+            });
+
+        if (bookingIdToExclude) {
+            query.where('id', '!=', bookingIdToExclude);
+        }
+
+        return query;
+    }
+
     async updateStatus(bookingId, status, trx) {
         return Booking.query(trx)
             .patchAndFetchById(bookingId, { status });
