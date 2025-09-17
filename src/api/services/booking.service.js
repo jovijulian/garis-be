@@ -307,7 +307,8 @@ class BookingService {
         });
     }
 
-    async forceApproveBooking(bookingId, authUser) {
+    async forceApproveBooking(bookingId, request) {
+        const authUser = getUserId(request);
         const trx = await knexConnection.transaction();
         let newApprovedBooking;
 
@@ -323,7 +324,7 @@ class BookingService {
                 await bookingRepository.update(conflict.id, { status: 'Submit', is_conflicting: 1 }, trx);
             }
             
-            const updatePayload = { status: 'Approved', approved_by: authUser.id };
+            const updatePayload = { status: 'Approved', approved_by: authUser };
             newApprovedBooking = await bookingRepository.update(bookingId, updatePayload, trx);
             
             await trx.commit();
