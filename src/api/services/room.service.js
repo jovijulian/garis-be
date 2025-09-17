@@ -65,8 +65,8 @@ class RoomService {
         
     }
 
-    async options(params) {
-        const data = await roomRepository.options(params);
+    async options(params, site) {
+        const data = await roomRepository.options(params, site);
 
         if (!data || data.length === 0) {
             const error = new Error('No Rooms found.');

@@ -40,7 +40,7 @@ class RoomRepository extends BaseRepository {
         };
     }
 
-    async options(params) {
+    async options(params, site) {
         const query = Room.query()
             .select('id', 'name', 'capacity', 'location', 'cab_id')
             .withGraphFetched('[cabang]')
@@ -48,6 +48,10 @@ class RoomRepository extends BaseRepository {
                 builder.select('id_cab', 'nama_cab');
             })
             .where('is_active', 1)
+
+        if (site) {
+            query.where('cab_id', site)
+        }
 
         if (params) {
             query.where('name', 'like', `%${params}%`)

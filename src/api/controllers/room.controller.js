@@ -57,7 +57,8 @@ class RoomController {
     async options(req, res) {
         try {
             const params = req.query.search;
-            const data = await roomService.options(params);
+            const site = req.query.site || null;
+            const data = await roomService.options(params, site);
             return success(res, 200, data, 'Room options retrieved successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);

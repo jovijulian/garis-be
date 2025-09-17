@@ -185,8 +185,8 @@ class BookingService {
                 throw error;
             }
             const updateBooking = await bookingRepository.update(bookingId, { status: payload.status, approved_by: getUserId(request), updated_at: formatDateTime() }, trx)
-            // const bookingDetailsForEmail = { ...bookingToUpdate, status: payload.status };
-            // await sendBookingStatusEmail(bookingDetailsForEmail);
+            const bookingDetailsForEmail = { ...bookingToUpdate, status: payload.status };
+            await sendBookingStatusEmail(bookingDetailsForEmail);
             return updateBooking;
         });
     }
