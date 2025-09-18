@@ -22,7 +22,7 @@ class BookingService {
                     id_user: userId,
                     room_id: payload.room_id,
                     topic_id: payload.topic_id,
-                    topic_detail: payload.topic_detail || null,
+                    detail_topic: payload.detail_topic || null,
                     purpose: payload.purpose,
                     start_time: payload.start_time,
                     end_time: payload.end_time,
@@ -102,7 +102,7 @@ class BookingService {
             const insertPayload = {
                 room_id: payload.room_id,
                 topic_id: payload.topic_id,
-                topic_detail: payload.topic_detail || null,
+                detail_topic: payload.detail_topic || null,
                 start_time: payload.start_time,
                 end_time: payload.end_time,
                 duration_minutes: durationMinutes,
@@ -141,7 +141,7 @@ class BookingService {
             const insertPayload = {
                 room_id: payload.room_id,
                 topic_id: payload.topic_id,
-                topic_detail: payload.topic_detail || null,
+                detail_topic: payload.detail_topic || null,
                 start_time: payload.start_time,
                 end_time: payload.end_time,
                 duration_minutes: durationMinutes,
