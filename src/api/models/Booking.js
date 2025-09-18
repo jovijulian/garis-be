@@ -14,6 +14,7 @@ class Booking extends BaseModelBooking {
                 id_user: { type: 'string' },
                 room_id: { type: 'integer' },
                 topic_id: { type: 'integer' },
+                detail_topic: { type: 'string' },
                 purpose: { type: 'string' },
                 start_time: { type: 'string' },
                 end_time: { type: 'string' },

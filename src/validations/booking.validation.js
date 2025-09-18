@@ -4,10 +4,11 @@ const createSchema = z.object({
     body: z.object({
         room_id: z.number({ required_error: 'Room ID is required' }),
         topic_id: z.number({ required_error: 'Topic ID is required' }),
+        detail_topic: z.string().optional().nullable(),
         purpose: z.string({ required_error: 'Purpose is required' }).min(3, { message: 'Purpose must be at least 3 characters' }),
         start_time: z.string({ required_error: 'Start time is required' }),
         end_time: z.string({ required_error: 'End time is required' }),
-        notes: z.string().optional(),
+        notes: z.string().optional().nullable(),
         amenity_ids: z.array(z.number()).optional().nullable(),
     }).refine((data) => new Date(data.start_time) < new Date(data.end_time), {
         message: 'End time must be after start time',
@@ -22,6 +23,7 @@ const updateSchema = z.object({
     body: z.object({
         room_id: z.number().optional(),
         topic_id: z.number().optional(),
+        detail_topic: z.string().optional().nullable(),
         purpose: z.string().min(3).optional(),
         start_time: z.string().optional(),
         end_time: z.string().optional(),
