@@ -39,7 +39,7 @@ class BookingRepository extends BaseRepository {
             })
             .page(page - 1, per_page)
             .orderBy('conflict_group_time', 'DESC')
-            .orderBy('start_time', 'ASC');
+            .orderBy('created_at', 'DESC');
         if (siteId) {
             query.whereExists(
                 Booking.relatedQuery('room')
@@ -107,7 +107,7 @@ class BookingRepository extends BaseRepository {
 
             .where('id_user', id_user)
             .page(page - 1, per_page)
-            .orderBy('start_time', 'DESC');
+            .orderBy('created_at', 'DESC');
 
         if (search) {
             query.where(builder => {
