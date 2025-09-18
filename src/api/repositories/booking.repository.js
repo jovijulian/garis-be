@@ -31,10 +31,11 @@ class BookingRepository extends BaseRepository {
                     ) as conflict_group_time
                 `)
             )
-            .withGraphFetched('[user(selectUsername), room(selectRoomName)]') 
+            .withGraphFetched('[user(selectUsername), room(selectRoomName), topic(selectTopicName)]') 
             .modifiers({
                 selectUsername: builder => builder.select('id_user', 'nama_user'),
-                selectRoomName: builder => builder.select('id', 'name')
+                selectRoomName: builder => builder.select('id', 'name'),
+                selectTopicName: builder => builder.select('id', 'name')
             })
             .page(page - 1, per_page)
             .orderBy('conflict_group_time', 'DESC')
@@ -90,11 +91,14 @@ class BookingRepository extends BaseRepository {
 
         const query = Booking.query()
             .select('*')
-            .withGraphFetched('[user, room, amenities]')
+            .withGraphFetched('[user, room, amenities, topic]')
             .modifyGraph('user', builder => {
                 builder.select('id_user', 'nama_user');
             })
             .modifyGraph('room', builder => {
+                builder.select('id', 'name');
+            })
+            .modifyGraph('topic', builder => {
                 builder.select('id', 'name');
             })
             .modifyGraph('amenities', builder => {

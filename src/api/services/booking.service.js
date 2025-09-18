@@ -21,6 +21,7 @@ class BookingService {
                 const insertPayload = {
                     id_user: userId,
                     room_id: payload.room_id,
+                    topic_id: payload.topic_id,
                     purpose: payload.purpose,
                     start_time: payload.start_time,
                     end_time: payload.end_time,
@@ -74,7 +75,7 @@ class BookingService {
     }
 
     async getBookingById(bookingId) {
-        const booking = await bookingRepository.findByIdWithRelations(bookingId, '[room, user, amenities]');
+        const booking = await bookingRepository.findByIdWithRelations(bookingId, '[room, user, amenities, topic]');
         if (!booking) {
             const error = new Error('Booking not found.');
             error.statusCode = 404;
@@ -99,6 +100,7 @@ class BookingService {
         return knexBooking.transaction(async (trx) => {
             const insertPayload = {
                 room_id: payload.room_id,
+                topic_id: payload.topic_id,
                 start_time: payload.start_time,
                 end_time: payload.end_time,
                 duration_minutes: durationMinutes,
@@ -136,6 +138,7 @@ class BookingService {
         return knexBooking.transaction(async (trx) => {
             const insertPayload = {
                 room_id: payload.room_id,
+                topic_id: payload.topic_id,
                 start_time: payload.start_time,
                 end_time: payload.end_time,
                 duration_minutes: durationMinutes,
@@ -255,7 +258,7 @@ class BookingService {
                 const emailDetails =
                     await bookingRepository.findByIdWithRelations(
                         rejectedBooking.id,
-                        "[room, user, amenities]"
+                        "[room, user, amenities, topic]"
                     );
                 await sendAutoRejectionEmail(emailDetails);
             } catch (err) {

@@ -8,11 +8,12 @@ class Booking extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['id_user', 'room_id', 'purpose', 'start_time', 'end_time', 'duration_minutes'],
+            required: ['id_user', 'room_id', 'topic_id', 'purpose', 'start_time', 'end_time', 'duration_minutes'],
             properties: {
                 id: { type: 'integer' },
                 id_user: { type: 'string' },
                 room_id: { type: 'integer' },
+                topic_id: { type: 'integer' },
                 purpose: { type: 'string' },
                 start_time: { type: 'string' },
                 end_time: { type: 'string' },
@@ -28,7 +29,7 @@ class Booking extends BaseModelBooking {
     static get relationMappings() {
         const User = require('./User');
         const Room = require('./Room');
-        const Amenity = require('./Amenity');
+        const Topic = require('./Topic');
 
 
         return {
@@ -46,6 +47,14 @@ class Booking extends BaseModelBooking {
                 join: {
                     from: 'bookings.room_id',
                     to: 'rooms.id',
+                },
+            },
+            topic: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: Topic,
+                join: {
+                    from: 'bookings.topic_id',
+                    to: 'topics.id',
                 },
             },
             amenities: {
