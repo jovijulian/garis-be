@@ -14,32 +14,24 @@ class BookingRepository extends BaseRepository {
         const page = queryParams.page || 1;
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
+        const startDate = queryParams.startDate || null;
+        const endDate = queryParams.endDate || null;
 
         const query = Booking.query()
-            .select(
-                'bookings.*', 
-                knexBooking.raw(`
-                    COALESCE(
-                        (SELECT MIN(b2.start_time)
-                         FROM bookings as b2
-                         WHERE
-                            b2.room_id = bookings.room_id AND
-                            b2.status IN ('Submit', 'Approved') AND
-                            (bookings.start_time < b2.end_time AND bookings.end_time > b2.start_time)
-                        ),
-                        bookings.start_time
-                    ) as conflict_group_time
-                `)
-            )
+            .select('*')
             .withGraphFetched('[user(selectUsername), room(selectRoomName), topic(selectTopicName)]') 
             .modifiers({
                 selectUsername: builder => builder.select('id_user', 'nama_user'),
                 selectRoomName: builder => builder.select('id', 'name'),
                 selectTopicName: builder => builder.select('id', 'name')
             })
-            .page(page - 1, per_page)
-            .orderBy('conflict_group_time', 'DESC')
             .orderBy('created_at', 'DESC');
+
+            if (startDate && endDate) {
+                query.whereBetween('start_time', [startDate, endDate]);
+            } else {
+                query.page(page - 1, per_page);
+            }
         if (siteId) {
             query.whereExists(
                 Booking.relatedQuery('room')
@@ -67,11 +59,26 @@ class BookingRepository extends BaseRepository {
         //     is_conflicting: !!booking.is_conflicting
         // }));
 
+        // return {
+        //     results: paginatedResult.results,
+        //     total: paginatedResult.total,
+        //     page: page,
+        //     per_page: per_page,
+        // };
+
+        if (!startDate && !endDate) {
+            return {
+                results: paginatedResult.results,
+                total: paginatedResult.total,
+                page: page,
+                per_page: per_page,
+            };
+        }
+
+        // Jika ada range tanggal (untuk kalender), kembalikan semua datanya
         return {
-            results: paginatedResult.results,
-            total: paginatedResult.total,
-            page: page,
-            per_page: per_page,
+            results: paginatedResult,
+            total: paginatedResult.length,
         };
     }
 
