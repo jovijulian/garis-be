@@ -9,6 +9,8 @@ const {
     bookingIdSchema
 } = require('../../validations/booking.validation');
 const verifyToken = require('../../middlewares/verifyToken');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(verifyToken);
 
@@ -23,5 +25,6 @@ router.delete('/:id', validate(bookingIdSchema), BookingController.delete);
 router.put('/status/:id', validate(bookingIdSchema), BookingController.updateBookingStatus);
 router.put('/cancel/:id', validate(bookingIdSchema), BookingController.cancelBooking);
 router.put('/force-approve/:id', validate(bookingIdSchema), BookingController.forceApproveBooking);
+router.post('/upload-proof/:id',upload.single('proofFile'), BookingController.uploadProof);
 
 module.exports = router;

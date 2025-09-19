@@ -112,6 +112,16 @@ class RoomController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async uploadProof(req, res) {
+        try {
+            const bookingId = req.params.id;
+            const updatedBooking = await bookingService.uploadBookingProof(bookingId, req);
+            return success(res, 200, updatedBooking, 'Bukti booking berhasil diupload.');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new RoomController();

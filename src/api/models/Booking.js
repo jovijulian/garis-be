@@ -23,6 +23,8 @@ class Booking extends BaseModelBooking {
                 notes: { type: 'string' },
                 approved_by: { type: 'string' },
                 is_conflicting: { type: 'integer', default: 0 },
+                proof_file: { type: 'string' },
+                admin_note: { type: 'string' },
             }
         };
     }

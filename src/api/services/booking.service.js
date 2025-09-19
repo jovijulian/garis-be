@@ -4,6 +4,7 @@ const roomRepository = require('../repositories/room.repository');
 const { knexBooking } = require('../../config/database');
 const { getUserId, formatDateTime } = require('../helpers/dataHelpers');
 const moment = require('moment');
+const { put } = require('@vercel/blob');
 const { sendBookingStatusEmail, sendNewBookingNotificationEmail, sendBookingUpdatedNotificationEmail, sendRescheduleNotificationEmail, sendAdminCancellationEmail, sendAutoRejectionEmail } = require('./email.service');
 
 class BookingService {
@@ -348,6 +349,31 @@ class BookingService {
         }
         
         return newApprovedBooking;
+    }
+
+    async uploadBookingProof(bookingId, request) {
+        const file = request.file;
+        const admin_note = request.body.admin_note || null;
+        if (!file) throw { statusCode: 400, message: 'Tidak ada file yang diupload.' };
+    
+        const trx = await knexBooking.transaction();
+        try {
+            const booking = await bookingRepository.findById(bookingId, null, trx);
+            if (!booking) throw { statusCode: 404, message: 'Booking tidak ditemukan.' };
+    
+            const fileName = `proof-booking-${bookingId}-${Date.now()}.${file.originalname.split('.').pop()}`;
+            
+            const blob = await put(fileName, file.buffer, { access: 'public' });
+            const updatedBooking = await bookingRepository.updateProofPath(bookingId, blob.pathname, admin_note, trx);
+            
+            await trx.commit();
+            
+            return { ...updatedBooking, proof_url: blob.url };
+        } catch (error) {
+            await trx.rollback();
+            console.error("Upload proof error:", error);
+            throw { statusCode: 500, message: 'Gagal mengupload file bukti.' };
+        }
     }
 }
 

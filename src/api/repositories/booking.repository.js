@@ -19,7 +19,7 @@ class BookingRepository extends BaseRepository {
 
         const query = Booking.query()
             .select('*')
-            .withGraphFetched('[user(selectUsername), room(selectRoomName), topic(selectTopicName)]') 
+            .withGraphFetched('[user(selectUsername), room(selectRoomName), topic(selectTopicName)]')
             .modifiers({
                 selectUsername: builder => builder.select('id_user', 'nama_user'),
                 selectRoomName: builder => builder.select('id', 'name'),
@@ -27,11 +27,11 @@ class BookingRepository extends BaseRepository {
             })
             .orderBy('created_at', 'DESC');
 
-            if (startDate && endDate) {
-                query.whereBetween('start_time', [startDate, endDate]);
-            } else {
-                query.page(page - 1, per_page);
-            }
+        if (startDate && endDate) {
+            query.whereBetween('start_time', [startDate, endDate]);
+        } else {
+            query.page(page - 1, per_page);
+        }
         if (siteId) {
             query.whereExists(
                 Booking.relatedQuery('room')
@@ -237,6 +237,13 @@ class BookingRepository extends BaseRepository {
         return this.model.query(trx)
             .whereIn('id', bookingIds)
             .patch({ is_conflicting: 1 });
+    }
+
+    async updateProofPath(bookingId, filePath, admin_note, trx) {
+        return this.model.query(trx).patchAndFetchById(bookingId, {
+            proof_of_booking_path: filePath,
+            admin_note: admin_note
+        });
     }
 }
 
