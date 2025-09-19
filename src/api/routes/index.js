@@ -8,6 +8,7 @@ const bookingRoutes = require('./booking.route');
 const userAccessRoutes = require('./user-access.route');
 const amenityRoutes = require('./amenity.route')
 const topicRoutes = require('./topic.route')
+const dashboardRoutes = require('./dashboard.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -16,5 +17,6 @@ router.use('/bookings', bookingRoutes);
 router.use('/user-access', userAccessRoutes);
 router.use('/amenities', amenityRoutes);
 router.use('/topics', topicRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 module.exports = router;
