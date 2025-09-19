@@ -75,7 +75,6 @@ class BookingRepository extends BaseRepository {
             };
         }
 
-        // Jika ada range tanggal (untuk kalender), kembalikan semua datanya
         return {
             results: paginatedResult,
             total: paginatedResult.length,
