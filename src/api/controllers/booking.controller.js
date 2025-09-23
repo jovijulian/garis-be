@@ -1,6 +1,6 @@
 const bookingService = require('../services/booking.service');
 const { success, error, paginated } = require('../../utils/response');
-
+const moment = require('moment');
 class RoomController {
 
     async createBooking(req, res) {
@@ -118,6 +118,27 @@ class RoomController {
             const bookingId = req.params.id;
             const updatedBooking = await bookingService.uploadBookingProof(bookingId, req);
             return success(res, 200, updatedBooking, 'Bukti booking berhasil diupload.');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
+    async exportToExcel(req, res) {
+        try {
+            const workbook = await bookingService.exportBookingsToExcel(req.query);
+            
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename="booking_report_${moment().format('YYYY-MM-DD')}.xlsx"`
+            );
+
+            await workbook.xlsx.write(res);
+            res.end();
+
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }

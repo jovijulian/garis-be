@@ -87,6 +87,11 @@ class RoomRepository extends BaseRepository {
         return data;
     }
 
+    async findByIdsSite(siteIds) {
+        if (!siteIds || siteIds.length === 0) return [];
+        return Site.query().whereIn('id_cab', siteIds);
+    }
+
 }
 
 module.exports = new RoomRepository();

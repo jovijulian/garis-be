@@ -16,6 +16,7 @@ router.use(verifyToken);
 
 router.post('/', validate(createSchema), BookingController.createBooking);
 router.get('/', BookingController.getAll);
+router.get('/export-excel', BookingController.exportToExcel);
 router.get('/user', BookingController.getAllBookingUser);
 router.get('/check-availability', BookingController.checkAvailability);
 router.get('/:id', validate(bookingIdSchema), BookingController.detail);

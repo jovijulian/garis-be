@@ -4,7 +4,6 @@ const { knexBooking } = require('../../config/database');
 const User = require('../models/User');
 const Room = require('../models/Room');
 const OrderAmenity = require('../models/OrderAmenity');
-
 class BookingRepository extends BaseRepository {
     constructor() {
         super(Booking);
@@ -244,6 +243,28 @@ class BookingRepository extends BaseRepository {
             proof_of_booking_path: filePath,
             admin_note: admin_note
         });
+    }
+
+    async findAllForExport(queryParams) {
+        const { startDate, endDate, status } = queryParams;
+
+        const query = Booking.query()
+            .withGraphFetched('[user(selectUsername), room(selectRoomWithCabId), topic(selectTopicName), amenities(selectAmenityName)]')
+            .modifiers({
+                selectUsername: builder => builder.select('id_user', 'nama_user', 'email'),
+                selectRoomWithCabId: builder => builder.select('id', 'name', 'cab_id'), 
+                selectTopicName: builder => builder.select('id', 'name'),
+                selectAmenityName: builder => builder.select('amenities.id', 'amenities.name')
+            });
+
+        if (startDate && endDate) {
+            query.whereBetween('bookings.start_time', [startDate, endDate]);
+        }
+
+        if (status) {
+            query.where('bookings.status', status);
+        }
+        return query
     }
 }
 
