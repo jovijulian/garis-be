@@ -1,16 +1,16 @@
-const topicRepository = require('../repositories/topic.repository');
+const consumptionTypeRepository = require('../repositories/consumption-type.repository');
 const { formatDateTime } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
-class TopicService {
+class ConsumptionTypeService {
 
     async getAll(queryParams) {
-        return topicRepository.findAllWithFilters(queryParams);
+        return consumptionTypeRepository.findAllWithFilters(queryParams);
     }
 
     async detail(id) {
-        const data = await topicRepository.findById(id);
+        const data = await consumptionTypeRepository.findById(id);
         if (!data) {
-            const error = new Error('Topic not found.');
+            const error = new Error('Consumption Type not found.');
             error.statusCode = 404;
             throw error;
         }
@@ -23,7 +23,7 @@ class TopicService {
                 payload.created_at = formatDateTime();
                 payload.updated_at = formatDateTime();
 
-                const data = await topicRepository.create(payload, trx);
+                const data = await consumptionTypeRepository.create(payload, trx);
                 return data;
             });
         } catch (error) {
@@ -37,7 +37,7 @@ class TopicService {
             return knexBooking.transaction(async (trx) => {
                 payload.updated_at = formatDateTime();
 
-                const data = await topicRepository.update(id, payload, trx);
+                const data = await consumptionTypeRepository.update(id, payload, trx);
                 return data;
             });
         } catch (error) {
@@ -49,15 +49,15 @@ class TopicService {
         await this.detail(id);
         try {
             return knexBooking.transaction(async (trx) => {
-                const data = await topicRepository.update(id, { is_active: 0 }, trx);
+                const data = await consumptionTypeRepository.update(id, { is_active: 0 }, trx);
     
                 if (!data) {
-                    const error = new Error('Failed to deleted topic.');
+                    const error = new Error('Failed to deleted Consumption Type.');
                     error.statusCode = 500;
                     throw error;
                 }
     
-                return { message: 'Topic has been deleted successfully.' };
+                return { message: 'Consumption Type has been deleted successfully.' };
             });
         } catch (error) {
             throw error;
@@ -66,10 +66,10 @@ class TopicService {
     }
 
     async options(params) {
-        const data = await topicRepository.options(params);
+        const data = await consumptionTypeRepository.options(params);
 
         if (!data || data.length === 0) {
-            const error = new Error('No Topics found.');
+            const error = new Error('No Consumption Type found.');
             error.statusCode = 404;
             throw error;
         }
@@ -78,4 +78,4 @@ class TopicService {
     }
 }
 
-module.exports = new TopicService();
+module.exports = new ConsumptionTypeService();

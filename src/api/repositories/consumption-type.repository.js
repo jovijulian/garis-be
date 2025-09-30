@@ -1,9 +1,9 @@
 const BaseRepository = require('./base.repository');
-const Topic = require('../models/Topic');
+const ConsumptionType = require('../models/ConsumptionType');
 
-class TopicRepository extends BaseRepository {
+class ConsumptionTypeRepository extends BaseRepository {
     constructor() {
-        super(Topic);
+        super(ConsumptionType);
     }
 
     async findAllWithFilters(queryParams = {}) {
@@ -11,7 +11,7 @@ class TopicRepository extends BaseRepository {
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
 
-        const query = Topic.query()
+        const query = ConsumptionType.query()
             .select('*')
             .where('is_active', 1)
             .page(page - 1, per_page)
@@ -35,7 +35,7 @@ class TopicRepository extends BaseRepository {
     }
 
     async options(params) {
-        const query = Topic.query()
+        const query = ConsumptionType.query()
             .select('id', 'name')
             .where('is_active', 1)
 
@@ -52,8 +52,8 @@ class TopicRepository extends BaseRepository {
         if (!relations) {
             return this.findById(id);
         }
-        return Topic.query().findById(id).withGraphFetched(relations);
+        return ConsumptionType.query().findById(id).withGraphFetched(relations);
     }
 }
 
-module.exports = new TopicRepository();
+module.exports = new ConsumptionTypeRepository();

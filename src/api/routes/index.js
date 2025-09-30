@@ -9,6 +9,7 @@ const userAccessRoutes = require('./user-access.route');
 const amenityRoutes = require('./amenity.route')
 const topicRoutes = require('./topic.route')
 const dashboardRoutes = require('./dashboard.route');
+const consumptionTypeRoutes = require('./consumption-type.route')
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -18,5 +19,6 @@ router.use('/user-access', userAccessRoutes);
 router.use('/amenities', amenityRoutes);
 router.use('/topics', topicRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/consumption-types', consumptionTypeRoutes);
 
 module.exports = router;
