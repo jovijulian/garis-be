@@ -21,6 +21,7 @@ class Order extends BaseModelBooking {
                 pax: { type: 'integer' },
                 order_time: { type: 'string', format: 'date-time' },
                 menu_description: { type: 'string', nullable: true },
+                note: { type: 'string', nullable: true },
                 approved_by: { type: 'string', nullable: true },
             }
         };

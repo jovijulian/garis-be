@@ -3,6 +3,10 @@ const { getUserId, formatDateTime } = require('../helpers/dataHelpers');
 const { knexBooking } = require('../../config/database');
 const bookingRepository = require('../repositories/booking.repository');
 const roomRepository = require('../repositories/room.repository');
+const fs = require('fs');
+const path = require('path');
+const { parseMenuDescription } = require('../helpers/dataHelpers');
+const moment = require('moment');
 class OrderService {
 
     async getAll(queryParams) {
@@ -75,17 +79,18 @@ class OrderService {
 
     }
 
-    async updateOrderUser(id, request) {
+    async update(id, request) {
         const payload = request.body;
         const existingOrder = await this.detail(id);
+        const roomId = payload.room_id
+        const locationText = payload.location_text
+        const bookingId = payload.booking_id
+       
         if (existingOrder.status !== 'Submit') {
             const error = new Error('This order cannot be edited as it has already been processed.');
             error.statusCode = 400;
             throw error;
         }
-        const roomId = payload.room_id
-        const locationText = payload.location_text
-        const bookingId = payload.booking_id
         return knexBooking.transaction(async (trx) => {
             if (bookingId) {
                 const relatedBooking = await bookingRepository.findById(bookingId);
@@ -172,6 +177,35 @@ class OrderService {
             return data;
         });
 
+    }
+
+    async generateReceiptHtml(orderId) {
+        const order = await this.detail(orderId);
+        if (!order) {
+            const error = new Error("Order not found.");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'receipt', 'order-receipt.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        
+        const menuItemsArray = parseMenuDescription(order.menu_description);
+        const menuItemsHtml = menuItemsArray.map(item => `<tr><td>${item}</td></tr>`).join('');
+
+        htmlContent = htmlContent.replace('{{orderId}}', order.id);
+        htmlContent = htmlContent.replace('{{orderDate}}', moment(order.created_at).utcOffset('+07:00').format('DD MMM YYYY'));
+        htmlContent = htmlContent.replace('{{requesterName}}', order.user.nama_user);
+        
+        const location = order.room ? order.room.name : order.location_text;
+        htmlContent = htmlContent.replace('{{location}}', location);
+        
+        htmlContent = htmlContent.replace('{{consumptionTime}}', moment(order.order_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm'));
+        htmlContent = htmlContent.replace('{{pax}}', order.pax);
+        htmlContent = htmlContent.replace('{{menuItems}}', menuItemsHtml);
+        htmlContent = htmlContent.replace('{{note}}', order.note);
+
+        return htmlContent;
     }
 
 

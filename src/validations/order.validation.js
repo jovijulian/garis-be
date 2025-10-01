@@ -12,6 +12,7 @@ const createSchema = z.object({
         order_time: z.string({ required_error: 'Order time is required' }),
         menu_description: z.string().optional().nullable(),
         status: z.enum(['Submit', 'Approved', 'Rejected', 'Completed', 'Canceled']).optional().nullable(),
+        note: z.string().optional().nullable(),
     }),
 });
 
@@ -30,6 +31,7 @@ const updateSchema = z.object({
         order_time: z.string({ required_error: 'Order time is required' }),
         menu_description: z.string().optional().nullable(),
         status: z.enum(['Submit', 'Approved', 'Rejected', 'Completed', 'Canceled']).optional().nullable(),
+        note: z.string().optional().nullable(),
     }),
 });
 

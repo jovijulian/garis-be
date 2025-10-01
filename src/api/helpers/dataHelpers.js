@@ -22,5 +22,20 @@ function getUserId(request) {
     }
     return request.user.id_user;
 }
+function parseMenuDescription(menuDescription) {
+    if (!menuDescription || typeof menuDescription !== 'string') {
+        return [];
+    }
 
-module.exports = { formatDateTime, formatRupiah, getUserId };
+    return menuDescription
+        .split('\n') 
+        .flatMap(line => line.split(','))
+        .map(item => 
+            item
+                .trim()
+                .replace(/^(\d+\.|-|\*)\s*/, '') 
+        )
+        .filter(item => item.length > 0); 
+}
+
+module.exports = { formatDateTime, formatRupiah, getUserId, parseMenuDescription };
