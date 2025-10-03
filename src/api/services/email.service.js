@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
 require('dotenv').config();
+const { parseMenuDescription } = require('../helpers/dataHelpers');
 
 const emailTransporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -201,6 +202,128 @@ const sendAdminCancellationEmail = async (bookingDetails) => {
     }
 };
 
+const sendNewOrderNotificationEmail = async (adminEmails, orderDetails) => {
+    try {
+        console.log(orderDetails)
+        const { user, room, consumption_type, note, order_time, pax, menu_description, id, location_text } = orderDetails;
+        
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'new-order-notification.html');
+        const menuItemsArray = parseMenuDescription(menu_description);
+        const menuItemsHtml = menuItemsArray.map(item => `<tr><td>${item}</td></tr>`).join('');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        const location = room ? room.name : location_text;
+
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{consumptionType}}/g, consumption_type.name);
+        htmlContent = htmlContent.replace(/{{location}}/g, location);
+        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).format('DD MMM YYYY, HH:mm'));
+        htmlContent = htmlContent.replace(/{{pax}}/g, pax);
+        htmlContent = htmlContent.replace(/{{menuDescription}}/g, menuItemsHtml || 'Tidak ada deskripsi.');
+        htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+
+        const adminLink = `${process.env.FRONTEND_URL}/orders/manage-order/${id}`; 
+        htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[TINJAU] Pengajuan Pesanan Konsumsi Baru`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi pesanan baru terkirim ke admin.`);
+
+    } catch (error) {
+        console.log(error)
+        console.error("Gagal mengirim email notifikasi pesanan baru ke admin:", error);
+    }
+};
+
+const sendReorderNotificationEmail = async (adminEmails, orderDetails) => {
+    try {
+        const { user, room, consumption_type, note, order_time, pax, menu_description, id, location_text } = orderDetails;
+        
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'update-order-notification.html');
+        const menuItemsArray = parseMenuDescription(menu_description);
+        const menuItemsHtml = menuItemsArray.map(item => `<tr><td>${item}</td></tr>`).join('');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        const location = room ? room.name : location_text;
+
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{consumptionType}}/g, consumption_type.name);
+        htmlContent = htmlContent.replace(/{{location}}/g, location);
+        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).format('DD MMM YYYY, HH:mm'));
+        htmlContent = htmlContent.replace(/{{pax}}/g, pax);
+        htmlContent = htmlContent.replace(/{{menuDescription}}/g, menuItemsHtml || 'Tidak ada deskripsi.');
+        htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+
+        const adminLink = `${process.env.FRONTEND_URL}/orders/manage-order/${id}`; 
+        htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[DIUBAH] Pembaruan Order Konsumsi`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi pesanan baru terkirim ke admin.`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi pesanan baru ke admin:", error);
+    }
+};
+
+const sendOrderStatusUpdateEmail = async (email, orderDetails) => {
+    try {
+        const { user, room, order_time, status, location_text } = orderDetails;
+        
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'order-status-update.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        let subject, headerClass, message;
+        if (status === 'Approved') {
+            subject = `[DISETUJUI] Pesanan Konsumsi Anda`;
+            headerClass = 'header-approved';
+            message = 'Pesanan konsumsi Anda telah disetujui dan akan segera diproses.';
+        } else if (status === 'Rejected') {
+            subject = `[DITOLAK] Pesanan Konsumsi Anda`;
+            headerClass = 'header-rejected';
+            message = 'Mohon maaf, pesanan konsumsi Anda telah ditolak. Silakan hubungi Admin GA untuk informasi lebih lanjut.';
+        } else {
+            subject = `[UPDATE] Status Pesanan Konsumsi Anda`;
+            headerClass = 'header-approved'; 
+            message = `Status pesanan konsumsi Anda telah diperbarui menjadi "${status}".`;
+        }
+
+        const location = room ? room.name : location_text;
+
+        htmlContent = htmlContent.replace(/{{headerClass}}/g, headerClass);
+        htmlContent = htmlContent.replace(/{{status}}/g, status);
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{message}}/g, message);
+        htmlContent = htmlContent.replace(/{{location}}/g, location);
+        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).format('DD MMM YYYY, HH:mm'));
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: email,
+            subject: subject,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi status pesanan terkirim ke ${user.email}`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi status pesanan:", error);
+    }
+};
+
 module.exports = {
     sendBookingStatusEmail,
     sendNewBookingNotificationEmail,
@@ -208,4 +331,7 @@ module.exports = {
     sendRescheduleNotificationEmail,
     sendAutoRejectionEmail,
     sendAdminCancellationEmail,
+    sendNewOrderNotificationEmail,
+    sendReorderNotificationEmail,
+    sendOrderStatusUpdateEmail
 };
