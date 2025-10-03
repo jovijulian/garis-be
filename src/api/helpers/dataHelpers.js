@@ -28,14 +28,21 @@ function parseMenuDescription(menuDescription) {
     }
 
     return menuDescription
-        .split('\n') 
+        .split('\n')
         .flatMap(line => line.split(','))
-        .map(item => 
+        .map(item =>
             item
                 .trim()
-                .replace(/^(\d+\.|-|\*)\s*/, '') 
+                .replace(/^(\d+\.|-|\*)\s*/, '')
         )
-        .filter(item => item.length > 0); 
+        .filter(item => item.length > 0);
 }
 
-module.exports = { formatDateTime, formatRupiah, getUserId, parseMenuDescription };
+function getRoleUser(request) {
+    if (!request.user || !request.user.id_user) {
+        throw new Error("User ID not found in request user.");
+    }
+    return request.user.role;
+}
+
+module.exports = { formatDateTime, formatRupiah, getUserId, parseMenuDescription, getRoleUser };

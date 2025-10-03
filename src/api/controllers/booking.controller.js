@@ -143,6 +143,16 @@ class RoomController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async options(req, res) {
+        try {
+            const params = req.query.search;
+            const data = await bookingService.options(req, params);
+            return success(res, 200, data, 'Booking options retrieved successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new RoomController();

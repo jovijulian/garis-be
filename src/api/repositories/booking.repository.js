@@ -252,7 +252,7 @@ class BookingRepository extends BaseRepository {
             .withGraphFetched('[user(selectUsername), room(selectRoomWithCabId), topic(selectTopicName), amenities(selectAmenityName)]')
             .modifiers({
                 selectUsername: builder => builder.select('id_user', 'nama_user', 'email'),
-                selectRoomWithCabId: builder => builder.select('id', 'name', 'cab_id'), 
+                selectRoomWithCabId: builder => builder.select('id', 'name', 'cab_id'),
                 selectTopicName: builder => builder.select('id', 'name'),
                 selectAmenityName: builder => builder.select('amenities.id', 'amenities.name')
             });
@@ -265,6 +265,31 @@ class BookingRepository extends BaseRepository {
             query.where('bookings.status', status);
         }
         return query
+    }
+
+    async options(userId, search) {
+        const query = Booking.query()
+            .select('*')
+            .whereIn('status', ['Submit', 'Approved'])
+
+        if (search) {
+            query.where(builder => {
+                builder.where('purpose', 'like', `%${search}%`)
+                    .orWhereExists(
+                        Booking.relatedQuery('room')
+                            .where('name', 'like', `%${search}%`)
+                    );
+            });
+        }
+
+        if (userId) {
+            query.where('id_user', userId);
+        }
+        
+
+        const data = await query;
+
+        return data;
     }
 }
 

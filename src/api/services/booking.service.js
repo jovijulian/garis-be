@@ -2,7 +2,7 @@ const bookingRepository = require('../repositories/booking.repository');
 const userRepository = require('../repositories/user.repository');
 const roomRepository = require('../repositories/room.repository');
 const { knexBooking } = require('../../config/database');
-const { getUserId, formatDateTime } = require('../helpers/dataHelpers');
+const { getUserId, formatDateTime, getRoleUser } = require('../helpers/dataHelpers');
 const moment = require('moment');
 const { put } = require('@vercel/blob');
 const { sendBookingStatusEmail, sendNewBookingNotificationEmail, sendBookingUpdatedNotificationEmail, sendRescheduleNotificationEmail, sendAdminCancellationEmail, sendAutoRejectionEmail } = require('./email.service');
@@ -438,6 +438,26 @@ class BookingService {
         });
 
         return workbook;
+    }
+
+    async options(request, search) {
+        let userId;
+        const roleUser = getRoleUser(request);
+        console.log(roleUser)
+        if (roleUser === 2) {
+            userId = null
+        } else {
+            userId = getUserId(request);
+        }
+        const data = await bookingRepository.options(userId, search);
+
+        if (!data || data.length === 0) {
+            const error = new Error('No Booking found.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return data;
     }
 }
 
