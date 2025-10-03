@@ -23,7 +23,7 @@ class OrderController {
 
     async getAllUser(req, res) {
         try {
-            const paginatedData = await orderService.getAllUser(req.query);
+            const paginatedData = await orderService.getAllUser(req);
             return paginated(res, 200, paginatedData, 'Orders retrieved successfully');
         } catch (err) {
             return error(res, 500, err);
