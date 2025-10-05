@@ -1,162 +1,209 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Nota Pemesanan Konsumsi</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inconsolata:wght@500&display=swap');
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inconsolata:wght@500&display=swap");
 
+      body {
+        font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 11px;
+        color: #222;
+        background-color: #f4f4f4;
+      }
+      .receipt-wrapper {
+        width: 80mm;
+        box-sizing: border-box;
+        padding: 5mm; /* Padding dipindahkan ke sini */
+        display: flex; /* 1. Jadikan flex container */
+        flex-direction: column; /* 2. Atur arahnya vertikal */
+        min-height: 98%; /* 3. Pastikan tingginya minimal mengisi kertas */
+      }
+
+      .receipt-content {
+        flex-grow: 1; /* 4. Biarkan area konten ini "tumbuh" mengisi ruang kosong */
+      }
+
+      .receipt-footer {
+        flex-shrink: 0; /* Pastikan footer tidak menyusut */
+        text-align: center;
+        font-size: 9pt;
+        margin-top: 15px; /* Beri jarak dari konten di atasnya */
+      }
+      .receipt-header {
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .receipt-header h1 {
+        margin: 5px 0 0 0;
+        font-size: 16px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .receipt-header p {
+        margin: 0;
+        font-size: 12px;
+        color: #555;
+      }
+      .separator {
+        border-top: 1px dashed #888;
+        margin: 15px 0;
+      }
+      .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 5px;
+        font-size: 12px;
+      }
+      .details-table td {
+        padding: 3px 0;
+        vertical-align: top;
+      }
+      .details-table td:first-child {
+        width: 35%;
+        font-weight: 600;
+        color: #444;
+      }
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .items-table thead th {
+        font-weight: 600;
+        text-align: left;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #222;
+        text-transform: uppercase;
+        font-size: 10px;
+      }
+      .items-table tbody td {
+        padding: 8px 0;
+        border-bottom: 1px dashed #ccc;
+        vertical-align: top;
+      }
+      .items-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .col-menu {
+        width: 60%;
+      }
+      .col-notes {
+        text-align: left;
+        color: #555;
+      }
+      /* -- CSS BARU UNTUK BAGIAN CATATAN -- */
+      .notes-section {
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px dashed #ccc;
+      }
+      .notes-section h4 {
+        margin: 0 0 5px 0;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .notes-section p {
+        margin: 0;
+        font-size: 11px;
+        color: #444;
+        font-style: italic;
+      }
+      /* -- AKHIR CSS BARU -- */
+      /* .receipt-footer {
+        text-align: center;
+        margin-top: 20px;
+      } */
+      .footer-note {
+        font-size: 10px;
+        color: #555;
+        margin-bottom: 0;
+      }
+      .footer-brand {
+        font-size: 10px;
+        color: #888;
+      }
+      @page {
+        size: 150mm; /* Atur lebar kertas menjadi 80mm, tinggi otomatis */
+      }
+
+      @media print {
         body {
-            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 11px;
-            color: #222;
-            background-color: #f4f4f4;
+          background-color: white;
+          margin: 0;
         }
         .receipt-wrapper {
-            width: 80mm;
-            margin: 20px auto;
-            padding: 15px;
-            background: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+          box-shadow: none;
+          margin: 0;
+          width: 100%;
+          padding: 5mm;
         }
-        .receipt-header {
-            text-align: center;
-            margin-bottom: 15px;
+        @page {
+          margin: 0;
         }
-       
-        .receipt-header h1 {
-            margin: 5px 0 0 0;
-            font-size: 16px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .receipt-header p {
-            margin: 0;
-            font-size: 12px;
-            color: #555;
-        }
-        .separator {
-            border-top: 1px dashed #888;
-            margin: 15px 0;
-        }
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 5px;
-            font-size: 12px;
-        }
-        .details-table td {
-            padding: 3px 0;
-            vertical-align: top;
-        }
-        .details-table td:first-child {
-            width: 35%;
-            font-weight: 600;
-            color: #444;
-        }
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .items-table thead th {
-            font-weight: 600;
-            text-align: left;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #222;
-            text-transform: uppercase;
-            font-size: 10px;
-        }
-        .items-table tbody td {
-            padding: 8px 0;
-            border-bottom: 1px dashed #ccc;
-            vertical-align: top;
-        }
-        .items-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        .col-menu {
-            width: 60%;
-        }
-        .col-notes {
-            text-align: left;
-            color: #555;
-        }
-        /* -- CSS BARU UNTUK BAGIAN CATATAN -- */
-        .notes-section {
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px dashed #ccc;
-        }
-        .notes-section h4 {
-            margin: 0 0 5px 0;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .notes-section p {
-            margin: 0;
-            font-size: 11px;
-            color: #444;
-            font-style: italic;
-        }
-        /* -- AKHIR CSS BARU -- */
-        .receipt-footer {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .footer-note {
-            font-size: 10px;
-            color: #555;
-            margin-bottom: 10px;
-        }
-        .footer-brand {
-            font-size: 10px;
-            color: #888;
-        }
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <div class="receipt-wrapper">
-        <div class="receipt-header">
-            <h1>Nota Konsumsi</h1>
-            <p>PT. CISANGKAN</p>
-        </div>
+      <div class="receipt-header">
+        <h1>Nota Konsumsi</h1>
+        <p>PT. CISANGKAN</p>
+      </div>
 
-        <div class="separator"></div>
+      <div class="separator"></div>
 
-        <table class="details-table">
-            <tr><td>ID Pesanan</td><td>: #{{orderId}}</td></tr>
-            <tr><td>Tanggal</td><td>: {{orderDate}}</td></tr>
-            <tr><td>Pemesan</td><td>: {{requesterName}}</td></tr>
-            <tr><td>Lokasi</td><td>: {{location}}</td></tr>
-            <tr><td>Waktu Makan</td><td>: {{consumptionTime}}</td></tr>
-            <tr><td>Jumlah Orang</td><td>: {{pax}} orang</td></tr>
-        </table>
+      <table class="details-table">
+        <tr>
+          <td>ID Pesanan</td>
+          <td>: #{{orderId}}</td>
+        </tr>
+        <tr>
+          <td>Tanggal</td>
+          <td>: {{orderDate}}</td>
+        </tr>
+        <tr>
+          <td>Pemesan</td>
+          <td>: {{requesterName}}</td>
+        </tr>
+        <tr>
+          <td>Lokasi</td>
+          <td>: {{location}}</td>
+        </tr>
+        <tr>
+          <td>Waktu Makan</td>
+          <td>: {{consumptionTime}}</td>
+        </tr>
+        <tr>
+          <td>Jumlah Orang</td>
+          <td>: {{pax}} orang</td>
+        </tr>
+      </table>
 
-        <div class="separator"></div>
+      <div class="separator"></div>
 
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th class="col-menu">Menu</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{menuItems}}
-            </tbody>
-        </table>
-        
-        <div class="notes-section">
-            <h4>Keterangan / Catatan:</h4>
-            <p>{{note}}</p>
-        </div>
-        <div class="separator"></div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th class="col-menu">Menu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{menuItems}}
+        </tbody>
+      </table>
 
-        <div class="receipt-footer">
-            <p class="footer-note">Harap serahkan nota ini ke bagian pembelian.</p>
-            <p class="footer-brand">Generated by GARIS</p>
-        </div>
+      <div class="notes-section">
+        <h4>Keterangan / Catatan:</h4>
+        <p>{{note}}</p>
+      </div>
+      <div class="separator"></div>
+
+      <div class="receipt-footer">
+        <p class="footer-note">Harap serahkan nota ini ke bagian pembelian.</p>
+        <p class="footer-brand">Generated by GARIS</p>
+      </div>
     </div>
-
-</body>
+  </body>
 </html>
