@@ -2,7 +2,7 @@ const { z } = require('zod');
 
 const createSchema = z.object({
     body: z.object({
-        user_id: z.number().optional().nullable(),
+        user_id: z.string().optional().nullable(),
         cab_id: z.number().optional().nullable(),
         booking_id: z.number().optional().nullable(),
         room_id: z.number().optional().nullable(),
