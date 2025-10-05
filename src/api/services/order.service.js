@@ -6,7 +6,7 @@ const roomRepository = require('../repositories/room.repository');
 const userRepository = require('../repositories/user.repository');
 const fs = require('fs');
 const path = require('path');
-const { sendNewOrderNotificationEmail, sendReorderNotificationEmail, sendOrderStatusUpdateEmail } = require('./email.service');
+const { sendNewOrderNotificationEmail, sendReorderNotificationEmail, sendOrderStatusUpdateEmail, sendAdminCancellationOrderEmail } = require('./email.service');
 const moment = require('moment');
 class OrderService {
 
@@ -235,7 +235,21 @@ class OrderService {
         return htmlContent;
     }
 
+    async cancelOrder(orderId) {
+        const existingOrder = await this.detail(orderId);
+        if (!existingOrder) {
+            const error = new Error('Order not found.');
+            error.statusCode = 404;
+            throw error;
+        }
 
+        return knexBooking.transaction(async (trx) => {
+            const updatedOrder = await orderRepository.update(orderId, { status: 'Canceled', updated_at: formatDateTime() }, trx);
+            const orderDetailForEmail = { ...existingOrder, status: 'Canceled' };
+            await sendAdminCancellationOrderEmail(orderDetailForEmail);
+            return updatedOrder;
+        });
+    }
 }
 
 module.exports = new OrderService();
