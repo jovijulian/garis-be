@@ -19,7 +19,7 @@ class UserRepository extends BaseRepository {
             .orderBy('id', 'DESC');
 
         if (search) {
-            query.where('name', 'like', `%${search}%`),
+            query.where('nama_user', 'like', `%${search}%`),
                 query.orWhere('email', 'like', `%${search}%`);
         }
 
@@ -46,8 +46,8 @@ class UserRepository extends BaseRepository {
 
     async findByUserId(id_user) {
         return User.query().where({ id_user })
-        .withGraphFetched('[permissions]')
-        .first();
+            .withGraphFetched('[permissions]')
+            .first();
     }
 
     async updateUser(id, data, trx = null) {
@@ -56,14 +56,25 @@ class UserRepository extends BaseRepository {
 
     async findAdminsBySiteId(siteId) {
         return this.model.query()
-            .select('email') 
+            .select('email')
             .where('role_garis', 2)
             .whereExists(
                 User.relatedQuery('permissions')
                     .where('cab_id', siteId)
             );
     }
+    async options(params) {
+        const query = User.query()
+            .select('*')
 
+
+        if (params) {
+            query.where('nama_user', 'like', `%${params}%`)
+        }
+
+        const data = await query;
+        return data;
+    }
 
 }
 

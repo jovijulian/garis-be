@@ -59,6 +59,18 @@ class UserService {
             return { message: 'User has been delete successfully.' };
         });
     }
+
+    async options(params) {
+        const data = await userRepository.options(params);
+
+        if (!data || data.length === 0) {
+            const error = new Error('No Users found.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return data;
+    }
 }
 
 module.exports = new UserService();

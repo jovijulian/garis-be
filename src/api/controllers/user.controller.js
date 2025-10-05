@@ -51,6 +51,16 @@ class UserController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async options(req, res) {
+        try {
+            const params = req.query.search;
+            const data = await userService.options(params);
+            return success(res, 200, data, 'User options retrieved successfully');
+        } catch (err) {
+            return error(res, 500, err);
+        }
+    }
 }
 
 module.exports = new UserController();
