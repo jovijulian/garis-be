@@ -7,5 +7,6 @@ const verifyToken = require('../../middlewares/verifyToken');
 router.use(verifyToken);
 
 router.get('/', DashboardController.getDashboardData);
+router.get('/orders', DashboardController.getOrderDashboardData);
 
 module.exports = router;

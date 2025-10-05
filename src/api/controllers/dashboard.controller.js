@@ -11,6 +11,14 @@ class DashboardController {
             return error(res, 500, err);
         }
     }
+    async getOrderDashboardData(req, res) {
+        try {
+            const data = await dashboardService.getOrderDashboardData(req.query);
+            return success(res, 200, data, 'Dashboard Data retrieved successfully');
+        } catch (err) {
+            return error(res, 500, err);
+        }
+    }
 }
 
 module.exports = new DashboardController();
