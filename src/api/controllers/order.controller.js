@@ -1,6 +1,6 @@
 const orderService = require('../services/order.service');
 const { success, error, paginated } = require('../../utils/response');
-
+const moment = require('moment');
 class OrderController {
 
     async create(req, res) {
@@ -102,6 +102,27 @@ class OrderController {
 
             const data = await orderService.cancelOrder(id);
             return success(res, 200, data, 'Order canceled successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
+    async exportToExcel(req, res) {
+        try {
+            const workbook = await orderService.exportOrdersToExcel(req.query);
+            
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename="order_report_${moment().format('YYYY-MM-DD')}.xlsx"`
+            );
+
+            await workbook.xlsx.write(res);
+            res.end();
+
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }

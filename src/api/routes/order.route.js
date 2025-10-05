@@ -15,6 +15,7 @@ router.use(verifyToken);
 router.post('/', validate(createSchema), OrderController.create);
 router.get('/', OrderController.getAll);
 router.get('/:id/receipt', OrderController.generateReceipt);
+router.get('/export-excel', OrderController.exportToExcel);
 router.get('/user', OrderController.getAllUser);
 router.get('/options', OrderController.options);
 router.get('/:id', validate(orderIdSchema), OrderController.detail);

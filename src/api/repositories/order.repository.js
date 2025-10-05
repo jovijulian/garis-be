@@ -1,6 +1,6 @@
 const BaseRepository = require('./base.repository');
 const Order = require('../models/Order');
-
+const moment = require('moment');
 class OrderRepository extends BaseRepository {
     constructor() {
         super(Order);
@@ -172,6 +172,42 @@ class OrderRepository extends BaseRepository {
             return this.findById(id);
         }
         return Order.query().findById(id).withGraphFetched(relations);
+    }
+
+    async findAllForExport(queryParams = {}) {
+        const { startDate, endDate, status } = queryParams;
+
+        const query = Order.query()
+            .select('*')
+            .withGraphFetched('[cabang, consumption_type, user, booking, room]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id_cab', 'nama_cab');
+            })
+            .modifyGraph('consumption_type', builder => {
+                builder.select('id', 'name');
+            })
+            .modifyGraph('user', builder => {
+                builder.select('id_user', 'nama_user');
+            })
+            .modifyGraph('booking', builder => {
+                builder.select('id', 'purpose', 'start_time', 'end_time');
+            })
+            .modifyGraph('room', builder => {
+                builder.select('id', 'name', 'location');
+            })
+            .orderBy('id', 'DESC');
+
+
+
+        if (startDate && endDate) {
+            query.whereBetween('orders.order_time', [startDate, endDate]);
+        }
+
+        if (status) {
+            query.where('orders.status', status);
+        }
+
+        return query
     }
 
 

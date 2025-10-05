@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { sendNewOrderNotificationEmail, sendReorderNotificationEmail, sendOrderStatusUpdateEmail, sendAdminCancellationOrderEmail } = require('./email.service');
 const moment = require('moment');
+const ExcelJS = require('exceljs');
 class OrderService {
 
     async getAll(queryParams) {
@@ -249,6 +250,53 @@ class OrderService {
             await sendAdminCancellationOrderEmail(orderDetailForEmail);
             return updatedOrder;
         });
+    }
+
+    async exportOrdersToExcel(queryParams) {
+        const orders = await orderRepository.findAllForExport(queryParams);
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Laporan Pesanan Konsumsi');
+
+        worksheet.columns = [
+            { header: 'ID Pesanan', key: 'id', width: 12 },
+            { header: 'Status', key: 'status', width: 15 },
+            { header: 'Jenis Konsumsi', key: 'consumption_type', width: 25 },
+            { header: 'Lokasi', key: 'location', width: 35 },
+            { header: 'Cabang', key: 'site', width: 20 },
+            { header: 'Pemesan', key: 'user_name', width: 30 },
+            { header: 'Waktu Dibutuhkan (WIB)', key: 'order_time', width: 22 },
+            { header: 'Jumlah (Pax)', key: 'pax', width: 15 },
+            { header: 'Deskripsi Menu', key: 'menu_description', width: 50 },
+            { header: 'Catatan User', key: 'note', width: 50 },
+            { header: 'Terkait Booking ID', key: 'booking_id', width: 18 },
+            { header: 'Dibuat Pada (WIB)', key: 'created_at', width: 22 },
+            { header: 'Disetujui/Ditolak Oleh', key: 'approved_by', width: 25 },
+        ];
+
+        worksheet.getRow(1).font = { bold: true };
+
+        orders.forEach(order => {
+            const locationName = order.room ? order.room.name : (order.location_text || '-');
+            const orderTimeWIB = moment(order.order_time).add(7, 'hours').format('YYYY-MM-DD HH:mm');
+            worksheet.addRow({
+                id: order.id,
+                status: order.status,
+                consumption_type: order.consumption_type ? order.consumption_type.name : '-',
+                location: locationName,
+                site: order.cabang ? order.cabang.nama_cab : '-',
+                user_name: order.user ? order.user.nama_user : '-',
+                order_time: orderTimeWIB,
+                pax: order.pax,
+                menu_description: order.menu_description,
+                note: order.note,
+                booking_id: order.booking_id || '-',
+                created_at: moment(order.created_at).add(7, 'hours').format('YYYY-MM-DD HH:mm'),
+                approved_by: order.approved_by || '-',
+            });
+        });
+
+        return workbook;
     }
 }
 
