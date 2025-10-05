@@ -21,7 +21,7 @@ const updateSchema = z.object({
         id: z.coerce.number({ invalid_type_error: 'Order ID must be a number' }),
     }),
     body: z.object({
-        user_id: z.number().optional().nullable(),
+        user_id: z.string().optional().nullable(),
         cab_id: z.number().optional().nullable(),
         booking_id: z.number().optional().nullable(),
         room_id: z.number().optional().nullable(),

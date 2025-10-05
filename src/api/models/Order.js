@@ -11,7 +11,7 @@ class Order extends BaseModelBooking {
             required: ['user_id', 'consumption_type_id', 'pax', 'order_time'],
             properties: {
                 id: { type: 'integer' },
-                user_id: { type: 'integer' },
+                user_id: { type: 'string' },
                 cab_id: { type: 'integer' },
                 booking_id: { type: 'integer', nullable: true },
                 room_id: { type: 'integer', nullable: true },
