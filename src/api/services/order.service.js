@@ -4,6 +4,7 @@ const { knexBooking } = require('../../config/database');
 const bookingRepository = require('../repositories/booking.repository');
 const roomRepository = require('../repositories/room.repository');
 const userRepository = require('../repositories/user.repository');
+const orderDetailRepository = require('../repositories/order-detail.repository');
 const fs = require('fs');
 const path = require('path');
 const { sendNewOrderNotificationEmail, sendReorderNotificationEmail, sendOrderStatusUpdateEmail, sendAdminCancellationOrderEmail } = require('./email.service');
@@ -22,7 +23,7 @@ class OrderService {
     }
 
     async detail(id) {
-        const data = await orderRepository.findByIdWithRelations(id, '[cabang, consumption_type, user, booking, room]');
+        const data = await orderRepository.findByIdWithRelations(id, '[details.[consumption_type], cabang, user, booking, room]');
         if (!data) {
             const error = new Error('Order not found.');
             error.statusCode = 404;
@@ -32,60 +33,82 @@ class OrderService {
     }
 
     async _prepareLocationData(payload) {
-        const { booking_id, room_id, location_text } = payload;
+        const { booking_id, location_text, cab_id, order_time } = payload;
 
         if (booking_id) {
-            const relatedBooking = await bookingRepository.findById(booking_id);
-            if (!relatedBooking) {
+            const booking = await bookingRepository.findById(booking_id);
+            if (!booking) {
                 const error = new Error('Booking not found.');
                 error.statusCode = 404;
                 throw error;
             }
-            const relatedRoom = await roomRepository.findById(relatedBooking.room_id);
-            payload.cab_id = relatedRoom.cab_id;
-            payload.room_id = relatedBooking.room_id;
-            payload.location_text = null;
-            payload.order_time = payload.order_time || relatedBooking.start_time;
-        } else if (room_id) {
-            const relatedRoom = await roomRepository.findById(room_id);
-            if (!relatedRoom) {
-                const error = new Error('Room not found.');
-                error.statusCode = 404;
+
+            const room = await roomRepository.findById(booking.room_id);
+
+            return {
+                ...payload,
+                cab_id: room.cab_id,
+                room_id: booking.room_id,
+                location_text: null,
+                order_date: moment(order_time || booking.start_time).format("YYYY-MM-DD"),
+            };
+        }
+
+        if (location_text) {
+            if (!cab_id) {
+                const error = new Error('Untuk lokasi custom, Cabang/Site wajib diisi.');
+                error.statusCode = 400;
                 throw error;
             }
-            payload.cab_id = relatedRoom.cab_id;
-            payload.location_text = null;
-        } else if (location_text) {
-            payload.room_id = null;
-            payload.location_text = location_text;
-        } else {
-            throw { statusCode: 400, message: "Lokasi pesanan (Ruangan atau Lokasi Teks) wajib diisi." };
+
+            return {
+                ...payload,
+                room_id: null,
+                location_text,
+            };
         }
-        return payload;
+
+        const error = new Error('Lokasi pesanan (Ruangan atau Lokasi Teks) wajib diisi.');
+        error.statusCode = 400;
+        throw error;
     }
 
     async create(request) {
         const userId = await getUserId(request);
-        let payload = request.body;
         const trx = await knexBooking.transaction();
         let newOrder;
         try {
-            payload = await this._prepareLocationData(payload);
+            const { details, ...header } = request.body;
 
-            payload.pax = payload.pax;
-            payload.user_id = payload.user_id || userId;
-            payload.status = 'Submit';
-            payload.created_at = formatDateTime();
-            payload.updated_at = formatDateTime();
-            newOrder = await orderRepository.create(payload, trx);
+            const orderPayload = {
+                ...header,
+                user_id: header.user_id || userId,
+                status: 'Submit',
+                created_at: formatDateTime(),
+                updated_at: formatDateTime(),
+            };
+
+            const preparedOrder = await this._prepareLocationData(orderPayload);
+
+            const createdOrder = await orderRepository.create(preparedOrder, trx);
+
+            const detailPayload = details.map(item => ({
+                ...item,
+                order_id: createdOrder.id,
+            }));
+            for (const detailItem of detailPayload) {
+                await orderDetailRepository.create(detailItem, trx);
+            }
             await trx.commit();
+            newOrder = await this.detail(createdOrder.id);
+
         } catch (error) {
             await trx.rollback();
             throw error;
         }
 
         try {
-            const admins = await userRepository.findAdminsBySiteId(payload.cab_id);
+            const admins = await userRepository.findAdminsBySiteId(newOrder.cab_id);
             if (admins.length > 0) {
                 const adminEmails = admins.map(admin => admin.email);
                 const orderDetails = await this.detail(newOrder.id);
@@ -96,38 +119,55 @@ class OrderService {
             console.error('Failed to send notification emails to admins.');
         }
         return newOrder;
-
     }
 
     async update(id, request) {
-        let payload = request.body;
         const existingOrder = await this.detail(id);
-
-
         if (existingOrder.status !== 'Submit') {
             const error = new Error('This order cannot be edited as it has already been processed.');
             error.statusCode = 400;
             throw error;
         }
+
         const trx = await knexBooking.transaction();
         let updatedOrder;
-        try {
-            payload = await this._prepareLocationData(payload);
 
-            payload.pax = payload.pax || existingOrder.pax;
-            payload.consumption_type_id = payload.consumption_type_id || existingOrder.consumption_type_id;
-            payload.menu_description = payload.menu_description || existingOrder.menu_description;
-            payload.order_time = payload.order_time || existingOrder.order_time;
-            payload.updated_at = formatDateTime();
-            updatedOrder = await orderRepository.update(id, payload, trx);
+        try {
+            const { details, ...header } = request.body;
+
+            const basePayload = {
+                ...header,
+                pax: header.pax ?? existingOrder.pax,
+                consumption_type_id: header.consumption_type_id ?? existingOrder.consumption_type_id,
+                menu_description: header.menu_description ?? existingOrder.menu_description,
+                order_time: header.order_time ?? existingOrder.order_time,
+                updated_at: formatDateTime(),
+            };
+
+            const preparedPayload = await this._prepareLocationData(basePayload);
+
+            await orderRepository.update(id, preparedPayload, trx);
+
+            if (details && Array.isArray(details) && details.length > 0) {
+                await orderDetailRepository.deleteByOrderId(id, trx);
+                const detailPayloads = details.map(item => ({
+                    ...item,
+                    order_id: Number(id),
+                }));
+                for (const detail of detailPayloads) {
+                    await orderDetailRepository.create(detail, trx);
+                }
+            }
+
             await trx.commit();
+            updatedOrder = await this.detail(id);
         } catch (error) {
             await trx.rollback();
             throw error;
         }
 
         try {
-            const admins = await userRepository.findAdminsBySiteId(payload.cab_id);
+            const admins = await userRepository.findAdminsBySiteId(updatedOrder.cab_id);
             if (admins.length > 0) {
                 const adminEmails = admins.map(admin => admin.email);
                 const orderDetails = await this.detail(id);
@@ -149,6 +189,7 @@ class OrderService {
         }
         return knexBooking.transaction(async (trx) => {
             await orderRepository.delete(id, trx);
+            await orderDetailRepository.deleteByOrderId(id, trx);
             return { message: 'Order has been deleted successfully.' };
         });
     }
@@ -218,17 +259,26 @@ class OrderService {
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'receipt', 'order-receipt.html');
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
 
-        const menuItemsArray = parseMenuDescription(order.menu_description);
-        const menuItemsHtml = menuItemsArray.map(item => `<tr><td>${item}</td></tr>`).join('');
+        const menuItemsHtml = order.details.map(item => {
+            const deliveryTime = moment(item.delivery_time).format('HH:mm');
+            return `
+                <tr>
+                    <td>${item.consumption_type.name}</td>
+                    <td>${item.menu}</td>
+                    <td class="col-qty">${item.qty}</td>
+                    <td class="col-time">${deliveryTime}</td>
+                </tr>
+            `;
+        }).join('');
 
         htmlContent = htmlContent.replace('{{orderId}}', order.id);
-        htmlContent = htmlContent.replace('{{orderDate}}', moment(order.created_at).utcOffset('+07:00').format('DD MMM YYYY'));
+        htmlContent = htmlContent.replace('{{purpose}}', order.purpose);
+        htmlContent = htmlContent.replace('{{orderDate}}', moment(order.order_date).utcOffset('+07:00').format('DD MMM YYYY'));
         htmlContent = htmlContent.replace('{{requesterName}}', order.user.nama_user);
 
         const location = order.room ? order.room.name : order.location_text;
         htmlContent = htmlContent.replace('{{location}}', location);
 
-        htmlContent = htmlContent.replace('{{consumptionTime}}', moment(order.order_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm'));
         htmlContent = htmlContent.replace('{{pax}}', order.pax);
         htmlContent = htmlContent.replace('{{menuItems}}', menuItemsHtml);
         htmlContent = htmlContent.replace('{{note}}', order.note);
@@ -259,40 +309,46 @@ class OrderService {
         const worksheet = workbook.addWorksheet('Laporan Pesanan Konsumsi');
 
         worksheet.columns = [
-            { header: 'ID Pesanan', key: 'id', width: 12 },
-            { header: 'Status', key: 'status', width: 15 },
-            { header: 'Jenis Konsumsi', key: 'consumption_type', width: 25 },
-            { header: 'Lokasi', key: 'location', width: 35 },
-            { header: 'Cabang', key: 'site', width: 20 },
+            { header: 'ID Pesanan', key: 'order_id', width: 12 },
+            { header: 'Status Pesanan', key: 'order_status', width: 15 },
+            { header: 'Keperluan', key: 'purpose', width: 35 },
             { header: 'Pemesan', key: 'user_name', width: 30 },
-            { header: 'Waktu Dibutuhkan (WIB)', key: 'order_time', width: 22 },
-            { header: 'Jumlah (Pax)', key: 'pax', width: 15 },
-            { header: 'Deskripsi Menu', key: 'menu_description', width: 50 },
-            { header: 'Catatan User', key: 'note', width: 50 },
+            { header: 'Cabang', key: 'site', width: 20 },
+            { header: 'Lokasi', key: 'location', width: 30 },
             { header: 'Terkait Booking ID', key: 'booking_id', width: 18 },
-            { header: 'Dibuat Pada (WIB)', key: 'created_at', width: 22 },
-            { header: 'Disetujui/Ditolak Oleh', key: 'approved_by', width: 25 },
+
+            { header: 'ID Item', key: 'item_id', width: 12 },
+            { header: 'Jenis Konsumsi', key: 'consumption_type', width: 25 },
+            { header: 'Deskripsi Menu', key: 'menu_description', width: 40 },
+            { header: 'Jumlah (Qty)', key: 'qty', width: 15 },
+            { header: 'Waktu Dibutuhkan (WIB)', key: 'delivery_time', width: 22 },
         ];
 
         worksheet.getRow(1).font = { bold: true };
 
         orders.forEach(order => {
+            if (!order.details || order.details.length === 0) {
+                return;
+            }
+
             const locationName = order.room ? order.room.name : (order.location_text || '-');
-            const orderTimeWIB = moment(order.order_time).add(7, 'hours').format('YYYY-MM-DD HH:mm');
-            worksheet.addRow({
-                id: order.id,
-                status: order.status,
-                consumption_type: order.consumption_type ? order.consumption_type.name : '-',
-                location: locationName,
-                site: order.cabang ? order.cabang.nama_cab : '-',
-                user_name: order.user ? order.user.nama_user : '-',
-                order_time: orderTimeWIB,
-                pax: order.pax,
-                menu_description: order.menu_description,
-                note: order.note,
-                booking_id: order.booking_id || '-',
-                created_at: moment(order.created_at).add(7, 'hours').format('YYYY-MM-DD HH:mm'),
-                approved_by: order.approved_by || '-',
+
+            order.details.forEach(item => {
+                worksheet.addRow({
+                    order_id: order.id,
+                    order_status: order.status,
+                    purpose: order.purpose,
+                    user_name: order.user ? order.user.nama_user : '-',
+                    site: order.cabang ? order.cabang.nama_cab : '-',
+                    location: locationName,
+                    booking_id: order.booking_id || '-',
+
+                    item_id: item.id,
+                    consumption_type: item.consumption_type ? item.consumption_type.name : '-',
+                    menu_description: item.menu,
+                    qty: item.qty,
+                    delivery_time: moment.utc(item.delivery_time).utcOffset('+07:00').format('YYYY-MM-DD HH:mm'),
+                });
             });
         });
 

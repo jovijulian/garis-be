@@ -13,12 +13,9 @@ class OrderRepository extends BaseRepository {
 
         const query = Order.query()
             .select('*')
-            .withGraphFetched('[cabang, consumption_type, user, booking, room]')
+            .withGraphFetched('[cabang, user, booking, room]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
-            })
-            .modifyGraph('consumption_type', builder => {
-                builder.select('id', 'name');
             })
             .modifyGraph('user', builder => {
                 builder.select('id_user', 'nama_user');
@@ -35,13 +32,13 @@ class OrderRepository extends BaseRepository {
         if (search) {
             query.where(builder => {
                 builder.where('location_text', 'like', `%${search}%`)
-                    .orWhere('consumption_type_id', 'like', `%${search}%`)
+                    .orWhere('order_date', 'like', `%${search}%`)
+                    .orWhere('purpose', 'like', `%${search}%`)
 
                     .orWhereExists(
                         User.relatedQuery('user')
                             .where('nama_user', 'like', `%${search}%`)
                     )
-
                     .orWhereExists(
                         Room.relatedQuery('room')
                             .where('name', 'like', `%${search}%`)
@@ -54,10 +51,6 @@ class OrderRepository extends BaseRepository {
                         Booking.relatedQuery('booking')
                             .where('purpose', 'like', `%${search}%`)
                     )
-                    .orWhereExists(
-                        ConsumptionType.relatedQuery('consumption_type')
-                            .where('name', 'like', `%${search}%`)
-                    );
             });
 
         }
@@ -80,12 +73,9 @@ class OrderRepository extends BaseRepository {
         const query = Order.query()
             .select('*')
 
-            .withGraphFetched('[cabang, consumption_type, user, booking, room]')
+            .withGraphFetched('[cabang, user, booking, room]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
-            })
-            .modifyGraph('consumption_type', builder => {
-                builder.select('id', 'name');
             })
             .modifyGraph('user', builder => {
                 builder.select('id_user', 'nama_user');
@@ -103,7 +93,8 @@ class OrderRepository extends BaseRepository {
         if (search) {
             query.where(builder => {
                 builder.where('location_text', 'like', `%${search}%`)
-                    .orWhere('consumption_type_id', 'like', `%${search}%`)
+                    .orWhere('order_date', 'like', `%${search}%`)
+                    .orWhere('purpose', 'like', `%${search}%`)
 
                     .orWhereExists(
                         User.relatedQuery('user')
@@ -121,10 +112,6 @@ class OrderRepository extends BaseRepository {
                     .orWhereExists(
                         Booking.relatedQuery('booking')
                             .where('purpose', 'like', `%${search}%`)
-                    )
-                    .orWhereExists(
-                        ConsumptionType.relatedQuery('consumption_type')
-                            .where('name', 'like', `%${search}%`)
                     );
             });
 
@@ -179,12 +166,9 @@ class OrderRepository extends BaseRepository {
 
         const query = Order.query()
             .select('*')
-            .withGraphFetched('[cabang, consumption_type, user, booking, room]')
+            .withGraphFetched('[cabang, user, booking, room, details.[consumption_type]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
-            })
-            .modifyGraph('consumption_type', builder => {
-                builder.select('id', 'name');
             })
             .modifyGraph('user', builder => {
                 builder.select('id_user', 'nama_user');
@@ -194,6 +178,12 @@ class OrderRepository extends BaseRepository {
             })
             .modifyGraph('room', builder => {
                 builder.select('id', 'name', 'location');
+            })
+            .modifyGraph('details', builder => {
+                builder.select('id', 'order_id', 'consumption_type_id', 'menu', 'qty', 'delivery_time')
+                    .modifyGraph('consumption_type', b => {
+                        b.select('id', 'name');
+                    });
             })
             .orderBy('id', 'DESC');
 

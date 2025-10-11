@@ -8,7 +8,7 @@ class Order extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['user_id', 'consumption_type_id', 'pax', 'order_time'],
+            required: ['user_id', 'purpose', 'pax', 'order_date'],
             properties: {
                 id: { type: 'integer' },
                 user_id: { type: 'string' },
@@ -17,10 +17,8 @@ class Order extends BaseModelBooking {
                 room_id: { type: 'integer', nullable: true },
                 location_text: { type: 'string', nullable: true },
                 status: { type: 'string', enum: ['Submit', 'Approved', 'Rejected', 'Completed', 'Canceled'] },
-                consumption_type_id: { type: 'integer' },
                 pax: { type: 'integer' },
-                order_time: { type: 'string', format: 'date-time' },
-                menu_description: { type: 'string', nullable: true },
+                order_date: { type: 'string', format: 'date' },
                 note: { type: 'string', nullable: true },
                 approved_by: { type: 'string', nullable: true },
             }
@@ -29,10 +27,10 @@ class Order extends BaseModelBooking {
 
     static get relationMappings() {
         const Site = require('./Site');
-        const ConsumptionType = require('./ConsumptionType');
         const User = require('./User');
         const Booking = require('./Booking');
         const Room = require('./Room');
+        const OrderDetail = require('./OrderDetail');
         return {
             cabang: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -40,14 +38,6 @@ class Order extends BaseModelBooking {
                 join: {
                     from: 'orders.cab_id',
                     to: 'tb_cab.id_cab'
-                }
-            },
-            consumption_type: {
-                relation: BaseModelBooking.BelongsToOneRelation,
-                modelClass: ConsumptionType,
-                join: {
-                    from: 'orders.consumption_type_id',
-                    to: 'consumption_types.id'
                 }
             },
             user: {
@@ -74,6 +64,15 @@ class Order extends BaseModelBooking {
                     to: 'rooms.id'
                 }
             },
+            details: {
+                relation: BaseModelBooking.HasManyRelation,
+                modelClass: OrderDetail,
+                join: {
+                    from: 'orders.id',
+                    to: 'order_details.order_id'
+                }
+            }
+            
         };
     }
 

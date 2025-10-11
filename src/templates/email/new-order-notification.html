@@ -6,7 +6,7 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        color: white;
+        color: #333;
       }
       .container {
         max-width: 600px;
@@ -47,10 +47,25 @@
       .details-table td {
         padding: 5px 0;
         vertical-align: top;
-        border-bottom: 1px solid #eee;
       }
       .details-table td:first-child {
         width: 35%;
+        font-weight: bold;
+      }
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        font-size: 12px;
+      }
+      .items-table th,
+      .items-table td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      .items-table th {
+        background-color: #f2f2f2;
         font-weight: bold;
       }
     </style>
@@ -64,7 +79,7 @@
         <p>Halo Admin,</p>
         <p>
           Ada pengajuan pesanan konsumsi baru yang membutuhkan persetujuan Anda.
-          Berikut adalah detailnya:
+          Berikut adalah ringkasannya:
         </p>
 
         <table class="details-table">
@@ -73,32 +88,42 @@
             <td>{{userName}}</td>
           </tr>
           <tr>
-            <td>Jenis Konsumsi:</td>
-            <td>{{consumptionType}}</td>
+            <td>Keperluan Pesanan:</td>
+            <td>{{orderPurpose}}</td>
+          </tr>
+          <tr>
+            <td>Tanggal:</td>
+            <td>{{orderDate}}</td>
           </tr>
           <tr>
             <td>Lokasi:</td>
             <td>{{location}}</td>
           </tr>
           <tr>
-            <td>Waktu:</td>
-            <td>{{orderTime}}</td>
-          </tr>
-          <tr>
-            <td>Jumlah:</td>
-            <td>{{pax}} orang</td>
-          </tr>
-          <tr>
-            <td>Detail Menu:</td>
-            <td><pre>{{menuDescription}}</pre></td>
-          </tr>
-          <tr>
-            <td>Keterangan / Catatan:</td>
+            <td>Catatan Umum:</td>
             <td>{{note}}</td>
           </tr>
         </table>
 
-        <p>Silakan tinjau pengajuan ini di panel admin Anda.</p>
+        <hr />
+        <h3>Detail Item Pesanan:</h3>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Jenis Konsumsi</th>
+              <th>Deskripsi</th>
+              <th>Jumlah</th>
+              <th>Waktu Dibutuhkan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{orderItems}}
+          </tbody>
+        </table>
+
+        <p style="margin-top: 20px">
+          Silakan tinjau pengajuan ini di panel admin Anda.
+        </p>
         <a href="{{adminLink}}" class="cta-button">Lihat Detail Pesanan</a>
       </div>
       <div class="footer">

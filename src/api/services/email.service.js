@@ -204,22 +204,28 @@ const sendAdminCancellationEmail = async (bookingDetails) => {
 
 const sendNewOrderNotificationEmail = async (adminEmails, orderDetails) => {
     try {
-        const { user, room, consumption_type, note, order_time, pax, menu_description, id, location_text } = orderDetails;
+        const { user, room, cabang, note, purpose, id, order_date, location_text, details } = orderDetails;
 
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'new-order-notification.html');
-        const menuItemsArray = parseMenuDescription(menu_description);
-        const menuItemsHtml = menuItemsArray.map(item => `<tr><td>${item}</td></tr>`).join('');
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
 
-        const location = room ? room.name : location_text;
+        const orderItemsHtml = details.map(item => `
+            <tr>
+                <td>${item.consumption_type ? item.consumption_type.name : 'N/A'}</td>
+                <td>${item.menu || '-'}</td>
+                <td>${item.qty}</td>
+                <td>${moment(item.delivery_time).format('DD MMM YYYY, HH:mm')}</td>
+            </tr>
+        `).join('');
+
+        const location = room ? room.name : (location_text || (cabang ? cabang.nama_cab : 'N/A'));
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
-        htmlContent = htmlContent.replace(/{{consumptionType}}/g, consumption_type.name);
+        htmlContent = htmlContent.replace(/{{orderDate}}/g, order_date ? moment(order_date).format('DD MMM YYYY') : '-');
+        htmlContent = htmlContent.replace(/{{orderPurpose}}/g, purpose || '-');
         htmlContent = htmlContent.replace(/{{location}}/g, location);
-        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).format('DD MMM YYYY, HH:mm'));
-        htmlContent = htmlContent.replace(/{{pax}}/g, pax);
-        htmlContent = htmlContent.replace(/{{menuDescription}}/g, menuItemsHtml || 'Tidak ada deskripsi.');
         htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+        htmlContent = htmlContent.replace(/{{orderItems}}/g, orderItemsHtml);
 
         const adminLink = `${process.env.FRONTEND_URL}/orders/manage-order/${id}`;
         htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
@@ -227,7 +233,7 @@ const sendNewOrderNotificationEmail = async (adminEmails, orderDetails) => {
         const mailOptions = {
             from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
             to: adminEmails.join(','),
-            subject: `[TINJAU] Pengajuan Pesanan Konsumsi Baru`,
+            subject: `[TINJAU] Pengajuan Pesanan Konsumsi Baru: ${purpose || ''}`,
             html: htmlContent
         };
 
@@ -242,22 +248,28 @@ const sendNewOrderNotificationEmail = async (adminEmails, orderDetails) => {
 
 const sendReorderNotificationEmail = async (adminEmails, orderDetails) => {
     try {
-        const { user, room, consumption_type, note, order_time, pax, menu_description, id, location_text } = orderDetails;
+        const { user, room, cabang, note, purpose, id, order_date, location_text, details } = orderDetails;
 
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'update-order-notification.html');
-        const menuItemsArray = parseMenuDescription(menu_description);
-        const menuItemsHtml = menuItemsArray.map(item => `<tr><td>${item}</td></tr>`).join('');
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        const orderItemsHtml = details.map(item => `
+            <tr>
+                <td>${item.consumption_type ? item.consumption_type.name : 'N/A'}</td>
+                <td>${item.menu || '-'}</td>
+                <td>${item.qty}</td>
+                <td>${moment(item.delivery_time).format('DD MMM YYYY, HH:mm')}</td>
+            </tr>
+        `).join('');
 
-        const location = room ? room.name : location_text;
+        const location = room ? room.name : (location_text || (cabang ? cabang.nama_cab : 'N/A'));
+
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
-        htmlContent = htmlContent.replace(/{{consumptionType}}/g, consumption_type.name);
+        htmlContent = htmlContent.replace(/{{orderDate}}/g, order_date ? moment(order_date).format('DD MMM YYYY') : '-');
+        htmlContent = htmlContent.replace(/{{orderPurpose}}/g, purpose || '-');
         htmlContent = htmlContent.replace(/{{location}}/g, location);
-        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).format('DD MMM YYYY, HH:mm'));
-        htmlContent = htmlContent.replace(/{{pax}}/g, pax);
-        htmlContent = htmlContent.replace(/{{menuDescription}}/g, menuItemsHtml || 'Tidak ada deskripsi.');
         htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+        htmlContent = htmlContent.replace(/{{orderItems}}/g, orderItemsHtml);
 
         const adminLink = `${process.env.FRONTEND_URL}/orders/manage-order/${id}`;
         htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
