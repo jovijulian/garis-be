@@ -63,21 +63,30 @@ class DashboardService {
         const [
             totalOrders,
             pendingOrdersCount,
-            mostPopularConsumptionType,
             orderTrend,
             statusDistribution,
-            topConsumptionTypes,
+            topRequesterResult,
+
+            // --- Metrik yang diubah & metrik baru ---
+            totalItemsOrdered,
+            topConsumptionTypesByQty, // Menggantikan topConsumptionTypes & mostPopular
+            mostPopularMenuItem,      // Metrik baru yang disarankan
         ] = await Promise.all([
+            // --- Metrik yang tidak berubah ---
             dashboardRepository.getTotalOrdersInRange(startDate, endDate),
             dashboardRepository.getPendingOrdersCount(),
-            dashboardRepository.getMostPopularConsumptionTypeInRange(startDate, endDate),
             dashboardRepository.getOrderTrendInRange(startDate, endDate),
             dashboardRepository.getOrderStatusDistributionInRange(startDate, endDate),
-            dashboardRepository.getTopConsumptionTypesInRange(startDate, endDate),
+            dashboardRepository.getTopRequesterIdInRange(startDate, endDate),
+
+            // --- Panggilan repository baru ---
+            dashboardRepository.getTotalItemsOrderedInRange(startDate, endDate),
+            dashboardRepository.getTopConsumptionTypesByQtyInRange(startDate, endDate, 5), 
+            dashboardRepository.getMostPopularMenuItemInRange(startDate, endDate),
         ]);
 
+        // Logika topRequester tetap sama
         let topRequesterName = 'N/A';
-        const topRequesterResult = await dashboardRepository.getTopRequesterIdInRange(startDate, endDate);
         if (topRequesterResult && topRequesterResult.user_id) {
             const topUser = await userRepository.findById(topRequesterResult.user_id);
             if (topUser) {
@@ -85,19 +94,22 @@ class DashboardService {
             }
         }
 
+        const mostPopularConsumptionType = topConsumptionTypesByQty.length > 0 ? topConsumptionTypesByQty[0].name : 'N/A';
+
         return {
             kpi: {
                 total_orders_in_range: totalOrders,
                 pending_orders_count: pendingOrdersCount,
-                most_popular_consumption_type: mostPopularConsumptionType ? mostPopularConsumptionType.name : 'N/A',
+                most_popular_consumption_type: mostPopularConsumptionType,
                 top_requester: topRequesterName,
             },
             charts: {
                 order_trend: orderTrend,
+               
             },
             rankings: {
-                status_distribution: statusDistribution,
-                top_consumption_types: topConsumptionTypes,
+                top_consumption_types: topConsumptionTypesByQty,
+                status_distribution: statusDistribution, 
             }
         };
     }
