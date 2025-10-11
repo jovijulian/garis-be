@@ -49,12 +49,7 @@ class BookingService {
                         amenity_id: id
                     }));
                     for (const amenity of amenityPayload) {
-                        if (!amenity.amenity_id) {
-                            const error = new Error('Invalid amenity ID provided.');
-                            error.statusCode = 400;
-                            throw error;
-                        }
-                        await amenityRepository.createAmenities(amenity, trx);
+                        await bookingRepository.createAmenities(amenity, trx);
                     }
                 }
                 if (adminEmails.length > 0) {
