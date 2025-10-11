@@ -1,5 +1,9 @@
 const BaseRepository = require('./base.repository');
 const Order = require('../models/Order');
+const User = require('../models/User');
+const Room = require('../models/Room');
+const Site = require('../models/Site');
+const Booking = require('../models/Booking');
 const moment = require('moment');
 class OrderRepository extends BaseRepository {
     constructor() {
@@ -35,20 +39,14 @@ class OrderRepository extends BaseRepository {
                     .orWhere('order_date', 'like', `%${search}%`)
                     .orWhere('purpose', 'like', `%${search}%`)
 
+
                     .orWhereExists(
-                        User.relatedQuery('user')
-                            .where('nama_user', 'like', `%${search}%`)
-                    )
-                    .orWhereExists(
-                        Room.relatedQuery('room')
+                        Order.relatedQuery('room')
                             .where('name', 'like', `%${search}%`)
                     )
+
                     .orWhereExists(
-                        Site.relatedQuery('cabang')
-                            .where('nama_cab', 'like', `%${search}%`)
-                    )
-                    .orWhereExists(
-                        Booking.relatedQuery('booking')
+                        Order.relatedQuery('booking')
                             .where('purpose', 'like', `%${search}%`)
                     )
             });
@@ -96,21 +94,15 @@ class OrderRepository extends BaseRepository {
                     .orWhere('order_date', 'like', `%${search}%`)
                     .orWhere('purpose', 'like', `%${search}%`)
 
+
+
                     .orWhereExists(
-                        User.relatedQuery('user')
-                            .where('nama_user', 'like', `%${search}%`)
+                        Order.relatedQuery('room')
+                            .where('name', 'like', `%${search}%`)
                     )
 
                     .orWhereExists(
-                        Room.relatedQuery('room')
-                            .where('name', 'like', `%${search}%`)
-                    )
-                    .orWhereExists(
-                        Site.relatedQuery('cabang')
-                            .where('nama_cab', 'like', `%${search}%`)
-                    )
-                    .orWhereExists(
-                        Booking.relatedQuery('booking')
+                        Order.relatedQuery('booking')
                             .where('purpose', 'like', `%${search}%`)
                     );
             });
