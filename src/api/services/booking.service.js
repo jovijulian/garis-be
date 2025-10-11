@@ -48,7 +48,14 @@ class BookingService {
                         booking_id: newBooking.id,
                         amenity_id: id
                     }));
-                    await bookingRepository.createAmenities(amenityPayload, trx);
+                    for (const amenity of amenityPayload) {
+                        if (!amenity.amenity_id) {
+                            const error = new Error('Invalid amenity ID provided.');
+                            error.statusCode = 400;
+                            throw error;
+                        }
+                        await amenityRepository.createAmenities(amenity, trx);
+                    }
                 }
                 if (adminEmails.length > 0) {
                     const emailDetails = {
@@ -416,7 +423,7 @@ class BookingService {
 
         bookings.forEach(booking => {
             const startTimeWIB = moment(booking.start_time).add(7, 'hours').format('YYYY-MM-DD HH:mm');
-            const endTimeWIB   = moment(booking.end_time).add(7, 'hours').format('YYYY-MM-DD HH:mm');
+            const endTimeWIB = moment(booking.end_time).add(7, 'hours').format('YYYY-MM-DD HH:mm');
             worksheet.addRow({
                 id: booking.id,
                 status: booking.status,
