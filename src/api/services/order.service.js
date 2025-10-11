@@ -87,6 +87,9 @@ class OrderService {
                 created_at: formatDateTime(),
                 updated_at: formatDateTime(),
             };
+            if (header.user_id) {
+                orderPayload.status = 'Approved';
+            }
 
             const preparedOrder = await this._prepareLocationData(orderPayload);
 
@@ -115,7 +118,6 @@ class OrderService {
                 await sendNewOrderNotificationEmail(adminEmails, orderDetails);
             }
         } catch (error) {
-            console.error(error)
             console.error('Failed to send notification emails to admins.');
         }
         return newOrder;
