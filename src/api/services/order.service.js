@@ -141,7 +141,7 @@ class OrderService {
                 ...header,
                 pax: header.pax ?? existingOrder.pax,
                 consumption_type_id: header.consumption_type_id ?? existingOrder.consumption_type_id,
-                menu_description: header.menu_description ?? existingOrder.menu_description,
+                menu: header.menu ?? existingOrder.menu,
                 order_date: header.order_date ?? existingOrder.order_date,
                 updated_at: formatDateTime(),
             };
