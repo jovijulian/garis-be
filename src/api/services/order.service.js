@@ -33,7 +33,7 @@ class OrderService {
     }
 
     async _prepareLocationData(payload) {
-        const { booking_id, location_text, cab_id, order_time } = payload;
+        const { booking_id, location_text, cab_id, order_date } = payload;
 
         if (booking_id) {
             const booking = await bookingRepository.findById(booking_id);
@@ -50,7 +50,7 @@ class OrderService {
                 cab_id: room.cab_id,
                 room_id: booking.room_id,
                 location_text: null,
-                order_date: moment(order_time || booking.start_time).format("YYYY-MM-DD"),
+                order_date: moment(order_date || booking.start_time).format("YYYY-MM-DD"),
             };
         }
 
@@ -142,7 +142,7 @@ class OrderService {
                 pax: header.pax ?? existingOrder.pax,
                 consumption_type_id: header.consumption_type_id ?? existingOrder.consumption_type_id,
                 menu_description: header.menu_description ?? existingOrder.menu_description,
-                order_time: header.order_time ?? existingOrder.order_time,
+                order_date: header.order_date ?? existingOrder.order_date,
                 updated_at: formatDateTime(),
             };
 

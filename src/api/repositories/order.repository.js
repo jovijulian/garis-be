@@ -182,7 +182,7 @@ class OrderRepository extends BaseRepository {
 
 
         if (startDate && endDate) {
-            query.whereBetween('orders.order_time', [startDate, endDate]);
+            query.whereBetween('orders.order_date', [startDate, endDate]);
         }
 
         if (status) {
