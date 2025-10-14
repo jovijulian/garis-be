@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const userRepository = require('../repositories/user.repository');
+const driverRepository = require('../repositories/driver.repository');
 const { getUserId } = require('../helpers/dataHelpers');
 const { knexHr } = require('../../config/database');
 const crypto = require('crypto');
@@ -59,12 +60,19 @@ class AuthService {
             throw error;
         }
 
+        let isDriver
+        const checkDriver = await driverRepository.findByUserId(user.id_user);
+        if (checkDriver) {
+            isDriver = true
+        }
+
         return {
             id_user: user.id_user,
             name: user.nama_user,
             email: user.email,
             role: user.role_garis,
             sites: user.permissions.length > 0 ? user.permissions[0].cab_id : null,
+            is_driver: isDriver || false,
         };
     }
 
@@ -78,7 +86,7 @@ class AuthService {
             throw error;
         }
         const oldPasswordMd5 = crypto.createHash('md5').update(old_password).digest('hex');
-        
+
         if (oldPasswordMd5 !== user.password) {
             const error = new Error('Old password is incorrect.');
             error.statusCode = 401;

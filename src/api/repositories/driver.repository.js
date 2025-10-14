@@ -60,6 +60,10 @@ class DriverRepository extends BaseRepository {
         return Driver.query().findById(id).withGraphFetched(relations);
     }
 
+    async findByUserId(user_id) {
+        return Driver.query().where('id_user', user_id).andWhere('is_active', 1).first();
+    }
+
 }
 
 module.exports = new DriverRepository();
