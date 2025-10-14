@@ -21,6 +21,8 @@ const createSchema = z.object({
             required_error: 'Passenger capacity is required',
             invalid_type_error: 'Passenger capacity must be a number',
         }).int().positive('Passenger capacity must be a positive number'),
+
+        cab_id: z.number().nullable().optional()
     }),
 });
 
@@ -44,7 +46,7 @@ const updateSchema = z.object({
             .max(15, 'License plate cannot be more than 15 characters')
             .transform(val => val.toUpperCase().replace(/\s/g, '')),
 
-            passenger_capacity: z.number({
+        passenger_capacity: z.number({
             required_error: 'Passenger capacity is required',
             invalid_type_error: 'Passenger capacity must be a number',
         }).int().positive('Passenger capacity must be a positive number'),
@@ -53,6 +55,7 @@ const updateSchema = z.object({
             required_error: 'Status is required',
             invalid_type_error: "Status must be one of: 'Available', 'Not Available', 'In Repair'",
         }),
+        cab_id: z.number().nullable().optional()
     }),
 });
 

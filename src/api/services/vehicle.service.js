@@ -9,7 +9,7 @@ class VehicleService {
     }
 
     async detail(id) {
-        const data = await vehicleService.findByIdWithRelations(id, '[vehicle_type]');
+        const data = await vehicleService.findByIdWithRelations(id, '[vehicle_type, cabang]');
         if (!data) {
             const error = new Error('Vehicle not found.');
             error.statusCode = 404;

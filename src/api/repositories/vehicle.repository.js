@@ -17,6 +17,13 @@ class VehicleRepository extends BaseRepository {
             .modifyGraph('vehicle_type', builder => {
                 builder.select('id', 'name');
             })
+            .withGraphFetched('[cabang]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id_cab', 'nama_cab');
+            })
+            .modifyGraph('vehicle_type', builder => {
+                builder.select('id', 'name');
+            })
             .where('is_active', 1)
 
             .page(page - 1, per_page)
@@ -48,11 +55,15 @@ class VehicleRepository extends BaseRepository {
         const vehicleTypeId = params.vehicle_type_id || null;
         const status = params.status || null;
         const query = Vehicle.query()
-            .select('id', 'name', 'license_plate', 'vehicle_type_id', 'passenger_capacity', 'status')
+            .select('id', 'name', 'license_plate', 'vehicle_type_id', 'passenger_capacity', 'status', 'cab_id')
             .where('is_active', 1)
             .withGraphFetched('[vehicle_type]')
             .modifyGraph('vehicle_type', builder => {
                 builder.select('id', 'name');
+            })
+            .withGraphFetched('[cabang]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id_cab', 'nama_cab');
             })
 
         if (search) {

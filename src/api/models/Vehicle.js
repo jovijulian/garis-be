@@ -13,6 +13,7 @@ class Vehicle extends BaseModelBooking {
                 id: { type: 'integer' },
                 name: { type: 'string' },
                 vehicle_type_id: { type: 'integer' },
+                cab_id: { type: 'integer' },
                 license_plate: { type: 'string' },
                 passenger_capacity: { type: 'integer' },
                 status: {
@@ -27,6 +28,7 @@ class Vehicle extends BaseModelBooking {
 
     static get relationMappings() {
         const VehicleType = require('./VehicleType');
+        const Site = require('./Site');
         return {
             vehicle_type: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -36,6 +38,14 @@ class Vehicle extends BaseModelBooking {
                     to: 'vehicle_types.id'
                 }
             },
+            cabang: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: Site,
+                join: {
+                    from: 'vehicles.cab_id',
+                    to: 'tb_cab.id_cab'
+                }
+            }
         };
     }
 
