@@ -12,6 +12,7 @@ const dashboardRoutes = require('./dashboard.route');
 const consumptionTypeRoutes = require('./consumption-type.route')
 const orderRoutes = require('./order.route');
 const vehicleTypeRoutes = require('./vehicle-type.route')
+const vehicleRoutes = require('./vehicle.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -24,5 +25,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/consumption-types', consumptionTypeRoutes);
 router.use('/orders', orderRoutes);
 router.use('/vehicle-types', vehicleTypeRoutes);
+router.use('/vehicles', vehicleRoutes);
 
 module.exports = router;
