@@ -14,7 +14,10 @@ class DriverRepository extends BaseRepository {
         const query = Driver.query()
             .select('*')
             .where('is_active', 1)
-
+            .withGraphFetched('[cabang]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id_cab', 'nama_cab');
+            })
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
 
@@ -37,7 +40,11 @@ class DriverRepository extends BaseRepository {
         const search = params.search || '';
         const status = params.status || null;
         const query = Driver.query()
-            .select('id', 'name', 'phone_number', 'status')
+            .select('id', 'name', 'phone_number', 'status', 'cab_id')
+            .withGraphFetched('[cabang]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id_cab', 'nama_cab');
+            })
             .where('is_active', 1)
 
         if (search) {

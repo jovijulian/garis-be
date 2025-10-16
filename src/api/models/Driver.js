@@ -8,11 +8,12 @@ class Driver extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['id_user', 'name', 'phone_number'],
+            required: ['id_user', 'name', 'phone_number', 'cab_id'],
             properties: {
                 id: { type: 'integer' },
                 id_user: { type: 'string' },
                 name: { type: 'string' },
+                cab_id: { type: 'integer' },
                 phone_number: { type: 'string' },
                 status: {
                     type: 'string',
@@ -26,6 +27,7 @@ class Driver extends BaseModelBooking {
 
     static get relationMappings() {
         const User = require('./User');
+        const Site = require('./Site')
         return {
             user: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -34,6 +36,14 @@ class Driver extends BaseModelBooking {
                     from: 'drivers.id_user',
                     to: 'tb_user.id_user',
                 },
+            },
+            cabang: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: Site,
+                join: {
+                    from: 'drivers.cab_id',
+                    to: 'tb_cab.id_cab'
+                }
             },
         };
     }

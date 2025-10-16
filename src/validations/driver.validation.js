@@ -5,6 +5,7 @@ const createSchema = z.object({
         name: z.string({ required_error: 'Driver name is required' }),
         id_user: z.string({ required_error: 'User ID is required' }),
         phone_number: z.string({ required_error: 'Phone number is required' }),
+        cab_id: z.number(),
     }),
 });
 
@@ -16,6 +17,7 @@ const updateSchema = z.object({
         name: z.string({ required_error: 'Driver name is required' }),
         id_user: z.string({ required_error: 'User ID is required' }),
         phone_number: z.string({ required_error: 'Phone number is required' }),
+        cab_id: z.number(),
     }).refine(data => Object.keys(data).length > 0, {
         message: 'At least one field must be provided for an update',
     }),

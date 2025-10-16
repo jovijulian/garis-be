@@ -9,7 +9,7 @@ class DriverService {
     }
 
     async detail(id) {
-        const data = await driverRepository.findByIdWithRelations(id, '[user]');
+        const data = await driverRepository.findByIdWithRelations(id, '[user, cabang]');
         if (!data) {
             const error = new Error('Driver not found.');
             error.statusCode = 404;
