@@ -6,7 +6,8 @@ const validate = require('../../middlewares/validate');
 const {
     createSchema,
     updateSchema,
-    driverIdSchema
+    driverIdSchema,
+    updateStatusSchema
 } = require('../../validations/driver.validation');
 const verifyToken = require('../../middlewares/verifyToken');
 
@@ -17,6 +18,7 @@ router.get('/', DriverController.getAll);
 router.get('/options', DriverController.options);
 router.get('/:id', validate(driverIdSchema), DriverController.detail);
 router.put('/:id', validate(updateSchema), DriverController.update);
+router.put('/:id/status', validate(updateStatusSchema), DriverController.updateStatus);
 router.delete('/:id', validate(driverIdSchema), DriverController.delete);
 
 module.exports = router;

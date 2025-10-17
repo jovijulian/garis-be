@@ -1,7 +1,7 @@
 const vehicleService = require('../services/vehicle.service');
 const { success, error, paginated } = require('../../utils/response');
 
-class TopicController {
+class VehicleController {
 
     async create(req, res) {
         try {
@@ -63,6 +63,18 @@ class TopicController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async updateStatus(req, res) {
+        try {
+            const id = req.params.id;
+            const payload = req.body;
+
+            const data = await vehicleService.updateStatus(id, payload);
+            return success(res, 200, data, 'Vehicle Status updated successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
-module.exports = new TopicController();
+module.exports = new VehicleController();

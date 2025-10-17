@@ -23,6 +23,18 @@ const updateSchema = z.object({
     }),
 });
 
+const updateStatusSchema = z.object({
+    params: z.object({
+        id: z.string().regex(/^\d+$/, { message: 'Vehicle ID must be a number' }),
+    }),
+    body: z.object({
+        status: z.enum(['Available', 'Not Available'], {
+            required_error: 'Status is required',
+            invalid_type_error: "Status must be one of: 'Available', 'Not Available'",
+        }),
+    }),
+});
+
 const driverIdSchema = z.object({
     params: z.object({
         id: z.string().regex(/^\d+$/, { message: 'Driver ID must be a number' }),
@@ -33,4 +45,5 @@ module.exports = {
     createSchema,
     updateSchema,
     driverIdSchema,
+    updateStatusSchema
 };

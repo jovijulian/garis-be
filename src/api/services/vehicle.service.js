@@ -1,15 +1,15 @@
-const vehicleService = require('../repositories/vehicle.repository');
+const vehicleRepository = require('../repositories/vehicle.repository');
 const vehicleTypeRepository = require('../repositories/vehicle-type.repository');
 const { formatDateTime } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
 class VehicleService {
 
     async getAll(queryParams) {
-        return vehicleService.findAllWithFilters(queryParams);
+        return vehicleRepository.findAllWithFilters(queryParams);
     }
 
     async detail(id) {
-        const data = await vehicleService.findByIdWithRelations(id, '[vehicle_type, cabang]');
+        const data = await vehicleRepository.findByIdWithRelations(id, '[vehicle_type, cabang]');
         if (!data) {
             const error = new Error('Vehicle not found.');
             error.statusCode = 404;
@@ -26,7 +26,7 @@ class VehicleService {
                 error.statusCode = 404;
                 throw error;
             }
-            const existingVehicle = await vehicleService.findByLicensePlate(payload.license_plate);
+            const existingVehicle = await vehicleRepository.findByLicensePlate(payload.license_plate);
             if (existingVehicle) {
                 const error = new Error('License plate already exists.');
                 error.statusCode = 400;
@@ -36,7 +36,7 @@ class VehicleService {
                 payload.created_at = formatDateTime();
                 payload.updated_at = formatDateTime();
 
-                const data = await vehicleService.create(payload, trx);
+                const data = await vehicleRepository.create(payload, trx);
                 return data;
             });
         } catch (error) {
@@ -56,7 +56,7 @@ class VehicleService {
             return knexBooking.transaction(async (trx) => {
                 payload.updated_at = formatDateTime();
 
-                const data = await vehicleService.update(id, payload, trx);
+                const data = await vehicleRepository.update(id, payload, trx);
                 return data;
             });
         } catch (error) {
@@ -68,7 +68,7 @@ class VehicleService {
         await this.detail(id);
         try {
             return knexBooking.transaction(async (trx) => {
-                const data = await vehicleService.update(id, { is_active: 0 }, trx);
+                const data = await vehicleRepository.update(id, { is_active: 0 }, trx);
 
                 if (!data) {
                     const error = new Error('Failed to deleted vehicle.');
@@ -85,7 +85,7 @@ class VehicleService {
     }
 
     async options(params) {
-        const data = await vehicleService.options(params);
+        const data = await vehicleRepository.options(params);
 
         if (!data || data.length === 0) {
             const error = new Error('No Vehicles found.');
@@ -94,6 +94,18 @@ class VehicleService {
         }
 
         return data;
+    }
+
+    async updateStatus(id, payload) {
+        await this.detail(id);
+        try {
+            return knexBooking.transaction(async (trx) => {
+                const data = await vehicleRepository.updateStatus(id, { status: payload.status, updated_at: formatDateTime() }, trx);
+                return data;
+            });
+        } catch (error) {
+            throw error;
+        }
     }
 }
 

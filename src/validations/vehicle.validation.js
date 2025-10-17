@@ -50,12 +50,19 @@ const updateSchema = z.object({
             required_error: 'Passenger capacity is required',
             invalid_type_error: 'Passenger capacity must be a number',
         }).int().positive('Passenger capacity must be a positive number'),
+        cab_id: z.number().nullable().optional()
+    }),
+});
 
+const updateStatusSchema = z.object({
+    params: z.object({
+        id: z.string().regex(/^\d+$/, { message: 'Vehicle ID must be a number' }),
+    }),
+    body: z.object({
         status: z.enum(['Available', 'Not Available', 'In Repair'], {
             required_error: 'Status is required',
             invalid_type_error: "Status must be one of: 'Available', 'Not Available', 'In Repair'",
         }),
-        cab_id: z.number().nullable().optional()
     }),
 });
 
@@ -69,4 +76,5 @@ module.exports = {
     createSchema,
     updateSchema,
     vehicleIdSchema,
+    updateStatusSchema
 };

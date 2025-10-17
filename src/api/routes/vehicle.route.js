@@ -6,7 +6,8 @@ const validate = require('../../middlewares/validate');
 const {
     createSchema,
     updateSchema,
-    vehicleIdSchema
+    vehicleIdSchema,
+    updateStatusSchema
 } = require('../../validations/vehicle.validation');
 const verifyToken = require('../../middlewares/verifyToken');
 
@@ -17,6 +18,7 @@ router.get('/', VehicleController.getAll);
 router.get('/options', VehicleController.options);
 router.get('/:id', validate(vehicleIdSchema), VehicleController.detail);
 router.put('/:id', validate(updateSchema), VehicleController.update);
+router.put('/:id/status', validate(updateStatusSchema), VehicleController.updateStatus);
 router.delete('/:id', validate(vehicleIdSchema), VehicleController.delete);
 
 module.exports = router;

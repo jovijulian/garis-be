@@ -71,6 +71,10 @@ class DriverRepository extends BaseRepository {
         return Driver.query().where('id_user', user_id).andWhere('is_active', 1).first();
     }
 
+    async updateStatus(id, payload, trx = null) {
+        return this.update(id, payload, trx);
+    }
+
 }
 
 module.exports = new DriverRepository();

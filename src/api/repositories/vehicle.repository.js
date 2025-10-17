@@ -94,6 +94,10 @@ class VehicleRepository extends BaseRepository {
             .andWhere('is_active', 1)
             .first();
     }
+
+    async updateStatus(id, payload, trx = null) {
+        return this.update(id, payload, trx);
+    }
 }
 
 module.exports = new VehicleRepository();

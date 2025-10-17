@@ -76,6 +76,18 @@ class DriverService {
 
         return data;
     }
+
+    async updateStatus(id, payload) {
+        await this.detail(id);
+        try {
+            return knexBooking.transaction(async (trx) => {
+                const data = await driverRepository.updateStatus(id, { status: payload.status, updated_at: formatDateTime() }, trx);
+                return data;
+            });
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 module.exports = new DriverService();

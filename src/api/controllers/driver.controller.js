@@ -63,6 +63,18 @@ class DriverController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async updateStatus(req, res) {
+        try {
+            const id = req.params.id;
+            const payload = req.body;
+
+            const data = await driverService.updateStatus(id, payload);
+            return success(res, 200, data, 'Driver Status updated successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new DriverController();
