@@ -13,7 +13,7 @@ class VehicleRequestRepository extends BaseRepository {
 
         const query = VehicleRequest.query()
             .select('*')
-            .withGraphFetched('[cabang, user, vehicle_type, assigned_vehicles.[vehicle], assigned_drivers.[driver]]')
+            .withGraphFetched('[cabang, user, vehicle_type, detail.[vehicle, driver]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
@@ -23,10 +23,10 @@ class VehicleRequestRepository extends BaseRepository {
             .modifyGraph('vehicle_type', builder => {
                 builder.select('id', 'name');
             })
-            .modifyGraph('assigned_vehicles.vehicle', builder => {
+            .modifyGraph('detail.vehicle', builder => {
                 builder.select('id', 'license_plate', 'name');
             })
-            .modifyGraph('assigned_drivers.driver', builder => {
+            .modifyGraph('detail.driver', builder => {
                 builder.select('id', 'name', 'phone_number');
             })
 
@@ -42,12 +42,12 @@ class VehicleRequestRepository extends BaseRepository {
                             .where('name', 'like', `%${search}%`)
                     )
                     .orWhereExists(
-                        VehicleRequest.relatedQuery('assigned_vehicles.vehicle')
+                        VehicleRequest.relatedQuery('detail.vehicle')
                             .where('name', 'like', `%${search}%`)
                             .orWhere('license_plate', 'like', `%${search}%`)
                     )
                     .orWhereExists(
-                        VehicleRequest.relatedQuery('assigned_drivers.driver')
+                        VehicleRequest.relatedQuery('detail.driver')
                             .where('name', 'like', `%${search}%`)
                             .orWhere('phone_number', 'like', `%${search}%`)
                     );

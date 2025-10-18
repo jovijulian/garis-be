@@ -36,6 +36,7 @@ class VehicleRequest extends BaseModelBooking {
         const RequestAssignedVehicle = require('./RequestAssignedVehicle');
         const RequestAssignedDriver = require('./RequestAssignedDriver');
         const VehicleType = require('./VehicleType');
+        const VehicleAssigment = require('./VehicleAssignment');
         return {
             cabang: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -61,22 +62,30 @@ class VehicleRequest extends BaseModelBooking {
                     to: 'vehicle_types.id'
                 }
             },
-            assigned_vehicles: {
+            detail: {
                 relation: BaseModelBooking.HasManyRelation,
-                modelClass: RequestAssignedVehicle,
+                modelClass: VehicleAssigment,
                 join: {
                     from: 'vehicle_requests.id',
-                    to: 'request_assigned_vehicles.request_id'
+                    to: 'vehicle_assignments.request_id'
                 }
             },
-            assigned_drivers: {
-                relation: BaseModelBooking.HasManyRelation,
-                modelClass: RequestAssignedDriver,
-                join: {
-                    from: 'vehicle_requests.id',
-                    to: 'request_assigned_drivers.request_id'
-                }
-            }
+            // assigned_vehicles: {
+            //     relation: BaseModelBooking.HasManyRelation,
+            //     modelClass: RequestAssignedVehicle,
+            //     join: {
+            //         from: 'vehicle_requests.id',
+            //         to: 'request_assigned_vehicles.request_id'
+            //     }
+            // },
+            // assigned_drivers: {
+            //     relation: BaseModelBooking.HasManyRelation,
+            //     modelClass: RequestAssignedDriver,
+            //     join: {
+            //         from: 'vehicle_requests.id',
+            //         to: 'request_assigned_drivers.request_id'
+            //     }
+            // }
 
         };
     }

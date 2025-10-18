@@ -1,8 +1,9 @@
 const vehicleRequestRepository = require('../repositories/vehicle-request.repository');
 const { getUserId, formatDateTime, parseMenuDescription } = require('../helpers/dataHelpers');
 const { knexBooking } = require('../../config/database');
-const assignedVehicleRepository = require('../repositories/request-assigned-vehicle.repository');
-const assignedDriverRepository = require('../repositories/request-assigned-driver.repository');
+const vehicleAssignmentRepository = require('../repositories/vehicle-assignment.repository');
+const driverRepository = require('../repositories/driver.repository');
+const vehicleRepository = require('../repositories/vehicle.repository');
 const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
@@ -23,7 +24,7 @@ class VehicleRequestService {
 
     async detail(id) {
         const data = await vehicleRequestRepository.findByIdWithRelations(id,
-            '[cabang, user, vehicle_type, assigned_vehicles.[vehicle], assigned_drivers.[driver]]'
+            '[cabang, user, vehicle_type, detail.[vehicle, driver]]'
         );
         if (!data) {
             const error = new Error('Vehicle Request not found.');
@@ -128,11 +129,6 @@ class VehicleRequestService {
             throw error;
         }
 
-        if (existingRequest.status !== 'Submit') {
-            const error = new Error('Status request ini tidak dapat diubah karena sudah diproses.');
-            error.statusCode = 400;
-            throw error;
-        }
 
         const trx = await knexBooking.transaction();
         let updatedRequest;
@@ -166,63 +162,71 @@ class VehicleRequestService {
         });
     }
 
-    async assignVehicle(id, req) {
-        const { vehicle_id } = req.body;
+    async assign(requestId, req) {
+        const trx = await knexBooking.transaction();
+        let createdAssignments = [];
 
-        const payload = {
-            vehicle_request_id: Number(id),
-            vehicle_id: Number(vehicle_id)
-        };
+        try {
+            const { details } = req.body;
 
-        return knexBooking.transaction(async (trx) => {
-            const data = assignedVehicleRepository.create(payload, trx);
-            return data;
-        });
-
-    }
-
-    async removeVehicleAssignment(id) {
-        return knexBooking.transaction(async (trx) => {
-            const data = await assignedVehicleRepository.delete(id, trx);
-
-            if (!data) {
-                const error = new Error('Failed to deleted vehicle assignment.');
-                error.statusCode = 500;
+            const request = await vehicleRequestRepository.findById(requestId, trx);
+            if (!request) {
+                const error = new Error('Vehicle Request not found.');
+                error.statusCode = 404;
                 throw error;
             }
 
-            return { message: 'Vehicle assignment removed.' };
-        });
-    }
-
-    async assignDriver(id, req) {
-        const { driver_id } = req.body;
-
-        const payload = {
-            vehicle_request_id: Number(id),
-            driver_id: Number(driver_id)
-        };
-
-        return knexBooking.transaction(async (trx) => {
-            const data = assignedDriverRepository.create(payload, trx);
-            return data;
-        });
-
-    }
-
-    async removeDriverAssignment(id) {
-        return knexBooking.transaction(async (trx) => {
-            const data = await assignedDriverRepository.delete(id, trx);
-
-            if (!data) {
-                const error = new Error('Failed to deleted driver assignment.');
-                error.statusCode = 500;
+            if (request.status !== 'Approved') {
+                const error = new Error(`Request cannot be assigned because its status is '${request.status}'.`);
+                error.statusCode = 400;
                 throw error;
             }
+            await vehicleAssignmentRepository.deleteByRequestId(requestId, trx);
 
-            return { message: 'Driver assignment removed.' };
-        });
+            for (const assignmentDetail of details) {
+                const { vehicle_id, driver_id } = assignmentDetail;
+                const checkStatusVehicle = await vehicleRepository.checkStatus(vehicle_id, trx);
+                if (checkStatusVehicle !== 'Available') {
+                    const error = new Error(`Vehicle with ID ${vehicle_id} is not available for assignment.`);
+                    error.statusCode = 400;
+                    throw error;
+                }
+
+                if (!driver_id) {
+                    const checkStatusDriver = await driverRepository.checkDriverStatus(driver_id, trx);
+                    if (checkStatusDriver !== 'Available') {
+                        const error = new Error(`Driver with ID ${driver_id} is not available for assignment.`);
+                        error.statusCode = 400;
+                        throw error;
+                    }
+                }
+
+
+
+                const assignmentPayload = {
+                    request_id: Number(requestId),
+                    vehicle_id: Number(vehicle_id),
+                    driver_id: driver_id ? Number(driver_id) : null,
+                    note_for_driver: assignmentDetail.note_for_driver || null,
+                    created_at: formatDateTime(),
+                    updated_at: formatDateTime(),
+                };
+
+                const newAssignment = await vehicleAssignmentRepository.create(assignmentPayload, trx);
+                createdAssignments.push(newAssignment);
+            }
+
+            await trx.commit();
+
+            return createdAssignments;
+
+        } catch (error) {
+            await trx.rollback();
+            throw error;
+        }
     }
+
+
 }
 
 module.exports = new VehicleRequestService();

@@ -22,6 +22,22 @@ const assignDriverSchema = z.object({
     })
 });
 
+const detailAssignSchema = z.object({
+    request_id: z.number({ required_error: 'Request ID is required' }),
+    vehicle_id: z.number({ required_error: 'Vehicle is required' }),
+    driver_id: z.number().int().positive().optional().nullable(),
+    note_for_driver: z.string().optional().nullable(),
+});
+
+const assignSchema = z.object({
+    params: z.object({
+        requestId: z.string().regex(/^\d+$/, { message: 'Request ID must be a number' }),
+    }),
+    body: z.object({
+        details: z.array(detailAssignSchema).min(1, { message: 'Request must have at least one assignment item.' }),
+    }),
+});
+
 const removeAssignmentSchema = z.object({
     params: z.object({
         assignment_id: z.string().regex(/^\d+$/, { message: 'Assignment ID must be a number' }),
@@ -31,5 +47,6 @@ const removeAssignmentSchema = z.object({
 module.exports = {
     assignVehicleSchema,
     assignDriverSchema,
-    removeAssignmentSchema
+    removeAssignmentSchema,
+    assignSchema
 };

@@ -102,6 +102,11 @@ class VehicleRepository extends BaseRepository {
     async updateStatus(id, payload, trx = null) {
         return this.update(id, payload, trx);
     }
+
+    async checkStatus(id) {
+        const vehicle = await this.findById(id);
+        return vehicle.status;
+    }
 }
 
 module.exports = new VehicleRepository();

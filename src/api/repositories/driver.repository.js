@@ -79,6 +79,11 @@ class DriverRepository extends BaseRepository {
         return this.update(id, payload, trx);
     }
 
+    async checkStatus(id) {
+        const driver = await this.findById(id);
+        return driver.status;
+    }
+
 }
 
 module.exports = new DriverRepository();

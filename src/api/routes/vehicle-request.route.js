@@ -7,8 +7,11 @@ const {
     createRequestSchema,
     updateRequestSchema,
     updateStatusSchema,
-    requestIdSchema
+    requestIdSchema,
 } = require('../../validations/vehicle-request.validation');
+const {
+    assignSchema
+} = require('../../validations/vehicle-assignment.validation');
 const verifyToken = require('../../middlewares/verifyToken');
 
 router.use(verifyToken);
@@ -19,6 +22,7 @@ router.get('/user', VehicleRequestController.getAllUser);
 router.get('/:id', validate(requestIdSchema), VehicleRequestController.detail);
 router.put('/:id', validate(updateRequestSchema), VehicleRequestController.update);
 router.put('/status/:id', validate(updateStatusSchema), VehicleRequestController.updateVehicleRequestStatus);
+router.put('/assignment/:requestId', validate(assignSchema), VehicleRequestController.assign);
 router.put('/cancel/:id', validate(requestIdSchema), VehicleRequestController.cancelRequest);
 router.delete('/:id', validate(requestIdSchema), VehicleRequestController.delete);
 

@@ -1,5 +1,6 @@
 const { z } = require('zod');
 
+
 const requestBodySchema = z.object({
     cab_id: z.number().int().positive().optional().nullable(),
     pickup_location_text: z.string().min(5).optional().nullable(),
@@ -24,7 +25,8 @@ const requestBodySchema = z.object({
         required_error: 'Purpose of the request is required'
     }).min(5, 'Purpose must be at least 5 characters'),
     note: z.string().optional().nullable(),
-    id_user: z.string().optional()
+    id_user: z.string().optional(),
+    requires_driver: z.boolean().optional().nullable(),
 })
 .refine(data => data.cab_id || data.pickup_location_text, {
     message: 'Either Cabang ID or Pickup Location Text must be provided',
@@ -68,5 +70,5 @@ module.exports = {
     createRequestSchema,
     updateRequestSchema,
     updateStatusSchema,
-    requestIdSchema
+    requestIdSchema,
 };

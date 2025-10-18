@@ -83,41 +83,12 @@ class VehicleRequestController {
         }
     }
 
-    async assignVehicle(req, res) {
+    async assign(req, res) {
+        console.log('a')
         try {
-            const id = req.params.id;
-            const data = await vehicleRequestService.assignVehicle(id, req);
-            return success(res, 201, data, 'Vehicle assigned successfully');
-        } catch (err) {
-            return error(res, err.statusCode || 500, err);
-        }
-    }
-
-    async removeVehicleAssignment(req, res) {
-        try {
-            const id = req.params.id;
-            const data = await vehicleRequestService.removeVehicleAssignment(id);
-            return success(res, 200, data, 'Vehicle assignment removed');
-        } catch (err) {
-            return error(res, err.statusCode || 500, err);
-        }
-    }
-
-    async assignDriver(req, res) {
-        try {
-            const id = req.params.id;
-            const data = await vehicleRequestService.assignDriver(id, req);
-            return success(res, 201, data, 'Driver assigned successfully');
-        } catch (err) {
-            return error(res, err.statusCode || 500, err);
-        }
-    }
-
-    async removeDriverAssignment(req, res) {
-        try {
-            const id = req.params.id;
-            const data = await vehicleRequestService.removeDriverAssignment(id);
-            return success(res, 200, data, 'Driver assignment removed');
+            const id = req.params.requestId;
+            const data = await vehicleRequestService.assign(id, req);
+            return success(res, 201, data, 'Assignment successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }
