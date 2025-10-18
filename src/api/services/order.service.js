@@ -12,8 +12,11 @@ const moment = require('moment');
 const ExcelJS = require('exceljs');
 class OrderService {
 
-    async getAll(queryParams) {
-        return orderRepository.findAllWithFilters(queryParams);
+    async getAll(queryParams, request) {
+        const siteId = request.user.sites ?? null;
+        return siteId
+            ? orderRepository.findAllWithFilters(queryParams, siteId)
+            : orderRepository.findAllWithFilters(queryParams);
     }
 
     async getAllUser(request) {

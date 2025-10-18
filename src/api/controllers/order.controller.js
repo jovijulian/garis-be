@@ -14,7 +14,7 @@ class OrderController {
 
     async getAll(req, res) {
         try {
-            const paginatedData = await orderService.getAll(req.query);
+            const paginatedData = await orderService.getAll(req.query, req);
             return paginated(res, 200, paginatedData, 'Orders retrieved successfully');
         } catch (err) {
             return error(res, 500, err);

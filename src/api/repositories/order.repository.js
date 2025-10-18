@@ -10,7 +10,7 @@ class OrderRepository extends BaseRepository {
         super(Order);
     }
 
-    async findAllWithFilters(queryParams = {}) {
+    async findAllWithFilters(queryParams = {}, siteId = null) {
         const page = queryParams.page || 1;
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
@@ -52,6 +52,11 @@ class OrderRepository extends BaseRepository {
             });
 
         }
+        if (siteId) {
+            query.where('cab_id', siteId);
+        }
+
+
 
         const paginatedResult = await query;
 
