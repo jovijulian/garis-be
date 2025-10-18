@@ -14,7 +14,7 @@ class VehicleRequestController {
 
     async getAll(req, res) {
         try {
-            const paginatedData = await vehicleRequestService.getAll(req.query);
+            const paginatedData = await vehicleRequestService.getAll(req.query, req);
             return paginated(res, 200, paginatedData, 'Vehicle Requests retrieved successfully');
         } catch (err) {
             return error(res, 500, err);

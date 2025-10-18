@@ -6,7 +6,7 @@ class VehicleRequestRepository extends BaseRepository {
         super(VehicleRequest);
     }
 
-    async findAllWithFilters(queryParams = {}) {
+    async findAllWithFilters(queryParams = {}, siteId = null) {
         const page = queryParams.page || 1;
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
@@ -53,6 +53,10 @@ class VehicleRequestRepository extends BaseRepository {
                     );
             });
 
+        }
+
+        if (siteId) {
+            query.where('cab_id', siteId);
         }
 
         const paginatedResult = await query;

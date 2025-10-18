@@ -8,9 +8,11 @@ const path = require('path');
 const moment = require('moment');
 const ExcelJS = require('exceljs');
 class VehicleRequestService {
-
-    async getAll(queryParams) {
-        return vehicleRequestRepository.findAllWithFilters(queryParams);
+    async getAll(queryParams, request) {
+        const siteId = request.user.sites ?? null;
+        return siteId
+            ? vehicleRequestRepository.findAllWithFilters(queryParams, siteId)
+            : vehicleRequestRepository.findAllWithFilters(queryParams);
     }
 
     async getAllUser(request) {
