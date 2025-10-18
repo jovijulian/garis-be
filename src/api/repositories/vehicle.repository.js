@@ -54,6 +54,7 @@ class VehicleRepository extends BaseRepository {
         const search = params.search || '';
         const vehicleTypeId = params.vehicle_type_id || null;
         const status = params.status || null;
+        const cab_id = params.cab_id || null;
         const query = Vehicle.query()
             .select('id', 'name', 'license_plate', 'vehicle_type_id', 'passenger_capacity', 'status', 'cab_id')
             .where('is_active', 1)
@@ -74,6 +75,9 @@ class VehicleRepository extends BaseRepository {
         }
         if (status) {
             query.where('status', status);
+        }
+        if (cab_id) {
+            query.where('cab_id', cab_id);
         }
 
         const data = await query;

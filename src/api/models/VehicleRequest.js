@@ -14,11 +14,11 @@ class VehicleRequest extends BaseModelBooking {
                 id_user: { type: 'string' },
                 cab_id: { type: 'integer', nullable: true },
                 pickup_location_text: { type: 'string', nullable: true },
-                destination: { type: 'integer', nullable: true },
+                destination: { type: 'string', nullable: true },
                 start_time: { type: 'string', format: 'date-time' },
                 end_time: { type: 'string', format: 'date-time', nullable: true },
                 passenger_count: { type: 'integer' },
-                passengger_names: { type: 'string', nullable: true },
+                passenger_names: { type: 'string', nullable: true },
                 requested_vehicle_type_id: { type: 'integer' },
                 requested_vehicle_count: { type: 'integer' },
                 purpose: { type: 'string' },
@@ -33,7 +33,8 @@ class VehicleRequest extends BaseModelBooking {
     static get relationMappings() {
         const Site = require('./Site');
         const User = require('./User');
-        const VehicleAssigment = require('./VehicleAssigment');
+        const RequestAssignedVehicle = require('./RequestAssignedVehicle');
+        const RequestAssignedDriver = require('./RequestAssignedDriver');
         const VehicleType = require('./VehicleType');
         return {
             cabang: {
@@ -48,7 +49,7 @@ class VehicleRequest extends BaseModelBooking {
                 relation: BaseModelBooking.BelongsToOneRelation,
                 modelClass: User,
                 join: {
-                    from: 'vehicle_requests.user_id',
+                    from: 'vehicle_requests.id_user',
                     to: 'tb_user.id_user'
                 }
             },
@@ -60,12 +61,20 @@ class VehicleRequest extends BaseModelBooking {
                     to: 'vehicle_types.id'
                 }
             },
-            details: {
+            assigned_vehicles: {
                 relation: BaseModelBooking.HasManyRelation,
-                modelClass: VehicleAssigment,
+                modelClass: RequestAssignedVehicle,
                 join: {
                     from: 'vehicle_requests.id',
-                    to: 'vehicle_assigments.vehicle_request_id'
+                    to: 'request_assigned_vehicles.request_id'
+                }
+            },
+            assigned_drivers: {
+                relation: BaseModelBooking.HasManyRelation,
+                modelClass: RequestAssignedDriver,
+                join: {
+                    from: 'vehicle_requests.id',
+                    to: 'request_assigned_drivers.request_id'
                 }
             }
 

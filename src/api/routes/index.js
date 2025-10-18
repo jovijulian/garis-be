@@ -14,6 +14,7 @@ const orderRoutes = require('./order.route');
 const vehicleTypeRoutes = require('./vehicle-type.route')
 const vehicleRoutes = require('./vehicle.route');
 const driverRoutes = require('./driver.route');
+const vehicleRequestRoutes = require('./vehicle-request.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -28,5 +29,6 @@ router.use('/orders', orderRoutes);
 router.use('/vehicle-types', vehicleTypeRoutes);
 router.use('/vehicles', vehicleRoutes);
 router.use('/drivers', driverRoutes);
+router.use('/vehicle-requests', vehicleRequestRoutes);
 
 module.exports = router;

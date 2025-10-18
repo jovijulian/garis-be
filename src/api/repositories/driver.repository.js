@@ -39,6 +39,7 @@ class DriverRepository extends BaseRepository {
     async options(params) {
         const search = params.search || '';
         const status = params.status || null;
+        const cab_id = params.cab_id || null;
         const query = Driver.query()
             .select('id', 'name', 'phone_number', 'status', 'cab_id')
             .withGraphFetched('[cabang]')
@@ -53,6 +54,9 @@ class DriverRepository extends BaseRepository {
 
         if (status) {
             query.where('status', status);
+        }
+        if (cab_id) {
+            query.where('cab_id', cab_id);
         }
 
         const data = await query;

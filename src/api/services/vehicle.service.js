@@ -66,22 +66,17 @@ class VehicleService {
 
     async delete(id) {
         await this.detail(id);
-        try {
-            return knexBooking.transaction(async (trx) => {
-                const data = await vehicleRepository.update(id, { is_active: 0 }, trx);
+        return knexBooking.transaction(async (trx) => {
+            const data = await vehicleRepository.update(id, { is_active: 0 }, trx);
 
-                if (!data) {
-                    const error = new Error('Failed to deleted vehicle.');
-                    error.statusCode = 500;
-                    throw error;
-                }
+            if (!data) {
+                const error = new Error('Failed to deleted vehicle.');
+                error.statusCode = 500;
+                throw error;
+            }
 
-                return { message: 'Vehicle has been deleted successfully.' };
-            });
-        } catch (error) {
-            throw error;
-        }
-
+            return { message: 'Vehicle has been deleted successfully.' };
+        });
     }
 
     async options(params) {
