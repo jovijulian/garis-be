@@ -9,9 +9,7 @@ const requestBodySchema = z.object({
     start_time: z.string({
         required_error: 'Start time is required'
     }).datetime({ message: 'Invalid datetime format for start_time (must be ISO 8601)' }),
-    end_time: z.string({
-        required_error: 'End time is required'
-    }).datetime({ message: 'Invalid datetime format for end_time (must be ISO 8601)' }),
+    end_time: z.string().datetime({ message: 'Invalid datetime format for end_time (must be ISO 8601)' }).optional().nullable(),
     passenger_count: z.number({
         required_error: 'Passenger count is required'
     }).int().positive('Passenger count must be a positive number'),
