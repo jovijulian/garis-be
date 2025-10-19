@@ -23,7 +23,7 @@ class VehicleRequest extends BaseModelBooking {
                 requested_vehicle_count: { type: 'integer' },
                 purpose: { type: 'string' },
                 note: { type: 'string', nullable: true },
-                status: { type: 'string', enum: ['Submit', 'Approved', 'Rejected', 'Completed', 'Canceled'] },
+                status: { type: 'string', enum: ['Submit', 'Approved', 'Rejected', 'Completed', 'Canceled', 'In Progress'] },
                 rejection_reason: { type: 'string', nullable: true },
                 approved_by: { type: 'string', nullable: true },
             }
