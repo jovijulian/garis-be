@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: white;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .header {
+        background-color: #007bff;
+        color: white;
+        padding: 10px;
+        text-align: center;
+        border-radius: 8px 8px 0 0;
+      }
+      .content {
+        padding: 20px;
+      }
+      .footer {
+        text-align: center;
+        font-size: 0.9em;
+        color: #777;
+        margin-top: 20px;
+      }
+      .reason-box {
+        padding: 15px;
+        border-radius: 5px;
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>Pemberitahuan Pembatalan Pengajuan Kendaraan oleh Admin</h2>
+      </div>
+      <div class="content">
+        <p>Halo, <strong>{{userName}}</strong>,</p>
+        <p>
+          Dengan berat hati kami informasikan bahwa pengajuan kendaraan Anda
+          yang telah disetujui sebelumnya telah dibatalkan oleh Administrator
+          karena ada kebutuhan mendesak atau prioritas yang lebih tinggi.
+        </p>
+
+        <p>Detail pengajuan kendaraan yang dibatalkan:</p>
+        <ul>
+          <li><strong>Waktu Pemesanan:</strong> {{startTime}}</li>
+          <li><strong>Tujuan:</strong> {{purpose}}</li>
+        </ul>
+
+        <div class="reason-box">
+          Mohon maaf atas ketidaknyamanan ini. Silakan hubungi General Affair
+          untuk informasi lebih lanjut.
+        </div>
+      </div>
+      <div class="footer">
+        <p>&copy; 2025 GARIS | PT. Cisangkan</p>
+      </div>
+    </div>
+  </body>
+</html>

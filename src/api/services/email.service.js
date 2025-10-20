@@ -360,6 +360,201 @@ const sendAdminCancellationOrderEmail = async (bookingDetails) => {
     }
 };
 
+const sendNewVehicleRequestNotificationEmail = async (adminEmails, requestDetail) => {
+    try {
+        const {
+            user, cabang, note, purpose, id, start_time, destination,
+            pickup_location_text, passenger_count, requested_vehicle_count,
+            vehicle_type, requires_driver
+        } = requestDetail;
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'new-vehicle-request-notification.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        const location = pickup_location_text || (cabang ? cabang.nama_cab : 'N/A');
+
+        htmlContent = htmlContent.replace(/{{userName}}/g, user?.nama_user || 'N/A');
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
+        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).format('DD MMM YYYY, HH:mm') : '-');
+        htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
+        htmlContent = htmlContent.replace(/{{location}}/g, location);
+        htmlContent = htmlContent.replace(/{{passengerCount}}/g, passenger_count || '0');
+        htmlContent = htmlContent.replace(/{{vehicleTypeRequested}}/g, vehicle_type?.name || 'Tidak Spesifik');
+        htmlContent = htmlContent.replace(/{{vehicleCountRequested}}/g, requested_vehicle_count || '0');
+        htmlContent = htmlContent.replace(/{{requiresDriver}}/g, requires_driver === 1 ? 'Ya' : 'Tidak');
+        htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+
+        const adminLink = `${process.env.FRONTEND_URL}/vehicles/manage-requests/${id}`;
+        htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[TINJAU] Pengajuan Kendaraan Baru: ${purpose || ''}`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi pengajuan kendaraan baru terkirim ke admin.`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi pengajuan kendaraan baru ke admin:", error);
+    }
+};
+
+const sendUpdateVehicleRequestNotificationEmail = async (adminEmails, requestDetail) => {
+    try {
+        const {
+            user, cabang, note, purpose, id, start_time, destination,
+            pickup_location_text, passenger_count, requested_vehicle_count,
+            vehicle_type, requires_driver
+        } = requestDetail;
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'update-vehicle-request-notification.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        const location = pickup_location_text || (cabang ? cabang.nama_cab : 'N/A');
+
+        htmlContent = htmlContent.replace(/{{userName}}/g, user?.nama_user || 'N/A');
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
+        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).format('DD MMM YYYY, HH:mm') : '-');
+        htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
+        htmlContent = htmlContent.replace(/{{location}}/g, location);
+        htmlContent = htmlContent.replace(/{{passengerCount}}/g, passenger_count || '0');
+        htmlContent = htmlContent.replace(/{{vehicleTypeRequested}}/g, vehicle_type?.name || 'Tidak Spesifik');
+        htmlContent = htmlContent.replace(/{{vehicleCountRequested}}/g, requested_vehicle_count || '0');
+        htmlContent = htmlContent.replace(/{{requiresDriver}}/g, requires_driver === 1 ? 'Ya' : 'Tidak');
+        htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+
+        const adminLink = `${process.env.FRONTEND_URL}/vehicles/manage-requests/${id}`;
+        htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[DIUBAH] Pengajuan Kendaraan: ${purpose || ''}`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi perubahan pengajuan kendaraan terkirim ke admin.`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi perubahan pengajuan kendaraan ke admin:", error);
+    }
+};
+
+const sendRequestStatusUpdateEmail = async (email, requestDetail) => {
+    try {
+        const {
+            user, purpose, start_time, status
+        } = requestDetail;
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'vehicle-request-status-update.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        let subject, headerClass, message;
+        if (status === 'Approved') {
+            subject = `[DISETUJUI] Pengajuan Kendaraan Anda`;
+            headerClass = 'header-approved';
+            message = 'Pengajuan kendaraan Anda telah disetujui dan akan segera diproses.';
+        } else if (status === 'Rejected') {
+            subject = `[DITOLAK] Pesanan Pengajuan Kendaraan Anda`;
+            headerClass = 'header-rejected';
+            message = 'Mohon maaf, pengajuan kendaraan Anda telah ditolak. Silakan hubungi Admin GA untuk informasi lebih lanjut.';
+        } else {
+            subject = `[UPDATE] Status Pesanan Pengajuan Kendaraan Anda`;
+            headerClass = 'header-approved';
+            message = `Status pengajuan kendaraan Anda telah diperbarui menjadi "${status}".`;
+        }
+
+
+        htmlContent = htmlContent.replace(/{{headerClass}}/g, headerClass);
+        htmlContent = htmlContent.replace(/{{status}}/g, status);
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{message}}/g, message);
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose);
+        htmlContent = htmlContent.replace(/{{start_time}}/g, moment(start_time).format('DD MMM YYYY, HH:mm'));
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: email,
+            subject: subject,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi status pesanan terkirim ke ${user.email}`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi status pesanan:", error);
+    }
+}
+
+const sendAdminCancellationRequestEmail = async (requestDetail) => {
+    try {
+        const {
+            user, purpose, start_time, status
+        } = requestDetail;
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'vehicle-request-canceled-by-admin.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose);
+        htmlContent = htmlContent.replace(/{{startTime}}/g, moment(start_time).format('DD MMM YYYY, HH:mm'));
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: user.email,
+            subject: `[DIBATALKAN] Pengajuan Kendaraan Anda`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.email}`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi pembatalan oleh admin:", error);
+    }
+};
+
+const sendAssignmentNotificationEmail = async (driverEmail, assignmentDetails, requestDetails, vehicleDetails) => {
+    try {
+        const { note_for_driver } = assignmentDetails;
+        const { user, purpose, destination, start_time, passenger_count, passenger_names } = requestDetails;
+        const { name: vehicleName, license_plate: vehiclePlate } = vehicleDetails;
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'assignment-notification.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        htmlContent = htmlContent.replace(/{{driverName}}/g, assignmentDetails.driver?.name || 'Supir'); 
+        htmlContent = htmlContent.replace(/{{requesterName}}/g, user?.nama_user || 'N/A');
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
+        htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
+        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).format('DD MMM YYYY, HH:mm') : '-');
+        htmlContent = htmlContent.replace(/{{vehicleInfo}}/g, `${vehicleName} (${vehiclePlate})`);
+        htmlContent = htmlContent.replace(/{{passengerCount}}/g, passenger_count || '0');
+        htmlContent = htmlContent.replace(/{{passengerNames}}/g, passenger_names || '-');
+        htmlContent = htmlContent.replace(/{{adminNote}}/g, note_for_driver || '-');
+
+        const driverAppLink = `${process.env.FRONTEND_URL}/vehicles/my-assignments`; 
+        htmlContent = htmlContent.replace(/{{driverAppLink}}/g, driverAppLink);
+
+        const mailOptions = {
+            from: `"Notifikasi Tugas GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: driverEmail, 
+            subject: `[TUGAS BARU] Penugasan Kendaraan: ${purpose || ''}`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi tugas baru terkirim ke ${driverEmail}.`);
+
+    } catch (error) {
+        console.error(`Gagal mengirim email notifikasi tugas ke ${driverEmail}:`, error);
+    }
+};
+
 module.exports = {
     sendBookingStatusEmail,
     sendNewBookingNotificationEmail,
@@ -371,4 +566,9 @@ module.exports = {
     sendReorderNotificationEmail,
     sendOrderStatusUpdateEmail,
     sendAdminCancellationOrderEmail,
+    sendNewVehicleRequestNotificationEmail,
+    sendUpdateVehicleRequestNotificationEmail,
+    sendRequestStatusUpdateEmail,
+    sendAdminCancellationRequestEmail,
+    sendAssignmentNotificationEmail
 };

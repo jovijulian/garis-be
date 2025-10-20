@@ -76,6 +76,14 @@ class UserRepository extends BaseRepository {
         return data;
     }
 
+    async findDriverByIdUser(id_user) {
+        return User.query()
+            .select('*')
+            .where('id_user', id_user)
+            .where('role_garis', 3)
+            .first();
+    }
+
 }
 
 module.exports = new UserRepository();

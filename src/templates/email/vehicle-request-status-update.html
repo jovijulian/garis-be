@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Pembaruan Status Pengajuan Kendaraan</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: white; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header { padding: 15px; text-align: center; border-radius: 8px 8px 0 0; color: white; }
+        .header-approved { background-color: #28a745; }
+        .header-rejected { background-color: #dc3545; }
+        .content { padding: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: #777; }
+        .details-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px; }
+        .details-table td { padding: 5px 0; vertical-align: top; border-bottom: 1px solid #eee; }
+        .details-table td:first-child { width: 35%; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header {{headerClass}}">
+            <h2>Status Pengajuan Anda: {{status}}</h2>
+        </div>
+        <div class="content">
+            <p>Halo, <strong>{{userName}}</strong>,</p>
+            <p>{{message}}</p>
+            
+            <table class="details-table">
+                <tr><td>Tujuan:</td><td>{{purpose}}</td></tr>
+                <tr><td>Waktu:</td><td>{{start_time}}</td></tr>
+            </table>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 GARIS | PT. Cisangkan</p>
+        </div>
+    </div>
+</body>
+</html>

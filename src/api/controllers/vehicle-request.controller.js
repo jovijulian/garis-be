@@ -84,7 +84,6 @@ class VehicleRequestController {
     }
 
     async assign(req, res) {
-        console.log('a')
         try {
             const id = req.params.requestId;
             const data = await vehicleRequestService.assign(id, req);

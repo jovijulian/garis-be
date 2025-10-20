@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Notifikasi Pengajuan Kendaraan Baru</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .header {
+        background-color: #007bff; 
+        color: white;
+        padding: 10px;
+        text-align: center;
+        border-radius: 8px 8px 0 0;
+      }
+      .content {
+        padding: 20px;
+      }
+      .footer {
+        text-align: center;
+        font-size: 0.9em;
+        color: #777;
+      }
+      .cta-button {
+        display: inline-block;
+        padding: 12px 25px;
+        margin: 20px 0;
+        background-color: #007bff; 
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+      }
+      .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+      .details-table td {
+        padding: 6px 0;
+        vertical-align: top;
+      }
+      .details-table td:first-child {
+        width: 40%; 
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>Pengajuan Kendaraan Baru</h2>
+      </div>
+      <div class="content">
+        <p>Halo Admin,</p>
+        <p>
+          Ada pengajuan peminjaman kendaraan baru yang membutuhkan persetujuan Anda.
+          Berikut adalah ringkasannya:
+        </p>
+
+        <table class="details-table">
+          <tr>
+            <td>Diajukan Oleh:</td>
+            <td>{{userName}}</td>
+          </tr>
+          <tr>
+            <td>Keperluan Perjalanan:</td>
+            <td>{{purpose}}</td>
+          </tr>
+           <tr>
+            <td>Waktu Mulai:</td>
+            <td>{{startTime}}</td>
+          </tr>
+          <tr>
+            <td>Tujuan Perjalanan:</td>
+            <td>{{destination}}</td>
+          </tr>
+          <tr>
+            <td>Lokasi Jemput:</td>
+            <td>{{location}}</td>
+          </tr>
+           <tr>
+            <td>Jumlah Penumpang:</td>
+            <td>{{passengerCount}}</td>
+          </tr>
+           <tr>
+            <td>Jenis Kendaraan Diminta:</td>
+            <td>{{vehicleTypeRequested}}</td>
+          </tr>
+           <tr>
+            <td>Jumlah Unit Diminta:</td>
+            <td>{{vehicleCountRequested}}</td>
+          </tr>
+          <tr>
+            <td>Butuh Supir?:</td>
+            <td>{{requiresDriver}}</td>
+          </tr>
+          <tr>
+            <td>Catatan Pemohon:</td>
+            <td>{{note}}</td>
+          </tr>
+        </table>
+        <p style="margin-top: 20px">
+          Silakan tinjau pengajuan ini di panel admin Anda.
+        </p>
+        <a href="{{adminLink}}" class="cta-button">Lihat Detail Pengajuan</a>
+      </div>
+      <div class="footer">
+        <p>&copy; 2025 GARIS | PT. Cisangkan</p>
+      </div>
+    </div>
+  </body>
+</html>
