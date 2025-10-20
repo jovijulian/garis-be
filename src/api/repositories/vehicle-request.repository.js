@@ -42,17 +42,14 @@ class VehicleRequestRepository extends BaseRepository {
                             .where('name', 'like', `%${search}%`)
                     )
                     .orWhereExists(
-                        VehicleRequest.relatedQuery('detail.vehicle')
-                            .where('name', 'like', `%${search}%`)
-                            .orWhere('license_plate', 'like', `%${search}%`)
-                    )
-                    .orWhereExists(
-                        VehicleRequest.relatedQuery('detail.driver')
-                            .where('name', 'like', `%${search}%`)
-                            .orWhere('phone_number', 'like', `%${search}%`)
+                        VehicleRequest.relatedQuery('detail')
+                            .joinRelated('[vehicle, driver]')
+                            .where('vehicle.name', 'like', `%${search}%`)
+                            .orWhere('vehicle.license_plate', 'like', `%${search}%`)
+                            .orWhere('driver.name', 'like', `%${search}%`)
+                            .orWhere('driver.phone_number', 'like', `%${search}%`)
                     );
             });
-
         }
 
         if (siteId) {
@@ -92,7 +89,7 @@ class VehicleRequestRepository extends BaseRepository {
             .modifyGraph('detail.driver', builder => {
                 builder.select('id', 'name', 'phone_number');
             })
-
+            .where('id_user', userId)
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
 
@@ -105,17 +102,14 @@ class VehicleRequestRepository extends BaseRepository {
                             .where('name', 'like', `%${search}%`)
                     )
                     .orWhereExists(
-                        VehicleRequest.relatedQuery('detail.vehicle')
-                            .where('name', 'like', `%${search}%`)
-                            .orWhere('license_plate', 'like', `%${search}%`)
-                    )
-                    .orWhereExists(
-                        VehicleRequest.relatedQuery('detail.driver')
-                            .where('name', 'like', `%${search}%`)
-                            .orWhere('phone_number', 'like', `%${search}%`)
+                        VehicleRequest.relatedQuery('detail')
+                            .joinRelated('[vehicle, driver]')
+                            .where('vehicle.name', 'like', `%${search}%`)
+                            .orWhere('vehicle.license_plate', 'like', `%${search}%`)
+                            .orWhere('driver.name', 'like', `%${search}%`)
+                            .orWhere('driver.phone_number', 'like', `%${search}%`)
                     );
             });
-
         }
 
         const paginatedResult = await query;
