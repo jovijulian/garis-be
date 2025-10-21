@@ -110,6 +110,15 @@ class VehicleRequestController {
         }
     }
 
+    async myAssign(req, res) {
+        try {
+            const paginatedData = await vehicleRequestService.myAssign(req);
+            return paginated(res, 200, paginatedData, 'Assigned Vehicle Requests retrieved successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
 }
 
 module.exports = new VehicleRequestController();

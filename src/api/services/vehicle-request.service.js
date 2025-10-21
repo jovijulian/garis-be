@@ -370,6 +370,17 @@ class VehicleRequestService {
             }
         }
     }
+
+    async myAssign(request) {
+        const userId = getUserId(request);
+        const driver = await driverRepository.findByUserId(userId);
+        if (!driver) {
+            const error = new Error('Driver not found for the logged-in user.');
+            error.statusCode = 404;
+            throw error;
+        }
+        return vehicleAssignmentRepository.findAllAssignmentsByDriverUserId(request.query, driver.id);
+    }
 }
 
 module.exports = new VehicleRequestService();
