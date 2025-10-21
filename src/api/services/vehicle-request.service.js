@@ -170,16 +170,18 @@ class VehicleRequestService {
             await trx.rollback();
             throw error;
         }
-        try {
-            const requester = await userRepository.findById(updatedRequest.id_user);
-            if (requester) {
-                const email = requester.email;
-                const requestDetail = await this.detail(id);
-                await sendRequestStatusUpdateEmail(email, requestDetail);
+        if (payload.status !== 'In Progress' && payload.status !== 'Completed') {
+            try {
+                const requester = await userRepository.findById(updatedRequest.id_user);
+                if (requester) {
+                    const email = requester.email;
+                    const requestDetail = await this.detail(id);
+                    await sendRequestStatusUpdateEmail(email, requestDetail);
+                }
+            } catch (error) {
+                console.log(error)
+                console.error('Failed to send notification email to requester.');
             }
-        } catch (error) {
-            console.log(error)
-            console.error('Failed to send notification email to requester.');
         }
         return updatedRequest;
     }
