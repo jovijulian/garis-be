@@ -20,6 +20,7 @@ router.post('/', validate(createRequestSchema), VehicleRequestController.create)
 router.get('/', VehicleRequestController.getAll);
 router.get('/user', VehicleRequestController.getAllUser);
 router.get('/:id', validate(requestIdSchema), VehicleRequestController.detail);
+router.get('/spj/:id', validate(requestIdSchema), VehicleRequestController.downloadSPJ);
 router.put('/:id', validate(updateRequestSchema), VehicleRequestController.update);
 router.put('/status/:id', validate(updateStatusSchema), VehicleRequestController.updateVehicleRequestStatus);
 router.put('/assignment/:requestId', validate(assignSchema), VehicleRequestController.assign);

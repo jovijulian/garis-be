@@ -6,10 +6,13 @@ const driverRepository = require('../repositories/driver.repository');
 const vehicleRepository = require('../repositories/vehicle.repository');
 const userRepository = require('../repositories/user.repository');
 const { sendNewVehicleRequestNotificationEmail, sendUpdateVehicleRequestNotificationEmail, sendRequestStatusUpdateEmail, sendAdminCancellationRequestEmail, sendAssignmentNotificationEmail } = require('./email.service');
-const fs = require('fs');
+// const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
 const ExcelJS = require('exceljs');
+const puppeteer = require('puppeteer');
+const ejs = require('ejs');
+const fs = require('fs').promises;
 class VehicleRequestService {
     async getAll(queryParams, request) {
         const siteId = request.user.sites ?? null;
@@ -277,7 +280,7 @@ class VehicleRequestService {
             driversToUpdate.forEach(id => {
                 updatePromises.push(driverRepository.update(id, { status: 'Not Available' }, trx));
             });
-            await Promise.all(updatePromises); 
+            await Promise.all(updatePromises);
 
 
             await trx.commit();
@@ -311,7 +314,62 @@ class VehicleRequestService {
         return createdAssignmentsData;
     }
 
+    async generateSPJPdf(id) {
+        const data = await this.detail(id);
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'pdf', 'spj-template.ejs');
+        const logoPath = path.join(__dirname, '..', '..', 'public', 'images', 'logo.png');
+        let base64Logo = '';
+        try {
+            const logoBuffer = await fs.readFile(logoPath);
+            base64Logo = logoBuffer.toString('base64');
+        } catch (err) {
+            console.error("Gagal membaca file logo:", err);
+        }
 
+        const templateData = {
+            request: data,
+            moment: moment,
+            logoBase64: base64Logo // Kirim data base64 ke template
+        };
+
+        const html = await ejs.renderFile(templatePath, templateData);
+
+        let browser;
+        try {
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage'
+                ],
+                // executablePath: '/usr/bin/google-chrome' 
+            });
+            const page = await browser.newPage();
+
+            await page.setContent(html, { waitUntil: 'networkidle0' });
+
+            const pdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: {
+                    top: '20px',
+                    right: '20px',
+                    bottom: '20px',
+                    left: '20px'
+                }
+            });
+
+            return pdfBuffer;
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+            throw new Error("Failed to generate SPJ PDF.");
+        } finally {
+            if (browser) {
+                await browser.close();
+            }
+        }
+    }
 }
 
 module.exports = new VehicleRequestService();

@@ -92,7 +92,23 @@ class VehicleRequestController {
             return error(res, err.statusCode || 500, err);
         }
     }
+    async downloadSPJ(req, res) {
+        try {
+            const id = req.params.id;
 
+            const pdfBuffer = await vehicleRequestService.generateSPJPdf(id);
+            const data = await vehicleRequestService.detail(id);
+            const filename = `SPJ_Request_${id}_${moment(data.start_time).format('YYYYMMDD')}.pdf`;
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+
+            res.send(pdfBuffer);
+
+        } catch (err) {
+            console.error("Error in downloadSPJ:", err);
+            return error(res, err.statusCode || 500, "Failed to generate SPJ PDF.");
+        }
+    }
 
 }
 

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surat Perintah Jalan - Request #<%= request.id %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body { 
+            font-family: 'Times New Roman', Times, serif;
+            background: white;
+            padding: 0;
+            color: #000;
+            line-height: 1.6;
+            font-size: 12pt;
+        }
+        
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20mm;
+            background: white;
+        }
+        
+        /* Kop Surat */
+        .letterhead {
+            border-bottom: 3px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .letterhead-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .company-info {
+            flex: 1;
+        }
+        
+        .company-name {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .company-address {
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #333;
+        }
+        
+        .logo-placeholder {
+            width: 120px;
+            height: 120px;
+            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+        
+        /* Document Header */
+        .document-header {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px 0;
+        }
+        
+        .document-title {
+            font-size: 16pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .document-number {
+            font-size: 11pt;
+            margin-top: 8px;
+        }
+        
+        /* Content Sections */
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+        }
+        
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .detail-table td {
+            padding: 8px 10px;
+            vertical-align: top;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .detail-table td:first-child {
+            width: 200px;
+            font-weight: bold;
+        }
+        
+        .detail-table td:nth-child(2) {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .detail-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Assignment Table */
+        .assignment-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            border: 1px solid #000;
+        }
+        
+        .assignment-table th,
+        .assignment-table td {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .assignment-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 11pt;
+        }
+        
+        .assignment-table td {
+            font-size: 11pt;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        /* Notes Box */
+        .notes-box {
+            border: 1px solid #000;
+            padding: 15px;
+            margin-top: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .notes-box .label {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+       
+        
+        
+        .footer {
+            margin-top: 50px; /* More space before footer */
+            padding-top: 20px;
+            border-top: 1px solid #eee; /* Separator line */
+            overflow: hidden; /* Clear floats */
+        }
+        .signature {
+            float: right; /* Position signature block */
+            width: 250px; /* Width of signature area */
+            text-align: center;
+        }
+        .signature p {
+            margin: 0 0 5px 0;
+            font-size: 11px;
+        }
+        .signature .date {
+            margin-bottom: 50px; /* Space for signature */
+        }
+        .signature .name-placeholder {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .app-footer {
+            flex-shrink: 0; /* Pastikan footer tidak menyusut */
+            text-align: center;
+            font-size: 9pt;
+            margin-top: 15px; /* Beri jarak dari konten di atasnya */
+          }
+        .footer-brand {
+            font-size: 10px;
+            color: #888;
+          }
+        
+        /* Print Optimization */
+        @media print {
+            body {
+                padding: 0;
+            }
+            
+            .container {
+                padding: 0;
+            }
+            
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Kop Surat -->
+        <div class="letterhead">
+            <div class="letterhead-content">
+                <div class="company-info">
+                    <div class="company-name">PT. CISANGKAN</div>
+                    <div class="company-address">
+                        Jl. Haji Alpi No 107, Cijerah, Bandung 40221<br>
+                        Telp: (022) 6031588 | Fax: (022) 6030467<br>
+                        Email: info@cisangkan.com | Website: www.cisangkan.co.id
+                    </div>
+                </div>
+                <div class="logo-placeholder">
+                    <% if (logoBase64) { %>
+                        <img src="data:image/png;base64,<%= logoBase64 %>" alt="Logo PT. Cisangkan" style="max-height: 80px; width: auto;">
+                    <% } else { %>
+                        <span>LOGO</span>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Title -->
+        <div class="document-header">
+            <div class="document-title">SURAT PERINTAH JALAN</div>
+            <div class="document-number">Nomor: SPJ/<%= request.id %>/<%= moment().format('MM/YYYY') %></div>
+        </div>
+
+        <!-- Request Details -->
+        <div class="section">
+            <div class="section-title">I. DATA PERMINTAAN</div>
+            <table class="detail-table">
+                <tr>
+                    <td>Nama Pemohon</td>
+                    <td>:</td>
+                    <td><%= request.user?.nama_user || '-' %></td>
+                </tr>
+                <tr>
+                    <td>Keperluan</td>
+                    <td>:</td>
+                    <td><%= request.purpose %></td>
+                </tr>
+                <tr>
+                    <td>Tujuan</td>
+                    <td>:</td>
+                    <td><%= request.destination %></td>
+                </tr>
+                <tr>
+                    <td>Lokasi Penjemputan</td>
+                    <td>:</td>
+                    <td><%= request.pickup_location_text || request.cabang?.nama_cab || '-' %></td>
+                </tr>
+                <tr>
+                    <td>Tanggal & Waktu Keberangkatan</td>
+                    <td>:</td>
+                    <td><%= moment(request.start_time).format('dddd, DD MMMM YYYY') %> Pukul <%= moment(request.start_time).format('HH:mm') %> WIB</td>
+                </tr>
+                <tr>
+                    <td>Tanggal & Waktu Kembali</td>
+                    <td>:</td>
+                    <td><%= request.end_time ? moment(request.end_time).format('dddd, DD MMMM YYYY') + ' Pukul ' + moment(request.end_time).format('HH:mm') + ' WIB' : 'Belum Ditentukan' %></td>
+                </tr>
+                <tr>
+                    <td>Jumlah Penumpang</td>
+                    <td>:</td>
+                    <td><%= request.passenger_count %> (orang)</td>
+                </tr>
+                <tr>
+                    <td>Nama-nama Penumpang</td>
+                    <td>:</td>
+                    <td><%= request.passenger_names || 'Tidak Disebutkan' %></td>
+                </tr>
+            </table>
+            
+            <% if (request.note) { %>
+            <div class="notes-box">
+                <div class="label">Catatan Khusus:</div>
+                <div><%= request.note %></div>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- Assignment Details -->
+        <div class="section">
+            <div class="section-title">II. PENUGASAN KENDARAAN DAN PENGEMUDI</div>
+            
+            <% if (request.detail && request.detail.length > 0) { %>
+            <table class="assignment-table">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">No</th>
+                        <th style="width: 25%;">Jenis Kendaraan</th>
+                        <th style="width: 15%;">No. Polisi</th>
+                        <th style="width: 20%;">Nama Pengemudi</th>
+                        <th style="width: 35%;">Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% request.detail.forEach(function(assignment, index){ %>
+                    <tr>
+                        <td style="text-align: center;"><%= index + 1 %></td>
+                        <td><%= assignment.vehicle?.name || '-' %></td>
+                        <td style="text-align: center; font-weight: bold;"><%= assignment.vehicle?.license_plate || '-' %></td>
+                        <td><%= assignment.driver?.name || 'Belum Ditugaskan' %></td>
+                        <td><%= assignment.note_for_driver || '-' %></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            <% } else { %>
+            <div class="notes-box">
+                <div class="no-data">Belum ada penugasan kendaraan dan pengemudi</div>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- Signature Section -->
+        <div class="signature-section">
+            <div style="text-align: left; margin-bottom: 10px;">
+                Demikian Surat Perintah Jalan ini dibuat untuk dapat dilaksanakan dengan sebaik-baiknya.
+            </div>
+        </div>
+
+        <!-- Document Footer -->
+        <div class="footer">
+            <div class="signature">
+                <h4 class="date"><%= request.cabang?.nama_cab || 'Kantor Pusat' %>, <%= moment().format('DD MMMM YYYY') %></h4>
+                <br/>
+                <br/>
+                <h4 class="name-placeholder">(_________________________)</h4>
+                <h4>Admin General Affairs <%= request.cabang?.nama_cab || 'Kantor Pusat' %></h4>
+            </div>
+        </div>
+        <div class="app-footer">
+            <p class="footer-brand">Generated by GARIS</p>
+          </div>
+    </div>
+</body>
+</html>
