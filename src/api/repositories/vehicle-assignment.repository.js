@@ -36,6 +36,10 @@ class VehicleAssignmentRepository extends BaseRepository {
             per_page: per_page,
         };
     }
+
+    async findByRequestId(requestId) {
+        return await VehicleAssignment.query().where('request_id', requestId);
+    }
 }
 
 module.exports = new VehicleAssignmentRepository();

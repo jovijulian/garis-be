@@ -153,7 +153,6 @@ class VehicleRequestService {
             throw error;
         }
 
-
         const trx = await knexBooking.transaction();
         let updatedRequest;
         try {
@@ -169,6 +168,43 @@ class VehicleRequestService {
         } catch (error) {
             await trx.rollback();
             throw error;
+        }
+        if (payload.status == 'Completed') {
+            try {
+                const assignments = await vehicleAssignmentRepository.findByRequestId(id);
+                console.log('Assignments for completed request:', assignments);
+                if (assignments && assignments.length > 0) {
+                    const vehicleIdsToUpdate = new Set();
+                    const driverIdsToUpdate = new Set();
+
+                    assignments.forEach(assign => {
+                        vehicleIdsToUpdate.add(assign.vehicle_id);
+                        if (assign.driver_id) {
+                            driverIdsToUpdate.add(assign.driver_id);
+                        }
+                    });
+
+                    if (vehicleIdsToUpdate.size > 0) {
+                        await Promise.all(
+                            Array.from(vehicleIdsToUpdate).map(vehicleId =>
+                                vehicleRepository.update(vehicleId, { status: 'Available' })
+                            )
+                        );
+                        console.log(`Vehicles [${Array.from(vehicleIdsToUpdate).join(', ')}] status set to Available for completed request ${id}`);
+                    }
+
+                    if (driverIdsToUpdate.size > 0) {
+                        await Promise.all(
+                            Array.from(driverIdsToUpdate).map(driverId =>
+                                driverRepository.update(driverId, { status: 'Available' })
+                            )
+                        );
+                        console.log(`Drivers [${Array.from(driverIdsToUpdate).join(', ')}] status set to Available for completed request ${id}`);
+                    }
+                }
+            } catch (assetStatusError) {
+                console.error(`Error updating asset status for completed request ${id}:`, assetStatusError);
+            }
         }
         if (payload.status !== 'In Progress' && payload.status !== 'Completed') {
             try {
