@@ -419,6 +419,93 @@ class VehicleRequestService {
         }
         return vehicleAssignmentRepository.findAllAssignmentsByDriverUserId(request.query, driver.id);
     }
+
+    async exportRequestToExcel(queryParams) {
+        const requests = await vehicleRequestRepository.findAllForExport(queryParams);
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Laporan Pengajuan Kendaraan');
+        worksheet.columns = [
+            { header: 'ID Pengajuan', key: 'request_id', width: 12 },
+            { header: 'Status', key: 'request_status', width: 15 },
+            { header: 'Pemohon', key: 'user_name', width: 30 },
+            { header: 'Cabang Pemohon', key: 'branch_name', width: 20 },
+            { header: 'Keperluan', key: 'purpose', width: 35 },
+            { header: 'Tujuan', key: 'destination', width: 30 },
+            { header: 'Lokasi Jemput', key: 'pickup_location', width: 30 },
+            { header: 'Waktu Mulai (WIB)', key: 'start_time', width: 22 },
+            { header: 'Waktu Selesai (WIB)', key: 'end_time', width: 22 },
+            { header: 'Jml Penumpang', key: 'passenger_count', width: 15 },
+            { header: 'Nama Penumpang', key: 'passenger_names', width: 40 },
+            { header: 'Jenis Kendaraan Diminta', key: 'requested_vehicle_type', width: 25 },
+            { header: 'Jml Unit Diminta', key: 'requested_vehicle_count', width: 15 },
+            { header: 'Butuh Supir?', key: 'requires_driver', width: 15 },
+            { header: 'Catatan Pemohon', key: 'note', width: 30 },
+            { header: 'Kendaraan Ditugaskan (Plat)', key: 'assigned_vehicles_plate', width: 30 },
+            { header: 'Kendaraan Ditugaskan (Nama)', key: 'assigned_vehicles_name', width: 30 },
+            { header: 'Supir Ditugaskan', key: 'assigned_drivers', width: 30 },
+            { header: 'Catatan Untuk Supir', key: 'driver_notes', width: 40 },
+            { header: 'Disetujui Oleh', key: 'approved_by', width: 25 },
+            { header: 'Tgl Pengajuan', key: 'created_at', width: 22 },
+        ];
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
+        requests.forEach(request => {
+            const pickupLocation = request.pickup_location_text || request.cabang?.nama_cab || '-';
+
+            const assignedVehiclesPlate = request.detail?.map(d => d.vehicle?.license_plate || '?').join('\n') || '-';
+            const assignedVehiclesName = request.detail?.map(d => d.vehicle?.name || '?').join('\n') || '-';
+            const assignedDrivers = request.detail?.map(d => d.driver?.name || (request.requires_driver ? 'Belum Ditugaskan' : '-')).join('\n') || (request.requires_driver ? 'Belum Ditugaskan' : '-');
+            const driverNotes = request.detail?.map(d => d.note_for_driver || '-').join('\n') || '-';
+            const startTimeWIB = request.start_time ? moment(request.start_time).add(7, 'hours').format('YYYY-MM-DD HH:mm') : null
+            const endTimeWIB = request.end_time ? moment(request.end_time).add(7, 'hours').format('YYYY-MM-DD HH:mm') : null;
+
+            worksheet.addRow({
+                request_id: request.id,
+                request_status: request.status,
+                user_name: request.user?.nama_user || '-',
+                branch_name: request.cabang?.nama_cab || '-',
+                purpose: request.purpose,
+                destination: request.destination,
+                pickup_location: pickupLocation,
+                start_time: startTimeWIB || '-',
+                end_time: endTimeWIB || '-',
+                passenger_count: request.passenger_count,
+                passenger_names: request.passenger_names || '-',
+                requested_vehicle_type: request.vehicle_type?.name || '-',
+                requested_vehicle_count: request.requested_vehicle_count,
+                requires_driver: request.requires_driver === 1 ? 'Ya' : 'Tidak',
+                note: request.note || '-',
+                assigned_vehicles_plate: assignedVehiclesPlate,
+                assigned_vehicles_name: assignedVehiclesName,
+                assigned_drivers: assignedDrivers,
+                driver_notes: driverNotes,
+                approved_by: request.approved_by || '-',
+                created_at: request.created_at ? moment.utc(request.created_at).utcOffset('+07:00').format('YYYY-MM-DD HH:mm') : '-',
+            });
+
+            const lastRow = worksheet.lastRow;
+            if (lastRow) {
+                ['assigned_vehicles_plate', 'assigned_vehicles_name', 'assigned_drivers', 'driver_notes', 'passenger_names'].forEach(key => {
+                    const cell = lastRow.getCell(key);
+                    cell.alignment = { ...cell.alignment, wrapText: true, vertical: 'top' };
+                });
+            }
+
+        });
+
+        worksheet.columns.forEach(column => {
+            let maxLen = column.header?.length ?? 10;
+            worksheet.getColumn(column.key).eachCell({ includeEmpty: true }, cell => {
+                const len = cell.value?.toString().length ?? 0;
+                if (len > maxLen) maxLen = len;
+            });
+            column.width = maxLen < 10 ? 10 : maxLen + 2;
+        });
+
+
+        return workbook;
+    }
 }
 
 module.exports = new VehicleRequestService();

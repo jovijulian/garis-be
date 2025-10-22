@@ -130,6 +130,41 @@ class VehicleRequestRepository extends BaseRepository {
         return VehicleRequest.query().findById(id).withGraphFetched(relations);
     }
 
+    async findAllForExport(queryParams = {}) {
+        const { startDate, endDate, status } = queryParams;
+
+        const query = VehicleRequest.query()
+            .select('*')
+            .withGraphFetched('[cabang, user, vehicle_type, detail.[vehicle, driver]]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id_cab', 'nama_cab');
+            })
+            .modifyGraph('user', builder => {
+                builder.select('id_user', 'nama_user');
+            })
+            .modifyGraph('vehicle_type', builder => {
+                builder.select('id', 'name');
+            })
+            .modifyGraph('detail.vehicle', builder => {
+                builder.select('id', 'license_plate', 'name');
+            })
+            .modifyGraph('detail.driver', builder => {
+                builder.select('id', 'name', 'phone_number');
+            })
+            .orderBy('id', 'DESC');
+
+
+
+        if (startDate && endDate) {
+            query.whereBetween('vehicle_requests.start_time', [startDate, endDate]);
+        }
+
+        if (status) {
+            query.where('vehicle_requests.status', status);
+        }
+
+        return query
+    }
 
 }
 

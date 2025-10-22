@@ -119,6 +119,27 @@ class VehicleRequestController {
         }
     }
 
+    async exportToExcel(req, res) {
+        try {
+            const workbook = await vehicleRequestService.exportRequestToExcel(req.query);
+
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename="vehicle_request_report_${moment().format('YYYY-MM-DD')}.xlsx"`
+            );
+
+            await workbook.xlsx.write(res);
+            res.end();
+
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
 }
 
 module.exports = new VehicleRequestController();
