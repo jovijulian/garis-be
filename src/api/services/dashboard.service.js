@@ -1,6 +1,7 @@
 const dashboardRepository = require('../repositories/dashboard.repository');
 const userRepository = require('../repositories/user.repository');
 const moment = require('moment');
+const _ = require('lodash');
 class DashboardService {
     async getDashboardData(queryParams = {}) {
         const startDate = queryParams.startDate ?
@@ -66,26 +67,19 @@ class DashboardService {
             orderTrend,
             statusDistribution,
             topRequesterResult,
-
-            // --- Metrik yang diubah & metrik baru ---
-            totalItemsOrdered,
-            topConsumptionTypesByQty, // Menggantikan topConsumptionTypes & mostPopular
-            mostPopularMenuItem,      // Metrik baru yang disarankan
+            topConsumptionTypesByQty, 
         ] = await Promise.all([
-            // --- Metrik yang tidak berubah ---
             dashboardRepository.getTotalOrdersInRange(startDate, endDate),
             dashboardRepository.getPendingOrdersCount(),
             dashboardRepository.getOrderTrendInRange(startDate, endDate),
             dashboardRepository.getOrderStatusDistributionInRange(startDate, endDate),
             dashboardRepository.getTopRequesterIdInRange(startDate, endDate),
 
-            // --- Panggilan repository baru ---
             dashboardRepository.getTotalItemsOrderedInRange(startDate, endDate),
             dashboardRepository.getTopConsumptionTypesByQtyInRange(startDate, endDate, 5), 
             dashboardRepository.getMostPopularMenuItemInRange(startDate, endDate),
         ]);
 
-        // Logika topRequester tetap sama
         let topRequesterName = 'N/A';
         if (topRequesterResult && topRequesterResult.user_id) {
             const topUser = await userRepository.findById(topRequesterResult.user_id);
@@ -110,6 +104,91 @@ class DashboardService {
             rankings: {
                 top_consumption_types: topConsumptionTypesByQty,
                 status_distribution: statusDistribution, 
+            }
+        };
+    }
+
+    async getVehicleRequestDashboardData(queryParams = {}) {
+        const startDate = queryParams.startDate ?
+            moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
+            moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+        const endDate = queryParams.endDate ?
+            moment(queryParams.endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss') :
+            moment().endOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+        const [
+            totalRequests,
+            pendingRequestsCount,
+            requestTrend,
+            statusDistribution,
+            topRequesterResult,
+            topVehicleTypesRequested,
+            topVehiclesUsed, 
+            topDriversAssigned, 
+            requestCountsById,  
+            vehicleCountsById,  
+            driverCountsById,   
+            allBranches
+        ] = await Promise.all([
+            dashboardRepository.getTotalRequestsInRange(startDate, endDate),
+            dashboardRepository.getPendingRequestsCount(), 
+            dashboardRepository.getRequestTrendInRange(startDate, endDate),
+            dashboardRepository.getRequestStatusDistributionInRange(startDate, endDate),
+            dashboardRepository.getTopRequesterIdInRange(startDate, endDate),
+            dashboardRepository.getTopVehicleTypesRequestedInRange(startDate, endDate, 5),
+            dashboardRepository.getTopVehiclesUsedInRange(startDate, endDate, 5),
+            dashboardRepository.getTopDriversAssignedInRange(startDate, endDate, 5),
+            dashboardRepository.getRequestCountsByBranchIdInRange(startDate, endDate),
+            dashboardRepository.getVehicleCountsByBranchId(),
+            dashboardRepository.getDriverCountsByBranchId(),
+            dashboardRepository.getAllBranches() 
+        ]);
+
+        let topRequesterName = 'N/A';
+        if (topRequesterResult && topRequesterResult.user_id) {
+            const topUser = await userRepository.findById(topRequesterResult.user_id); 
+            if (topUser) {
+                topRequesterName = topUser.nama_user;
+            }
+        }
+        const branchMap = _.keyBy(allBranches, 'id_cab');
+
+        const requestCountByBranch = requestCountsById.map(item => ({
+            nama_cab: branchMap[item.cab_id]?.nama_cab || `Unknown Branch (ID: ${item.cab_id})`,
+            request_count: Number(item.request_count) || 0 
+        })).sort((a, b) => b.request_count - a.request_count); 
+
+        const vehicleCountByBranch = vehicleCountsById.map(item => ({
+            nama_cab: branchMap[item.cab_id]?.nama_cab || `Unknown Branch (ID: ${item.cab_id})`,
+            vehicle_count: Number(item.vehicle_count) || 0
+        })).sort((a, b) => b.vehicle_count - a.vehicle_count);
+
+        const driverCountByBranch = driverCountsById.map(item => ({
+            nama_cab: branchMap[item.cab_id]?.nama_cab || `Unknown Branch (ID: ${item.cab_id})`,
+            driver_count: Number(item.driver_count) || 0
+        })).sort((a, b) => b.driver_count - a.driver_count);
+
+        const mostRequestedVehicleType = topVehicleTypesRequested.length > 0 ? topVehicleTypesRequested[0].name : 'N/A';
+
+        return {
+            kpi: {
+                total_requests_in_range: totalRequests,
+                pending_requests_count: pendingRequestsCount,
+                most_requested_vehicle_type: mostRequestedVehicleType,
+                top_requester: topRequesterName,
+            },
+            charts: {
+                request_trend: requestTrend,
+                status_distribution: statusDistribution,
+                request_count_by_branch: requestCountByBranch,
+                vehicle_count_by_branch: vehicleCountByBranch,
+                driver_count_by_branch: driverCountByBranch,
+            },
+            rankings: {
+                top_vehicle_types_requested: topVehicleTypesRequested,
+                top_vehicles_used: topVehiclesUsed,
+                top_drivers_assigned: topDriversAssigned,
             }
         };
     }

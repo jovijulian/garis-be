@@ -8,6 +8,7 @@ router.use(verifyToken);
 
 router.get('/', DashboardController.getDashboardData);
 router.get('/orders', DashboardController.getOrderDashboardData);
+router.get('/vehicle-requests', DashboardController.getVehicleRequestDashboardData);
 
 
 module.exports = router;

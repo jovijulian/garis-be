@@ -8,10 +8,15 @@ const Order = require('../models/Order');
 const ConsumptionType = require('../models/ConsumptionType');
 const User = require('../models/User');
 const OrderDetail = require('../models/OrderDetail');
+const VehicleRequest = require('../models/VehicleRequest');
+const VehicleAssignment = require('../models/VehicleAssignment');
+const Site = require('../models/Site');
+const Vehicle = require('../models/Vehicle')
+const Driver = require('../models/Driver')
 
 
 class DashboardRepository {
-
+    // booking
     getTotalBookingsInRange(startDate, endDate) {
         return Booking.query().whereBetween('start_time', [startDate, endDate]).resultSize();
     }
@@ -87,6 +92,7 @@ class DashboardRepository {
             .limit(5);
     }
 
+    // order 
     getTotalOrdersInRange(startDate, endDate) {
         return Order.query().whereBetween('order_date', [startDate, endDate]).resultSize();
     }
@@ -120,45 +126,18 @@ class DashboardRepository {
             .groupBy('status');
     }
 
-
-    // --- Method yang Diubah / Ditulis Ulang ---
-    // Method lama 'getMostPopularConsumptionTypeInRange' dan 'getTopConsumptionTypesInRange'
-    // digantikan oleh satu method yang lebih akurat dan fleksibel ini.
-    // Di controller, Anda bisa ambil elemen pertama dari hasilnya untuk "Most Popular".
-
-    /**
-     * Mengambil jenis konsumsi teratas berdasarkan jumlah total item (qty) yang dipesan.
-     * @param {string} startDate 
-     * @param {string} endDate 
-     * @param {number} limit 
-     * @returns {Promise<Array>}
-     */
     getTopConsumptionTypesByQtyInRange(startDate, endDate, limit = 5) {
-        // Query ini sekarang join melalui order_details dan menjumlahkan qty
         return ConsumptionType.query()
             .select('consumption_types.name')
-            // Join ke order_details (od)
             .join('order_details as od', 'consumption_types.id', 'od.consumption_type_id')
-            // Join ke orders (o) untuk filter tanggal
             .join('orders as o', 'od.order_id', 'o.id')
             .whereBetween('o.order_date', [startDate, endDate])
             .groupBy('consumption_types.name')
-            // Menggunakan SUM(qty) untuk akurasi, bukan COUNT
             .sum('od.qty as total_quantity')
             .orderBy('total_quantity', 'desc')
             .limit(limit);
     }
 
-
-    // --- Method Baru (Sesuai Saran) ---
-    // Menambahkan metrik baru untuk wawasan yang lebih dalam.
-
-    /**
-     * Menghitung total semua item (qty) yang dipesan dalam rentang waktu.
-     * @param {string} startDate 
-     * @param {string} endDate 
-     * @returns {Promise<number>}
-     */
     async getTotalItemsOrderedInRange(startDate, endDate) {
         const result = await OrderDetail.query()
             .join('orders as o', 'order_details.order_id', 'o.id')
@@ -166,27 +145,125 @@ class DashboardRepository {
             .sum('qty as total_items')
             .first();
 
-        // Mengembalikan 0 jika tidak ada hasil
         return result ? Number(result.total_items) : 0;
     }
 
-    /**
-     * Menemukan item menu spesifik yang paling populer berdasarkan total qty.
-     * @param {string} startDate 
-     * @param {string} endDate 
-     * @returns {Promise<Object|null>}
-     */
     getMostPopularMenuItemInRange(startDate, endDate) {
         return OrderDetail.query()
             .select('menu')
             .join('orders as o', 'order_details.order_id', 'o.id')
             .whereBetween('o.order_date', [startDate, endDate])
-            .whereNotNull('menu') // Hindari menu yang kosong
+            .whereNotNull('menu')
             .groupBy('menu')
             .sum('qty as total_qty')
             .orderBy('total_qty', 'desc')
             .first();
     }
+
+    //vehicle request
+    getTotalRequestsInRange(startDate, endDate) {
+        return VehicleRequest.query().whereBetween('start_time', [startDate, endDate]).resultSize();
+    }
+
+    getPendingRequestsCount() {
+        return VehicleRequest.query().where('status', 'Submit').resultSize();
+    }
+
+    getRequestTrendInRange(startDate, endDate) {
+        return VehicleRequest.query()
+            .select(knexBooking.raw('DATE(start_time) as date'), knexBooking.raw('count(id) as count'))
+            .whereBetween('start_time', [startDate, endDate])
+            .groupByRaw('DATE(start_time)')
+            .orderBy('start_time', 'asc');
+    }
+
+    getRequestStatusDistributionInRange(startDate, endDate) {
+        return VehicleRequest.query()
+            .select('status', knexBooking.raw('count(id) as count'))
+            .whereBetween('start_time', [startDate, endDate])
+            .groupBy('status');
+    }
+
+    getTopVehicleRequesterIdInRange(startDate, endDate) {
+        return VehicleRequest.query()
+            .select('id_user')
+            .count('id as request_count')
+            .whereBetween('start_time', [startDate, endDate])
+            .groupBy('id_user')
+            .orderBy('request_count', 'desc')
+            .first();
+    }
+
+    async getTopVehicleTypesRequestedInRange(startDate, endDate, limit = 5) {
+        return VehicleRequest.query()
+            .select('vt.name', knexBooking.raw('count(vehicle_requests.id) as request_count'))
+            .join('vehicle_types as vt', 'vehicle_requests.requested_vehicle_type_id', 'vt.id')
+            .whereBetween('vehicle_requests.start_time', [startDate, endDate])
+            .whereNotNull('vehicle_requests.requested_vehicle_type_id')
+            .groupBy('vt.name')
+            .orderBy('request_count', 'desc')
+            .limit(limit);
+    }
+
+
+    async getTopVehiclesUsedInRange(startDate, endDate, limit = 5) {
+        return VehicleAssignment.query()
+            .select('v.name', 'v.license_plate', knexBooking.raw('count(vehicle_assignments.id) as assignment_count'))
+            .join('vehicles as v', 'vehicle_assignments.vehicle_id', 'v.id')
+            .join('vehicle_requests as vr', 'vehicle_assignments.request_id', 'vr.id')
+            .whereBetween('vr.start_time', [startDate, endDate])
+            .groupBy('v.name', 'v.license_plate')
+            .orderBy('assignment_count', 'desc')
+            .limit(limit);
+    }
+
+    async getTopDriversAssignedInRange(startDate, endDate, limit = 5) {
+        return VehicleAssignment.query()
+            .select('d.name', knexBooking.raw('count(vehicle_assignments.id) as assignment_count'))
+            .join('drivers as d', 'vehicle_assignments.driver_id', 'd.id')
+            .join('vehicle_requests as vr', 'vehicle_assignments.request_id', 'vr.id')
+            .whereBetween('vr.start_time', [startDate, endDate])
+            .whereNotNull('vehicle_assignments.driver_id')
+            .groupBy('d.name')
+            .orderBy('assignment_count', 'desc')
+            .limit(limit);
+    }
+
+    async getRequestCountsByBranchIdInRange(startDate, endDate) {
+        return VehicleRequest.query() 
+            .select('cab_id')
+            .count('id as request_count')
+            .whereBetween('start_time', [startDate, endDate])
+            .whereNotNull('cab_id')
+            .groupBy('cab_id');
+    }
+
+    async getVehicleCountsByBranchId() {
+        return Vehicle.query() 
+            .select('cab_id')
+            .where('is_active', 1)
+            .count('id as vehicle_count')
+            .whereNotNull('cab_id')
+            .groupBy('cab_id');
+    }
+
+
+    async getDriverCountsByBranchId() {
+        return Driver.query() 
+            .select('cab_id')
+            .where('is_active', 1)
+            .count('id as driver_count')
+            .whereNotNull('cab_id')
+            .groupBy('cab_id');
+    }
+
+   
+    async getAllBranches() {
+        return Site.query().select('id_cab', 'nama_cab');
+    }
+
+
+
 }
 
 module.exports = new DashboardRepository();
