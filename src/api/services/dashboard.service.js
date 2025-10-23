@@ -75,9 +75,7 @@ class DashboardService {
             dashboardRepository.getOrderStatusDistributionInRange(startDate, endDate),
             dashboardRepository.getTopRequesterIdInRange(startDate, endDate),
 
-            dashboardRepository.getTotalItemsOrderedInRange(startDate, endDate),
             dashboardRepository.getTopConsumptionTypesByQtyInRange(startDate, endDate, 5), 
-            dashboardRepository.getMostPopularMenuItemInRange(startDate, endDate),
         ]);
 
         let topRequesterName = 'N/A';

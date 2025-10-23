@@ -157,7 +157,6 @@ class DashboardRepository {
             .groupBy('menu')
             .sum('qty as total_qty')
             .orderBy('total_qty', 'desc')
-            .first();
     }
 
     //vehicle request
