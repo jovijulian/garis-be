@@ -19,6 +19,7 @@ router.use(verifyToken);
 router.post('/', validate(createRequestSchema), VehicleRequestController.create);
 router.get('/', VehicleRequestController.getAll);
 router.get('/export-excel', VehicleRequestController.exportToExcel);
+router.get('/schedule', VehicleRequestController.getSchedule);
 router.get('/user', VehicleRequestController.getAllUser);
 router.get('/driver', VehicleRequestController.myAssign);
 router.get('/:id', validate(requestIdSchema), VehicleRequestController.detail);

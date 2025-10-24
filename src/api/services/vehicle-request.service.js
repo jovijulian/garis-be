@@ -506,6 +506,38 @@ class VehicleRequestService {
 
         return workbook;
     }
+
+    async getSchedule(queryParams) {
+        const targetDate = queryParams.date ? moment(queryParams.date, 'YYYY-MM-DD').toDate() : moment().toDate();
+        const cab_id = queryParams.cab_id ? Number(queryParams.cab_id) : null;
+
+        const scheduleData = await vehicleRequestRepository.findScheduleData({ targetDate, cab_id });
+
+        const formattedData = scheduleData.map(req => {
+            const vehicles = req.detail?.map(assignment =>
+                assignment.vehicle ? `${assignment.vehicle.name} (${assignment.vehicle.license_plate})` : '?'
+            ).join('\n') || '-'; 
+        
+            const drivers = req.detail?.map(assignment =>
+                assignment.driver ? assignment.driver.name : (req.requires_driver ? 'Belum Ditugaskan' : '-') 
+            ).join('\n') || (req.requires_driver ? 'Belum Ditugaskan' : '-'); 
+        
+            return {
+                id: req.id,
+                time: moment(req.start_time).format('HH:mm'),
+                destination: req.destination,
+                purpose: req.purpose,
+                status: req.status,
+                passengers: req.passenger_names || '-',
+                requester: req.user?.nama_user || '-',
+                vehicles: vehicles, 
+                drivers: drivers,   
+            };
+        });
+
+
+         return formattedData;
+    }
 }
 
 module.exports = new VehicleRequestService();

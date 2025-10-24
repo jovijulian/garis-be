@@ -166,6 +166,30 @@ class VehicleRequestRepository extends BaseRepository {
         return query
     }
 
+    async findScheduleData({ targetDate, cab_id }) {
+        const startOfDay = moment(targetDate).startOf('day').toISOString();
+        const endOfDay = moment(targetDate).endOf('day').toISOString();
+
+        const query = VehicleRequest.query()
+            .whereIn('status', ['Approved', 'In Progress'])
+            .whereBetween('start_time', [startOfDay, endOfDay])
+            .withGraphFetched('[cabang(selectCabang), user(selectUser), detail(selectDetail).[vehicle(selectVehicle), driver(selectDriver)]]')
+            .modifiers({
+                selectCabang: builder => builder.select('id_cab', 'nama_cab'),
+                selectUser: builder => builder.select('id_user', 'nama_user'),
+                selectDetail: builder => builder.select('id', 'vehicle_id', 'driver_id', 'note_for_driver', 'request_id'), // Select necessary fields from assignment table
+                selectVehicle: builder => builder.select('id', 'name', 'license_plate'),
+                selectDriver: builder => builder.select('id', 'name')
+                
+            })
+            .orderBy('start_time', 'ASC'); 
+
+        if (cab_id) {
+            query.where('cab_id', cab_id);
+        }
+
+        return query;
+    }
 }
 
 module.exports = new VehicleRequestRepository();

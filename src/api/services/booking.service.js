@@ -445,7 +445,6 @@ class BookingService {
     async options(request, search) {
         let userId;
         const roleUser = getRoleUser(request);
-        console.log(roleUser)
         if (roleUser === 2) {
             userId = null
         } else {
