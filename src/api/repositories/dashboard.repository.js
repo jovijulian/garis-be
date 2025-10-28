@@ -19,7 +19,7 @@ class DashboardRepository {
 
     //pending
     getPendingBookingCount(status) {
-        return VehicleRequest.query().where('status', status).resultSize();
+        return Booking.query().where('status', status).resultSize();
     }
     getPendingVehiclesCount(status) {
         return VehicleRequest.query().where('status', status).resultSize();
