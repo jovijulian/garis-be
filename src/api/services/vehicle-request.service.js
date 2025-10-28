@@ -520,7 +520,8 @@ class VehicleRequestService {
         const columns = vehicles.map(v => ({
             id: v.id,
             name: v.name,
-            licensePlate: v.license_plate
+            licensePlate: v.license_plate,
+            vehicleTypeId: v.vehicle_type_id,
         }));
 
         const requests = await vehicleRequestRepository.findScheduleData({
