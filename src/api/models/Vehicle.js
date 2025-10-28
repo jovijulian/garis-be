@@ -8,7 +8,7 @@ class Vehicle extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['vehicle_type_id', 'name', 'license_plate', 'passenger_capacity'],
+            required: ['vehicle_type_id', 'name', 'license_plate', 'passenger_capacity', 'is_operational'],
             properties: {
                 id: { type: 'integer' },
                 name: { type: 'string' },
@@ -21,6 +21,7 @@ class Vehicle extends BaseModelBooking {
                     enum: ['Available', 'Not Available', 'In Repair'],
                     default: 'Available'
                 },
+                is_operational: { type: 'integer' },
                 is_active: { type: 'integer' }
             },
         }

@@ -21,7 +21,7 @@ const createSchema = z.object({
             required_error: 'Passenger capacity is required',
             invalid_type_error: 'Passenger capacity must be a number',
         }).int().positive('Passenger capacity must be a positive number'),
-
+        is_operational: z.number(),
         cab_id: z.number().nullable().optional()
     }),
 });
@@ -50,6 +50,7 @@ const updateSchema = z.object({
             required_error: 'Passenger capacity is required',
             invalid_type_error: 'Passenger capacity must be a number',
         }).int().positive('Passenger capacity must be a positive number'),
+        is_operational: z.number(),
         cab_id: z.number().nullable().optional()
     }),
 });
