@@ -545,11 +545,14 @@ class VehicleRequestService {
                     id: assignment.id, 
                     requestId: request.id, 
                     vehicleId: assignment.vehicle_id, 
+                    destination: request.destination,
                     startTime: startTimeISO,
                     endTime: endTimeISO,
                     purpose: request.purpose,
                     requester: request.user?.nama_user || '-',
                     status: request.status,
+                    driver: assignment.driver ? assignment.driver.name : (request.requires_driver ? 'Belum Ditugaskan' : 'Tidak Memerlukan Supir'),
+                    vehicle: assignment.vehicle ? `${assignment.vehicle.name} (${assignment.vehicle.license_plate})`  : 'Tidak Ada Kendaraan Ditugaskan'
                 };
             });
         });
