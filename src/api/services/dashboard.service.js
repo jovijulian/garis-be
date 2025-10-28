@@ -67,7 +67,7 @@ class DashboardService {
             orderTrend,
             statusDistribution,
             topRequesterResult,
-            topConsumptionTypesByQty, 
+            topConsumptionTypesByQty,
         ] = await Promise.all([
             dashboardRepository.getTotalOrdersInRange(startDate, endDate),
             dashboardRepository.getPendingOrdersCount(),
@@ -75,7 +75,7 @@ class DashboardService {
             dashboardRepository.getOrderStatusDistributionInRange(startDate, endDate),
             dashboardRepository.getTopRequesterIdInRange(startDate, endDate),
 
-            dashboardRepository.getTopConsumptionTypesByQtyInRange(startDate, endDate, 5), 
+            dashboardRepository.getTopConsumptionTypesByQtyInRange(startDate, endDate, 5),
         ]);
 
         let topRequesterName = 'N/A';
@@ -97,11 +97,11 @@ class DashboardService {
             },
             charts: {
                 order_trend: orderTrend,
-               
+
             },
             rankings: {
                 top_consumption_types: topConsumptionTypesByQty,
-                status_distribution: statusDistribution, 
+                status_distribution: statusDistribution,
             }
         };
     }
@@ -122,15 +122,15 @@ class DashboardService {
             statusDistribution,
             topRequesterResult,
             topVehicleTypesRequested,
-            topVehiclesUsed, 
-            topDriversAssigned, 
-            requestCountsById,  
-            vehicleCountsById,  
-            driverCountsById,   
+            topVehiclesUsed,
+            topDriversAssigned,
+            requestCountsById,
+            vehicleCountsById,
+            driverCountsById,
             allBranches
         ] = await Promise.all([
             dashboardRepository.getTotalRequestsInRange(startDate, endDate),
-            dashboardRepository.getPendingRequestsCount(), 
+            dashboardRepository.getPendingRequestsCount(),
             dashboardRepository.getRequestTrendInRange(startDate, endDate),
             dashboardRepository.getRequestStatusDistributionInRange(startDate, endDate),
             dashboardRepository.getTopRequesterIdInRange(startDate, endDate),
@@ -140,12 +140,12 @@ class DashboardService {
             dashboardRepository.getRequestCountsByBranchIdInRange(startDate, endDate),
             dashboardRepository.getVehicleCountsByBranchId(),
             dashboardRepository.getDriverCountsByBranchId(),
-            dashboardRepository.getAllBranches() 
+            dashboardRepository.getAllBranches()
         ]);
 
         let topRequesterName = 'N/A';
         if (topRequesterResult && topRequesterResult.user_id) {
-            const topUser = await userRepository.findById(topRequesterResult.user_id); 
+            const topUser = await userRepository.findById(topRequesterResult.user_id);
             if (topUser) {
                 topRequesterName = topUser.nama_user;
             }
@@ -154,8 +154,8 @@ class DashboardService {
 
         const requestCountByBranch = requestCountsById.map(item => ({
             nama_cab: branchMap[item.cab_id]?.nama_cab || `Unknown Branch (ID: ${item.cab_id})`,
-            request_count: Number(item.request_count) || 0 
-        })).sort((a, b) => b.request_count - a.request_count); 
+            request_count: Number(item.request_count) || 0
+        })).sort((a, b) => b.request_count - a.request_count);
 
         const vehicleCountByBranch = vehicleCountsById.map(item => ({
             nama_cab: branchMap[item.cab_id]?.nama_cab || `Unknown Branch (ID: ${item.cab_id})`,
@@ -189,6 +189,24 @@ class DashboardService {
                 top_drivers_assigned: topDriversAssigned,
             }
         };
+    }
+
+    async getPendingRequestsCount() {
+        const status = 'Submit'
+        const [
+            pendingBooking,
+            pendingVehicles,
+            pendingOrders,
+        ] = await Promise.all([
+            dashboardRepository.getPendingBookingCount(status),
+            dashboardRepository.getPendingVehiclesCount(status),
+            dashboardRepository.getPendingOrderCount(status),
+        ]);
+        return {
+            pending_bookings: pendingBooking,
+            pending_vehicle_requests: pendingVehicles,
+            pending_orders: pendingOrders,
+        }
     }
 }
 

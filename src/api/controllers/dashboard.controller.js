@@ -27,6 +27,15 @@ class DashboardController {
             return error(res, 500, err);
         }
     }
+
+    async getPendingRequestsCount(req, res) {
+        try {
+            const data = await dashboardService.getPendingRequestsCount();
+            return success(res, 200, data, 'Pending Requests Count retrieved successfully');
+        } catch (err) {
+            return error(res, 500, err);
+        }
+    }
 }
 
 module.exports = new DashboardController();

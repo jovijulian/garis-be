@@ -16,6 +16,18 @@ const Driver = require('../models/Driver')
 
 
 class DashboardRepository {
+
+    //pending
+    getPendingBookingCount(status) {
+        return VehicleRequest.query().where('status', status).resultSize();
+    }
+    getPendingVehiclesCount(status) {
+        return VehicleRequest.query().where('status', status).resultSize();
+    }
+    getPendingOrderCount(status) {
+        return Order.query().where('status', status).resultSize();
+    }
+
     // booking
     getTotalBookingsInRange(startDate, endDate) {
         return Booking.query().whereBetween('start_time', [startDate, endDate]).resultSize();
@@ -229,7 +241,7 @@ class DashboardRepository {
     }
 
     async getRequestCountsByBranchIdInRange(startDate, endDate) {
-        return VehicleRequest.query() 
+        return VehicleRequest.query()
             .select('cab_id')
             .count('id as request_count')
             .whereBetween('start_time', [startDate, endDate])
@@ -238,7 +250,7 @@ class DashboardRepository {
     }
 
     async getVehicleCountsByBranchId() {
-        return Vehicle.query() 
+        return Vehicle.query()
             .select('cab_id')
             .where('is_active', 1)
             .count('id as vehicle_count')
@@ -248,7 +260,7 @@ class DashboardRepository {
 
 
     async getDriverCountsByBranchId() {
-        return Driver.query() 
+        return Driver.query()
             .select('cab_id')
             .where('is_active', 1)
             .count('id as driver_count')
@@ -256,7 +268,7 @@ class DashboardRepository {
             .groupBy('cab_id');
     }
 
-   
+
     async getAllBranches() {
         return Site.query().select('id_cab', 'nama_cab');
     }
