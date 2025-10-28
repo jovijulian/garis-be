@@ -109,14 +109,14 @@ class VehicleRepository extends BaseRepository {
     }
 
     async findAllForSchedule(cab_id) {
-        console.log('cab_id in repo:', cab_id);
-        const data = await Vehicle.query()
+        const query = Vehicle.query()
             .select('id', 'name', 'license_plate', 'vehicle_type_id', 'passenger_capacity', 'status', 'cab_id')
             .where('is_active', 1);
 
         if (cab_id) {
-            data.where('cab_id', cab_id);
+            query.where('cab_id', cab_id);
         }
+        const data = await query;
         return data;
 
     }

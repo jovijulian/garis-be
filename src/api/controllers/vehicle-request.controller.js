@@ -143,7 +143,6 @@ class VehicleRequestController {
     async getSchedule(req, res) {
         try {
             const data = await vehicleRequestService.getSchedule(req.query);
-            // Note: Not using 'paginated' helper here, assuming it's a single day's schedule
             return success(res, 200, data, 'Vehicle schedule retrieved successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);

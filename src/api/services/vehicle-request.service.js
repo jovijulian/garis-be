@@ -507,6 +507,7 @@ class VehicleRequestService {
         return workbook;
     }
 
+
     async getSchedule(queryParams) {
         const targetDate = queryParams.date ? moment(queryParams.date, 'YYYY-MM-DD') : moment();
         const cab_id = queryParams.cab_id ? Number(queryParams.cab_id) : null;
@@ -515,7 +516,7 @@ class VehicleRequestService {
         const targetEndOfDay = targetDate.clone().endOf('day').toDate();
 
         const vehicleFilter = cab_id ? cab_id : null;
-        const vehicles = await vehicleRepository.findAllForSchedule(vehicleFilter);
+        const vehicles = await vehicleRepository.findAll(vehicleFilter);
 
         const columns = vehicles.map(v => ({
             id: v.id,
@@ -523,22 +524,36 @@ class VehicleRequestService {
             licensePlate: v.license_plate
         }));
 
-        const assignments = await vehicleRequestRepository.findScheduleData({
+        const requests = await vehicleRequestRepository.findScheduleData({
             startDate: targetStartOfDay,
             endDate: targetEndOfDay,
-            cab_id: cab_id, 
-            statuses: ['Approved', 'In Progress'] 
+            cab_id: cab_id,
+            statuses: ['Approved', 'In Progress']
         });
-        const bookings = assignments.map(a => ({
-            id: a.id,
-            requestId: a.id,
-            vehicleId: a.vehicle_id, 
-            startTime: moment(a.start_time).add(7, 'hours').format('HH:mm'),
-            endTime:  moment(a.end_time).add(7, 'hours').format('HH:mm'),
-            purpose: a.purpose,
-            requester: a.user?.nama_user || '-',
-            status: a.status,
-        }));
+
+        const bookings = requests.flatMap(request => {
+
+            if (!request.detail || request.detail.length === 0) {
+                return [];
+            }
+
+            return request.detail.map(assignment => {
+
+                const startTimeISO = moment(request.start_time).format();
+                const endTimeISO = moment(request.end_time).format();
+
+                return {
+                    id: assignment.id, 
+                    requestId: request.id, 
+                    vehicleId: assignment.vehicle_id, 
+                    startTime: startTimeISO,
+                    endTime: endTimeISO,
+                    purpose: request.purpose,
+                    requester: request.user?.nama_user || '-',
+                    status: request.status,
+                };
+            });
+        });
 
         const timeSlots = [];
         for (let i = 0; i < 24; i++) {
