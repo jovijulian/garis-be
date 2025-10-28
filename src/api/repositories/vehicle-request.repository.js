@@ -166,12 +166,12 @@ class VehicleRequestRepository extends BaseRepository {
         return query
     }
 
-    async findScheduleData({ targetDate, cab_id }) {
-        const startOfDay = moment(targetDate).startOf('day').toISOString();
-        const endOfDay = moment(targetDate).endOf('day').toISOString();
-
+    async findScheduleData({startDate, endDate, cab_id = null, statuses}) {
+        const startOfDay = moment(startDate).startOf('day').toISOString();
+        const endOfDay = moment(endDate).endOf('day').toISOString();
+        console.log(statuses)
         const query = VehicleRequest.query()
-            .whereIn('status', ['Approved', 'In Progress'])
+            .whereIn('status', statuses)
             .whereBetween('start_time', [startOfDay, endOfDay])
             .withGraphFetched('[cabang(selectCabang), user(selectUser), detail(selectDetail).[vehicle(selectVehicle), driver(selectDriver)]]')
             .modifiers({

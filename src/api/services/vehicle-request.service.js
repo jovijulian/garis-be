@@ -508,35 +508,49 @@ class VehicleRequestService {
     }
 
     async getSchedule(queryParams) {
-        const targetDate = queryParams.date ? moment(queryParams.date, 'YYYY-MM-DD').toDate() : moment().toDate();
+        const targetDate = queryParams.date ? moment(queryParams.date, 'YYYY-MM-DD') : moment();
         const cab_id = queryParams.cab_id ? Number(queryParams.cab_id) : null;
 
-        const scheduleData = await vehicleRequestRepository.findScheduleData({ targetDate, cab_id });
+        const targetStartOfDay = targetDate.clone().startOf('day').toDate();
+        const targetEndOfDay = targetDate.clone().endOf('day').toDate();
 
-        const formattedData = scheduleData.map(req => {
-            const vehicles = req.detail?.map(assignment =>
-                assignment.vehicle ? `${assignment.vehicle.name} (${assignment.vehicle.license_plate})` : '?'
-            ).join('\n') || '-'; 
-        
-            const drivers = req.detail?.map(assignment =>
-                assignment.driver ? assignment.driver.name : (req.requires_driver ? 'Belum Ditugaskan' : '-') 
-            ).join('\n') || (req.requires_driver ? 'Belum Ditugaskan' : '-'); 
-        
-            return {
-                id: req.id,
-                time: moment(req.start_time).format('HH:mm'),
-                destination: req.destination,
-                purpose: req.purpose,
-                status: req.status,
-                passengers: req.passenger_names || '-',
-                requester: req.user?.nama_user || '-',
-                vehicles: vehicles, 
-                drivers: drivers,   
-            };
+        const vehicleFilter = cab_id ? cab_id : null;
+        const vehicles = await vehicleRepository.findAllForSchedule(vehicleFilter);
+
+        const columns = vehicles.map(v => ({
+            id: v.id,
+            name: v.name,
+            licensePlate: v.license_plate
+        }));
+
+        const assignments = await vehicleRequestRepository.findScheduleData({
+            startDate: targetStartOfDay,
+            endDate: targetEndOfDay,
+            cab_id: cab_id, 
+            statuses: ['Approved', 'In Progress'] 
         });
 
+        const bookings = assignments.map(a => ({
+            id: a.id,
+            requestId: a.id,
+            vehicleId: a.vehicle_id, 
+            startTime: a.start_time, 
+            endTime: a.end_time,     
+            purpose: a.purpose,
+            requester: a.user?.nama_user || '-',
+            status: a.status,
+        }));
 
-         return formattedData;
+        const timeSlots = [];
+        for (let i = 0; i < 24; i++) {
+            timeSlots.push(`${String(i).padStart(2, '0')}:00`);
+        }
+
+        return {
+            columns: columns,
+            bookings: bookings,
+            timeSlots: timeSlots
+        };
     }
 }
 
