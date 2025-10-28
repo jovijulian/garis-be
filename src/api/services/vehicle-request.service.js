@@ -529,13 +529,12 @@ class VehicleRequestService {
             cab_id: cab_id, 
             statuses: ['Approved', 'In Progress'] 
         });
-
         const bookings = assignments.map(a => ({
             id: a.id,
             requestId: a.id,
             vehicleId: a.vehicle_id, 
-            startTime: moment(a.start_time).format('HH:mm'),
-            endTime:  moment(a.end_time).format('HH:mm'),
+            startTime: moment(a.start_time).add(7, 'hours').format('HH:mm'),
+            endTime:  moment(a.end_time).add(7, 'hours').format('HH:mm'),
             purpose: a.purpose,
             requester: a.user?.nama_user || '-',
             status: a.status,
