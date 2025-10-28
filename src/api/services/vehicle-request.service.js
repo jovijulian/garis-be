@@ -542,7 +542,7 @@ class VehicleRequestService {
             const drivers = request.detail?.map(assignment =>
                 assignment.driver ? assignment.driver.name : (request.requires_driver ? 'Belum Ditugaskan' : '-')
             ).join('\n') || (request.requires_driver ? 'Belum Ditugaskan' : '-');
-            
+
             return request.detail.map(assignment => {
 
                 const startTimeISO = moment(request.start_time).format();
@@ -551,6 +551,7 @@ class VehicleRequestService {
                 return {
                     id: assignment.id,
                     requestId: request.id,
+                    vehicleTypeId: request.requested_vehicle_type_id, 
                     vehicleId: assignment.vehicle_id,
                     destination: request.destination,
                     startTime: startTimeISO,
