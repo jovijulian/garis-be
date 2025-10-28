@@ -511,12 +511,11 @@ class VehicleRequestService {
     async getSchedule(queryParams) {
         const targetDate = queryParams.date ? moment(queryParams.date, 'YYYY-MM-DD') : moment();
         const cab_id = queryParams.cab_id ? Number(queryParams.cab_id) : null;
-
         const targetStartOfDay = targetDate.clone().startOf('day').toDate();
         const targetEndOfDay = targetDate.clone().endOf('day').toDate();
 
-        const vehicleFilter = cab_id ? cab_id : null;
-        const vehicles = await vehicleRepository.findAll(vehicleFilter);
+        const vehicleFilter = cab_id || null
+        const vehicles = await vehicleRepository.findAllForSchedule(vehicleFilter);
 
         const columns = vehicles.map(v => ({
             id: v.id,
