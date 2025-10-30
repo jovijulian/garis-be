@@ -35,8 +35,8 @@ class AuthService {
         };
 
         const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
-        await userRepository.updateUser(user.id_user, { token: token });
-        // await userRepository.updateUser(user.id_user, { token_garis: token }); //prod
+        // await userRepository.updateUser(user.id_user, { token: token });
+        await userRepository.updateUser(user.id_user, { token_garis: token }); //prod
         return { token };
     }
 
