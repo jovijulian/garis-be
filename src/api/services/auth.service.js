@@ -50,7 +50,7 @@ class AuthService {
         }
 
         // await userRepository.updateUser(user.id_user, { token: null });
-        await userRepository.updateUser(user.id_user, { token_garis: token }); //prod
+        await userRepository.updateUser(user.id_user, { token_garis: null }); //prod
         return { message: 'Logged out successfully' };
     }
 
