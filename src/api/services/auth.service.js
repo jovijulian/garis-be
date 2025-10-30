@@ -49,7 +49,7 @@ class AuthService {
             throw error;
         }
 
-        // await userRepository.updateUser(user.id_user, { token: null });
+        await userRepository.updateUser(user.id_user, { token: null });
         return { message: 'Logged out successfully' };
     }
 
