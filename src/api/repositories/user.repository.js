@@ -13,10 +13,8 @@ class UserRepository extends BaseRepository {
 
         const query = User.query()
             .select('*')
-            .whereNull('deleted_at')
-
             .page(page - 1, per_page)
-            .orderBy('id', 'DESC');
+            .orderBy('id_user', 'DESC');
 
         if (search) {
             query.where('nama_user', 'like', `%${search}%`),

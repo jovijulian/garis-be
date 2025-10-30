@@ -13,6 +13,18 @@ module.exports = {
   },
 
   hr: {
+    client: process.env.DB_SECOND_DEV_CLIENT || 'mysql2',
+    connection: {
+      host: process.env.DB_SECOND_DEV_HOST,
+      user: process.env.DB_SECOND_DEV_USER,
+      password: process.env.DB_SECOND_DEV_PASSWORD,
+      database: process.env.DB_SECOND_DEV_NAME,
+      port: 3306
+    },
+    pool: { min: 2, max: 10 }
+  },
+
+  hr_prod: {
     client: process.env.DB_SECOND_CLIENT || 'mysql2',
     connection: {
       host: process.env.DB_SECOND_HOST,

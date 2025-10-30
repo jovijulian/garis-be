@@ -41,7 +41,7 @@ class User extends BaseModelHr {
     $formatJson(json) {
         json = super.$formatJson(json);
         delete json.password;
-        delete json.token;
+        delete json.token_garis;
         return json;
     }
 }
