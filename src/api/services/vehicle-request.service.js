@@ -513,7 +513,7 @@ class VehicleRequestService {
         const cab_id = queryParams.cab_id ? Number(queryParams.cab_id) : null;
         const targetStartOfDay = targetDate.clone().startOf('day').toDate();
         const targetEndOfDay = targetDate.clone().endOf('day').toDate();
-
+        const statuses = queryParams.statuses ? queryParams.statuses.split(',') : ['Approved', 'In Progress', 'Completed'];
         const vehicleFilter = cab_id || null
         const vehicles = await vehicleRepository.findAllForSchedule(vehicleFilter);
 
@@ -528,7 +528,7 @@ class VehicleRequestService {
             startDate: targetStartOfDay,
             endDate: targetEndOfDay,
             cab_id: cab_id,
-            statuses: ['Approved', 'In Progress']
+            statuses: statuses
         });
 
         const bookings = requests.flatMap(request => {
