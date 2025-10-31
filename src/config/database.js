@@ -3,7 +3,7 @@ const knex = require('knex');
 const config = require('./knexfile');
 
 const knexBooking = knex(config.booking);
-const knexHr = knex(config.hr_prod);
+const knexHr = knex(config.hr);
 
 class BaseModelBooking extends Model {}
 BaseModelBooking.knex(knexBooking);
