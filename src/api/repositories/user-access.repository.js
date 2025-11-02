@@ -10,15 +10,11 @@ class UserAccessRepository {
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
 
-        // Query yang sudah diperbaiki
         const query = User.query()
-            .select('tb_user.id_user', 'tb_user.nama_user', 'tb_user.email', 'tb_user.role_garis')
-            // 1. Sintaks withGraphFetched yang benar untuk relasi bersarang
+            .select('tb_user.id_user', 'tb_user.nama_user',  'tb_user.role_garis')
             .withGraphFetched('permissions.[site(selectSiteName)]')
-            // 2. Gunakan satu blok modifiers untuk semua modifier
             .modifiers({
                 selectSiteName(builder) {
-                    // Modifier ini berlaku untuk relasi 'site'
                     builder.select('id_cab', 'nama_cab');
                 }
             })
@@ -28,8 +24,6 @@ class UserAccessRepository {
         if (search) {
             query.where(builder => {
                 builder.where('tb_user.nama_user', 'like', `%${search}%`)
-                    .orWhere('tb_user.email', 'like', `%${search}%`)
-                    // 3. Query pencarian pada relasi yang benar
                     .orWhereExists(
                         User.relatedQuery('permissions')
                             .joinRelated('site')
