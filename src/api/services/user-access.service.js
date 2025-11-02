@@ -21,7 +21,7 @@ class UserAccessService {
 
             delete user.permissions;
 
-            return { ...user, site_access: siteAccess };
+            return { ...user, site_access: siteAccess, email: user.email || '' };
         });
 
         return {
