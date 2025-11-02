@@ -1,6 +1,18 @@
 require('dotenv').config();
 module.exports = {
   booking: {
+    client: process.env.DB_DEV_CLIENT || 'mysql2',
+    connection: {
+      host: process.env.DB_DEV_HOST,
+      user: process.env.DB_DEV_USER,
+      password: process.env.DB_DEV_PASSWORD,
+      database: process.env.DB_DEV_NAME,
+      port: 3306
+    },
+    pool: { min: 2, max: 10 }
+  },
+
+  booking_prod: {
     client: process.env.DB_CLIENT || 'mysql2',
     connection: {
       host: process.env.DB_HOST,
