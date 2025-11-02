@@ -83,9 +83,7 @@ class VehicleService {
         const data = await vehicleRepository.options(params);
 
         if (!data || data.length === 0) {
-            const error = new Error('No Vehicles found.');
-            error.statusCode = 404;
-            throw error;
+            return [];
         }
 
         return data;

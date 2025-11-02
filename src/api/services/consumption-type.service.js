@@ -69,9 +69,7 @@ class ConsumptionTypeService {
         const data = await consumptionTypeRepository.options(params);
 
         if (!data || data.length === 0) {
-            const error = new Error('No Consumption Type found.');
-            error.statusCode = 404;
-            throw error;
+            return [];
         }
 
         return data;

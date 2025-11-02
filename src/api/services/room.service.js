@@ -69,9 +69,7 @@ class RoomService {
         const data = await roomRepository.options(params, site);
 
         if (!data || data.length === 0) {
-            const error = new Error('No Rooms found.');
-            error.statusCode = 404;
-            throw error;
+            return [];
         }
 
         return data;
@@ -81,9 +79,7 @@ class RoomService {
         const data = await roomRepository.optionsSite(params);
 
         if (!data || data.length === 0) {
-            const error = new Error('No Sites found.');
-            error.statusCode = 404;
-            throw error;
+            return [];
         }
 
         return data;

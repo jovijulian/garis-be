@@ -453,9 +453,7 @@ class BookingService {
         const data = await bookingRepository.options(userId, search);
 
         if (!data || data.length === 0) {
-            const error = new Error('No Booking found.');
-            error.statusCode = 404;
-            throw error;
+            return [];
         }
 
         return data;

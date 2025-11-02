@@ -69,9 +69,7 @@ class DriverService {
         const data = await driverRepository.options(params);
 
         if (!data || data.length === 0) {
-            const error = new Error('No Drivers found.');
-            error.statusCode = 404;
-            throw error;
+            return [];
         }
 
         return data;
