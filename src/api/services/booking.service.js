@@ -13,58 +13,67 @@ class BookingService {
     async createBooking(request) {
         const userId = await getUserId(request);
         const payload = request.body;
+        let newBooking;
+        let adminEmails = [];
+        let userWhoBooked;
+        let roomToBook
+        const trx = await knexBooking.transaction();
         try {
             const conflicts = await bookingRepository.findConflicts(payload.room_id, payload.start_time, payload.end_time);
             const durationMinutes = moment(payload.end_time).diff(moment(payload.start_time), 'minutes');
-            const userWhoBooked = await userRepository.findById(userId);
-            const roomToBook = await roomRepository.findById(payload.room_id);
+            userWhoBooked = await userRepository.findById(userId);
+            roomToBook = await roomRepository.findById(payload.room_id);
             const adminsOfSite = await userRepository.findAdminsBySiteId(roomToBook.cab_id);
-            const adminEmails = adminsOfSite.map(admin => admin.email);
-            return knexBooking.transaction(async (trx) => {
-                const insertPayload = {
-                    id_user: userId,
-                    room_id: payload.room_id,
-                    topic_id: payload.topic_id,
-                    detail_topic: payload.detail_topic || null,
-                    purpose: payload.purpose,
-                    start_time: payload.start_time,
-                    end_time: payload.end_time,
-                    duration_minutes: durationMinutes,
-                    notes: payload.notes,
-                    status: 'Submit',
-                    is_conflicting: conflicts.length > 0 ? 1 : 0,
-                    created_at: formatDateTime(),
-                    updated_at: formatDateTime()
+            adminEmails = adminsOfSite.map(admin => admin.email);
+            const insertPayload = {
+                id_user: userId,
+                room_id: payload.room_id,
+                topic_id: payload.topic_id,
+                detail_topic: payload.detail_topic || null,
+                purpose: payload.purpose,
+                start_time: payload.start_time,
+                end_time: payload.end_time,
+                duration_minutes: durationMinutes,
+                notes: payload.notes,
+                status: 'Submit',
+                is_conflicting: conflicts.length > 0 ? 1 : 0,
+                created_at: formatDateTime(),
+                updated_at: formatDateTime()
 
-                };
-                const newBooking = await bookingRepository.create(insertPayload, trx);
-                if (conflicts.length > 0) {
-                    const conflictIds = conflicts.map(booking => booking.id);
-                    await bookingRepository.markAsConflicting(conflictIds, trx);
-                }
+            };
+            newBooking = await bookingRepository.create(insertPayload, trx);
+            if (conflicts.length > 0) {
+                const conflictIds = conflicts.map(booking => booking.id);
+                await bookingRepository.markAsConflicting(conflictIds, trx);
+            }
 
-                if (payload.amenity_ids && payload.amenity_ids.length > 0) {
-                    const amenityPayload = payload.amenity_ids.map(id => ({
-                        booking_id: newBooking.id,
-                        amenity_id: id
-                    }));
-                    for (const amenity of amenityPayload) {
-                        await bookingRepository.createAmenities(amenity, trx);
-                    }
+            if (payload.amenity_ids && payload.amenity_ids.length > 0) {
+                const amenityPayload = payload.amenity_ids.map(id => ({
+                    booking_id: newBooking.id,
+                    amenity_id: id
+                }));
+                for (const amenity of amenityPayload) {
+                    await bookingRepository.createAmenities(amenity, trx);
                 }
-                if (adminEmails.length > 0) {
-                    const emailDetails = {
-                        ...newBooking,
-                        user: userWhoBooked,
-                        room: roomToBook,
-                    };
-                    await sendNewBookingNotificationEmail(adminEmails, emailDetails);
-                }
-                return newBooking;
-            });
-        } catch (err) {
-            throw err;
+            }
+            await trx.commit();
+        } catch (error) {
+            await trx.rollback();
+            throw error;
         }
+        try {
+            if (adminEmails.length > 0) {
+                const emailDetails = {
+                    ...newBooking,
+                    user: userWhoBooked,
+                    room: roomToBook,
+                };
+                await sendNewBookingNotificationEmail(adminEmails, emailDetails);
+            }
+        } catch (err) {
+            console.error('Failed to send notification emails to admins.');
+        }
+        return newBooking;
     }
     async getAll(queryParams, request) {
         const siteId = request.user.sites ?? null;
@@ -94,7 +103,7 @@ class BookingService {
     async updateBooking(bookingId, request) {
         const payload = request.body;
         const existingBooking = await this.getBookingById(bookingId);
-
+        let updatedBooking;
         if (existingBooking.status !== 'Submit') {
             const error = new Error('This booking cannot be edited as it has already been processed.');
             error.statusCode = 400;
@@ -103,7 +112,8 @@ class BookingService {
 
         const conflicts = await bookingRepository.findConflicts(payload.room_id, payload.start_time, payload.end_time, bookingId);
         const durationMinutes = moment(payload.end_time).diff(moment(payload.start_time), 'minutes');
-        return knexBooking.transaction(async (trx) => {
+        const trx = await knexBooking.transaction();
+        try {
             const insertPayload = {
                 room_id: payload.room_id,
                 topic_id: payload.topic_id,
@@ -113,36 +123,45 @@ class BookingService {
                 duration_minutes: durationMinutes,
                 purpose: payload.purpose,
                 status: payload.status || 'Submit',
-                // status: payload.status || 'Submit',
                 is_conflicting: conflicts.length > 0 ? 1 : 0,
                 updated_at: formatDateTime()
             };
-            const updatedBooking = await bookingRepository.update(bookingId, insertPayload, trx);
+            updatedBooking = await bookingRepository.update(bookingId, insertPayload, trx);
+            await trx.commit();
+        } catch (error) {
+            await trx.rollback();
+            throw error;
+        }
 
+        try {
             const emailDetails = {
                 ...updatedBooking,
                 user: existingBooking.user,
                 room: existingBooking.room,
             };
             await sendRescheduleNotificationEmail(emailDetails);
-            return updatedBooking;
-        });
+        } catch (err) {
+            console.error('Failed to send reschedule notification email.');
+        }
+        return updatedBooking;
     }
 
     async updateBookingUser(bookingId, request) {
         const payload = request.body;
         const existingBooking = await this.getBookingById(bookingId);
-
+        let updatedBooking;
+        let adminEmails = [];
         if (existingBooking.status !== 'Submit') {
             const error = new Error('This booking cannot be edited as it has already been processed.');
             error.statusCode = 400;
             throw error;
         }
         const adminsOfSite = await userRepository.findAdminsBySiteId(existingBooking.room.cab_id);
-        const adminEmails = adminsOfSite.map(admin => admin.email);
+        adminEmails = adminsOfSite.map(admin => admin.email);
         const conflicts = await bookingRepository.findConflicts(payload.room_id, payload.start_time, payload.end_time, bookingId);
         const durationMinutes = moment(payload.end_time).diff(moment(payload.start_time), 'minutes');
-        return knexBooking.transaction(async (trx) => {
+        const trx = await knexBooking.transaction();
+        try {
             const insertPayload = {
                 room_id: payload.room_id,
                 topic_id: payload.topic_id,
@@ -155,13 +174,19 @@ class BookingService {
                 is_conflicting: conflicts.length > 0 ? 1 : 0,
                 updated_at: formatDateTime()
             };
-            const updatedBooking = await bookingRepository.update(bookingId, insertPayload, trx);
+            updatedBooking = await bookingRepository.update(bookingId, insertPayload, trx);
             await bookingRepository.deleteAmenitiesByBookingId(bookingId, trx);
             const amenityPayload = payload.amenity_ids.map(id => ({
                 booking_id: updatedBooking.id,
                 amenity_id: id
             }));
             await bookingRepository.createAmenities(amenityPayload, trx);
+            await trx.commit();
+        } catch (error) {
+            await trx.rollback();
+            throw error;
+        }
+        try {
             if (adminEmails.length > 0) {
                 const emailDetails = {
                     ...existingBooking,
@@ -169,9 +194,10 @@ class BookingService {
                 };
                 await sendBookingUpdatedNotificationEmail(adminEmails, emailDetails);
             }
-
-            return updatedBooking;
-        });
+        } catch (err) {
+            console.error('Failed to send notification emails to admins.');
+        }
+        return updatedBooking;
     }
 
     async deleteBooking(bookingId) {
@@ -192,7 +218,8 @@ class BookingService {
 
     async updateBookingStatus(bookingId, request) {
         const payload = request.body;
-        const authUser = getUserId(request);
+        const authUser = getUserId(request); 
+
         const bookingToUpdate = await this.getBookingById(bookingId);
 
         if (!bookingToUpdate) {
@@ -201,64 +228,73 @@ class BookingService {
             throw error;
         }
 
-        const { updatedBooking, rejectedBookingsForEmail } =
-            await knexBooking.transaction(async (trx) => {
-                const rejectedBookingsForEmail = [];
+        let updatedBooking;
+        const rejectedBookingsForEmail = []; 
 
-                if (payload.status === "Approved") {
-                    const approvedConflicts = await bookingRepository.findApprovedConflicts(
-                        bookingToUpdate.room_id,
-                        bookingToUpdate.start_time,
-                        bookingToUpdate.end_time,
-                        bookingId,
-                        trx
-                    );
+        const trx = await knexBooking.transaction();
 
-                    if (approvedConflicts.length > 0) {
-                        const error = new Error(
-                            "Gagal, jadwal ini bentrok dengan booking lain yang sudah disetujui."
-                        );
-                        error.statusCode = 409;
-                        throw error;
-                    }
+        try {
 
-                    const pendingConflicts = await bookingRepository.findSubmitConflicts(
-                        bookingToUpdate.room_id,
-                        bookingToUpdate.start_time,
-                        bookingToUpdate.end_time,
-                        bookingId,
-                        trx
-                    );
-
-                    for (const conflict of pendingConflicts) {
-                        await bookingRepository.update(
-                            conflict.id,
-                            { status: "Rejected" },
-                            trx
-                        );
-                        rejectedBookingsForEmail.push(conflict);
-                    }
-                }
-
-                const updatePayload = {
-                    status: payload.status,
-                    approved_by: authUser,
-                };
-
-                const updatedBooking = await bookingRepository.update(
+            if (payload.status === "Approved") {
+                const approvedConflicts = await bookingRepository.findApprovedConflicts(
+                    bookingToUpdate.room_id,
+                    bookingToUpdate.start_time,
+                    bookingToUpdate.end_time,
                     bookingId,
-                    updatePayload,
                     trx
                 );
 
-                return { updatedBooking, rejectedBookingsForEmail };
-            });
+                if (approvedConflicts.length > 0) {
+                    const error = new Error(
+                        "Gagal, jadwal ini bentrok dengan booking lain yang sudah disetujui."
+                    );
+                    error.statusCode = 409; 
+                    throw error;
+                }
+
+                const pendingConflicts = await bookingRepository.findSubmitConflicts(
+                    bookingToUpdate.room_id,
+                    bookingToUpdate.start_time,
+                    bookingToUpdate.end_time,
+                    bookingId,
+                    trx
+                );
+
+                for (const conflict of pendingConflicts) {
+                    await bookingRepository.update(
+                        conflict.id,
+                        { status: "Rejected" },
+                        trx
+                    );
+                    rejectedBookingsForEmail.push(conflict);
+                }
+            }
+
+            const updatePayload = {
+                status: payload.status,
+                approved_by: authUser,
+                updated_at: formatDateTime()
+            };
+
+            updatedBooking = await bookingRepository.update(
+                bookingId,
+                updatePayload,
+                trx
+            );
+
+            await trx.commit();
+
+        } catch (dbError) {
+            await trx.rollback();
+            console.error("Gagal update status booking (Database Error):", dbError);
+            throw dbError; 
+        }
 
         try {
             const mainEmailDetails = { ...bookingToUpdate, status: payload.status };
             await sendBookingStatusEmail(mainEmailDetails);
         } catch (err) {
-            console.error("Gagal kirim email utama:", err.message);
+            console.error(`Gagal kirim email status untuk booking ${bookingId}:`, err.message);
         }
 
         for (const rejectedBooking of rejectedBookingsForEmail) {
@@ -309,13 +345,37 @@ class BookingService {
             error.statusCode = 404;
             throw error;
         }
-
-        return knexBooking.transaction(async (trx) => {
-            const updatedBooking = await bookingRepository.update(bookingId, { status: 'Canceled', updated_at: formatDateTime() }, trx);
+    
+        let updatedBooking;
+        const trx = await knexBooking.transaction();
+    
+        try {
+            const updatePayload = { 
+                status: 'Canceled', 
+                updated_at: formatDateTime() 
+            };
+            
+            updatedBooking = await bookingRepository.update(bookingId, updatePayload, trx);
+            
+            await trx.commit();
+    
+        } catch (dbError) {
+            await trx.rollback();
+            console.error("Gagal membatalkan booking (Database Error):", dbError);
+            throw dbError;
+        }
+    
+        
+        try {
             const bookingDetailsForEmail = { ...existingBooking, status: 'Canceled' };
             await sendAdminCancellationEmail(bookingDetailsForEmail);
-            return updatedBooking;
-        });
+        
+        } catch (emailError) {
+            console.error(`Booking ${bookingId} berhasil dibatalkan, TAPI gagal mengirim email notifikasi.`);
+            console.error(emailError);
+        }
+    
+        return updatedBooking;
     }
 
     async forceApproveBooking(bookingId, request) {
