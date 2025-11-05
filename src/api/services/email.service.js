@@ -34,13 +34,13 @@ const sendBookingStatusEmail = async (bookingDetails) => {
 
         const mailOptions = {
             from: `"Notifikasi GARIS | PT. Cisangkan" <${process.env.SMTP_USERNAME}>`,
-            to: user.email,
+            to: user.employee.email,
             subject: `Pembaruan Status Booking: ${purpose}`,
             html: htmlContent
         };
 
         await emailTransporter.sendMail(mailOptions);
-        console.log(`Email notifikasi status terkirim ke ${user.email}`);
+        console.log(`Email notifikasi status terkirim ke ${user.employee.email}`);
 
     } catch (error) {
         console.error("Gagal mengirim email notifikasi status:", error);
@@ -127,13 +127,13 @@ const sendRescheduleNotificationEmail = async (bookingDetails) => {
 
         const mailOptions = {
             from: `"Notifikasi GARIS | PT. Cisangkan" <${process.env.SMTP_USERNAME}>`,
-            to: user.email,
+            to: user.employee.email,
             subject: `[DIJADWALKAN ULANG] Booking Anda untuk: ${purpose}`,
             html: htmlContent
         };
 
         await emailTransporter.sendMail(mailOptions);
-        console.log(`Email notifikasi reschedule terkirim ke ${user.email}`);
+        console.log(`Email notifikasi reschedule terkirim ke ${user.employee.email}`);
 
     } catch (error) {
         console.error("Gagal mengirim email notifikasi reschedule:", error);
@@ -160,13 +160,13 @@ const sendAutoRejectionEmail = async (rejectedBooking) => {
 
         const mailOptions = {
             from: `"Notifikasi GARIS | PT. Cisangkan" <${process.env.SMTP_USERNAME}>`,
-            to: user.email,
+            to: user.employee.email,
             subject: `[DITOLAK] Pengajuan Booking Anda: ${purpose}`,
             html: htmlContent
         };
 
         await emailTransporter.sendMail(mailOptions);
-        console.log(`Email notifikasi penolakan otomatis terkirim ke ${user.email}`);
+        console.log(`Email notifikasi penolakan otomatis terkirim ke ${user.employee.email}`);
 
     } catch (error) {
         console.error("Gagal mengirim email notifikasi penolakan otomatis:", error);
@@ -189,13 +189,13 @@ const sendAdminCancellationEmail = async (bookingDetails) => {
 
         const mailOptions = {
             from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
-            to: user.email,
+            to: user.employee.email,
             subject: `[DIBATALKAN] Booking Anda untuk: ${purpose}`,
             html: htmlContent
         };
 
         await emailTransporter.sendMail(mailOptions);
-        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.email}`);
+        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.employee.email}`);
 
     } catch (error) {
         console.error("Gagal mengirim email notifikasi pembatalan oleh admin:", error);
@@ -328,7 +328,7 @@ const sendOrderStatusUpdateEmail = async (email, orderDetails) => {
         };
 
         await emailTransporter.sendMail(mailOptions);
-        console.log(`Email notifikasi status pesanan terkirim ke ${user.email}`);
+        console.log(`Email notifikasi status pesanan terkirim ke ${user.employee.email}`);
 
     } catch (error) {
         console.error("Gagal mengirim email notifikasi status pesanan:", error);
@@ -342,18 +342,18 @@ const sendAdminCancellationOrderEmail = async (bookingDetails) => {
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
-        htmlContent = htmlContent.replace(/{{roomName}}/g, room.name || location_text);
+        htmlContent = htmlContent.replace(/{{roomName}}/g, room?.name || location_text);
         htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).format('DD MMM YYYY, HH:mm'));
 
         const mailOptions = {
             from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
-            to: user.email,
+            to: user.employee.email,
             subject: `[DIBATALKAN] Order Anda`,
             html: htmlContent
         };
 
         await emailTransporter.sendMail(mailOptions);
-        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.email}`);
+        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.employee.email}`);
 
     } catch (error) {
         console.error("Gagal mengirim email notifikasi pembatalan oleh admin:", error);
@@ -484,7 +484,7 @@ const sendRequestStatusUpdateEmail = async (email, requestDetail) => {
         };
 
         await emailTransporter.sendMail(mailOptions);
-        console.log(`Email notifikasi status pesanan terkirim ke ${user.email}`);
+        console.log(`Email notifikasi status pesanan terkirim ke ${user.employee.email}`);
 
     } catch (error) {
         console.error("Gagal mengirim email notifikasi status pesanan:", error);
@@ -505,13 +505,13 @@ const sendAdminCancellationRequestEmail = async (requestDetail) => {
 
         const mailOptions = {
             from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
-            to: user.email,
+            to: user.employee.email,
             subject: `[DIBATALKAN] Pengajuan Kendaraan Anda`,
             html: htmlContent
         };
 
         await emailTransporter.sendMail(mailOptions);
-        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.email}`);
+        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.employee.email}`);
 
     } catch (error) {
         console.error("Gagal mengirim email notifikasi pembatalan oleh admin:", error);

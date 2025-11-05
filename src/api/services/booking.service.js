@@ -90,7 +90,7 @@ class BookingService {
     }
 
     async getBookingById(bookingId) {
-        const booking = await bookingRepository.findByIdWithRelations(bookingId, '[room, user, amenities, topic]');
+        const booking = await bookingRepository.findByIdWithRelations(bookingId, '[room, user.[employee], amenities, topic]');
         if (!booking) {
             const error = new Error('Booking not found.');
             error.statusCode = 404;

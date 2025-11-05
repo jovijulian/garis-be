@@ -26,6 +26,7 @@ class User extends BaseModelHr {
 
     static get relationMappings() {
         const UserPermission = require('./UserPermission');
+        const Employee = require('./Employee');
         return {
             permissions: {
                 relation: BaseModelHr.HasManyRelation,
@@ -34,7 +35,16 @@ class User extends BaseModelHr {
                     from: 'tb_user.id_user',
                     to: 'tb_user_permissions_garis.user_id'
                 }
+            },
+            employee: {
+                relation: BaseModelHr.BelongsToOneRelation,
+                modelClass: Employee,
+                join: {
+                    from: 'tb_user.id_user',
+                    to: 'tb_karyawan.nik'
+                },
             }
+            
         };
     }
 

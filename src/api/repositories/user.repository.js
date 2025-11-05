@@ -53,14 +53,24 @@ class UserRepository extends BaseRepository {
     }
 
     async findAdminsBySiteId(siteId) {
-        return this.model.query()
-            .select('email')
+        const users = await User.query()
+            .withGraphFetched('employee')
+            .modifyGraph('employee', builder => {
+                builder.select('email');
+            })
             .where('role_garis', 2)
             .whereExists(
                 User.relatedQuery('permissions')
                     .where('cab_id', siteId)
             );
+
+        return users
+            .filter(user => user.employee && user.employee.email)
+            .map(user => ({
+                email: user.employee.email
+            }));
     }
+
     async options(params) {
         const query = User.query()
             .select('*')
@@ -79,8 +89,23 @@ class UserRepository extends BaseRepository {
             .select('*')
             .where('id_user', id_user)
             .where('role_garis', 3)
+            .withGraphFetched('employee')
+            .modifyGraph('employee', builder => {
+                builder.select('email');
+            })
             .first();
     }
+
+    async findEmailUser(id_user) {
+        return User.query()
+            .findById(id_user)
+            .withGraphFetched('employee')
+            .modifyGraph('employee', builder => {
+                builder.select('email');
+            })
+            .select('id_user', 'nama_user');
+    }
+
 
 }
 

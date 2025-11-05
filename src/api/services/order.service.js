@@ -26,7 +26,7 @@ class OrderService {
     }
 
     async detail(id) {
-        const data = await orderRepository.findByIdWithRelations(id, '[details.[consumption_type], cabang, user, booking, room]');
+        const data = await orderRepository.findByIdWithRelations(id, '[details.[consumption_type], cabang, user.[employee], booking, room]');
         if (!data) {
             const error = new Error('Order not found.');
             error.statusCode = 404;
@@ -238,9 +238,9 @@ class OrderService {
         }
 
         try {
-            const requester = await userRepository.findById(existingOrder.user_id);
+            const requester = await userRepository.findByIdWithRelations(existingOrder.user_id, 'employee');
             if (requester) {
-                const email = requester.email;
+                const email = requester.employee.email;
                 const orderDetails = await this.detail(id);
                 await sendOrderStatusUpdateEmail(email, orderDetails);
             }

@@ -26,10 +26,12 @@ class AuthService {
             throw error;
         }
 
+        const getEmailUser = await userRepository.findEmailUser(user.id_user);
+
         const jwtPayload = {
             id_user: user.id_user,
             name: user.nama_user,
-            email: user.email,
+            email: getEmailUser.employee ? getEmailUser.employee.email : null,
             role: user.role_garis,
             sites: user.permissions.length > 0 ? user.permissions[0].cab_id : null,
         };
@@ -67,11 +69,12 @@ class AuthService {
         if (checkDriver) {
             isDriver = true
         }
+        const getEmailUser = await userRepository.findEmailUser(user.id_user);
 
         return {
             id_user: user.id_user,
             name: user.nama_user,
-            email: user.email,
+            email: getEmailUser.employee ? getEmailUser.employee.email : null,
             role: user.role_garis,
             sites: user.permissions.length > 0 ? user.permissions[0].cab_id : null,
             is_driver: isDriver || false,

@@ -29,7 +29,7 @@ class VehicleRequestService {
 
     async detail(id) {
         const data = await vehicleRequestRepository.findByIdWithRelations(id,
-            '[cabang, user, vehicle_type, detail.[vehicle, driver]]'
+            '[cabang, user.[employee], vehicle_type, detail.[vehicle, driver]]'
         );
         if (!data) {
             const error = new Error('Vehicle Request not found.');
@@ -208,9 +208,9 @@ class VehicleRequestService {
         }
         if (payload.status !== 'In Progress' && payload.status !== 'Completed') {
             try {
-                const requester = await userRepository.findById(updatedRequest.id_user);
+                const requester = await userRepository.findByIdWithRelations(updatedRequest.id_user, '[employee]');
                 if (requester) {
-                    const email = requester.email;
+                    const email = requester.employee.email;
                     const requestDetail = await this.detail(id);
                     await sendRequestStatusUpdateEmail(email, requestDetail);
                 }
@@ -331,7 +331,7 @@ class VehicleRequestService {
             for (const assignment of createdAssignmentsData) {
                 if (assignment.driver && assignment.driver.id_user) {
                     const driverUserData = await userRepository.findDriverByIdUser(assignment.driver.id_user);
-                    const driverEmail = driverUserData?.email;
+                    const driverEmail = driverUserData?.employee?.email;
 
                     if (driverEmail) {
                         await sendAssignmentNotificationEmail(
@@ -367,7 +367,7 @@ class VehicleRequestService {
         const templateData = {
             request: data,
             moment: moment,
-            logoBase64: base64Logo // Kirim data base64 ke template
+            logoBase64: base64Logo 
         };
 
         const html = await ejs.renderFile(templatePath, templateData);
