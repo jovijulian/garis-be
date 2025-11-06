@@ -263,7 +263,7 @@ class OrderService {
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
 
         const menuItemsHtml = order.details.map(item => {
-            const deliveryTime = moment.utc(item.delivery_time).utcOffset('+07:00').format('YYYY-MM-DD HH:mm')
+            const deliveryTime = moment.utc(item.delivery_time).utcOffset('+07:00').format('HH:mm')
             return `
                 <tr>
                     <td>${item.consumption_type.name}</td>
