@@ -245,13 +245,14 @@ class VehicleRequestService {
         const trx = await knexBooking.transaction();
         let createdAssignmentsData = [];
         let requestDetails;
-        const vehiclesToUpdate = new Set();
+        
+        const vehiclesToUpdate = new Set(); 
         const driversToUpdate = new Set();
-
-
+    
+    
         try {
             const { details } = req.body;
-
+    
             requestDetails = await vehicleRequestRepository.findByIdWithRelations(requestId, '[user, vehicle_type, cabang]', trx);
             if (!requestDetails) {
                 const error = new Error('Vehicle Request not found.');
@@ -263,27 +264,46 @@ class VehicleRequestService {
                 error.statusCode = 400;
                 throw error;
             }
-
-
+    
+            const existingAssignments = await vehicleAssignmentRepository.findByRequestId(requestId, trx);
+            const oldVehicleIds = new Set(
+                existingAssignments.map(a => a.vehicle_id).filter(Boolean)
+            );
+            const oldDriverIds = new Set(
+                existingAssignments.map(a => a.driver_id).filter(Boolean)
+            );
             await vehicleAssignmentRepository.deleteByRequestId(requestId, trx);
-
+    
             for (const assignmentDetail of details) {
                 const { vehicle_id, driver_id, note_for_driver } = assignmentDetail;
-
+    
                 const vehicle = await vehicleRepository.findById(vehicle_id, trx);
-                if (!vehicle || vehicle.status !== 'Available') {
-                    const error = new Error(`Vehicle with ID ${vehicle_id} is not available or not found.`);
-                    error.statusCode = 400;
-                    throw error;
+                if (!vehicle || (vehicle.status !== 'Available' && !oldVehicleIds.has(vehicle_id)) ) {
+                    if (!vehicle) {
+                         const error = new Error(`Vehicle with ID ${vehicle_id} not found.`);
+                         error.statusCode = 400;
+                         throw error;
+                    }
+                    if (vehicle.status !== 'Available' && !oldVehicleIds.has(vehicle_id)) {
+                        const error = new Error(`Vehicle with ID ${vehicle_id} is not available.`);
+                        error.statusCode = 400;
+                        throw error;
+                    }
                 }
-
                 let driver = null;
                 if (driver_id) {
                     driver = await driverRepository.findById(driver_id, trx);
-                    if (!driver || driver.status !== 'Available') {
-                        const error = new Error(`Driver with ID ${driver_id} is not available or not found.`);
-                        error.statusCode = 400;
-                        throw error;
+                     if (!driver || (driver.status !== 'Available' && !oldDriverIds.has(driver_id))) {
+                        if (!driver) {
+                            const error = new Error(`Driver with ID ${driver_id} not found.`);
+                            error.statusCode = 400;
+                            throw error;
+                        }
+                        if (driver.status !== 'Available' && !oldDriverIds.has(driver_id)) {
+                            const error = new Error(`Driver with ID ${driver_id} is not available.`);
+                            error.statusCode = 400;
+                            throw error;
+                        }
                     }
                 } else if (requestDetails.requires_driver) {
                     console.warn(`Warning: Assignment for request ${requestId} requires a driver but none provided for vehicle ${vehicle_id}.`);
@@ -291,7 +311,7 @@ class VehicleRequestService {
                     error.statusCode = 400;
                     throw error;
                 }
-
+    
                 const assignmentPayload = {
                     request_id: Number(requestId),
                     vehicle_id: Number(vehicle_id),
@@ -300,33 +320,49 @@ class VehicleRequestService {
                     created_at: formatDateTime(),
                     updated_at: formatDateTime(),
                 };
-
                 const newAssignment = await vehicleAssignmentRepository.create(assignmentPayload, trx);
-
+    
                 createdAssignmentsData.push({ ...newAssignment, vehicle, driver });
-
+    
                 vehiclesToUpdate.add(vehicle_id);
                 if (driver_id) {
                     driversToUpdate.add(driver_id);
                 }
             }
-
+    
             const updatePromises = [];
+    
+            const vehiclesToSetAvailable = [...oldVehicleIds].filter(
+                id => !vehiclesToUpdate.has(id) 
+            );
+            const driversToSetAvailable = [...oldDriverIds].filter(
+                id => !driversToUpdate.has(id) 
+            );
+            
+            vehiclesToSetAvailable.forEach(id => {
+                updatePromises.push(vehicleRepository.update(id, { status: 'Available' }, trx));
+            });
+            driversToSetAvailable.forEach(id => {
+                updatePromises.push(driverRepository.update(id, { status: 'Available' }, trx));
+            });
+    
+    
             vehiclesToUpdate.forEach(id => {
                 updatePromises.push(vehicleRepository.update(id, { status: 'Not Available' }, trx));
             });
             driversToUpdate.forEach(id => {
                 updatePromises.push(driverRepository.update(id, { status: 'Not Available' }, trx));
             });
+    
             await Promise.all(updatePromises);
-
-
+    
             await trx.commit();
-
+    
         } catch (error) {
             await trx.rollback();
             throw error;
         }
+    
         try {
             for (const assignment of createdAssignmentsData) {
                 if (assignment.driver && assignment.driver.id_user) {
@@ -348,7 +384,7 @@ class VehicleRequestService {
         } catch (emailError) {
             console.error('Failed to send assignment notification emails:', emailError);
         }
-
+    
         return createdAssignmentsData;
     }
 
