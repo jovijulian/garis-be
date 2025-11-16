@@ -40,6 +40,27 @@ class VehicleAssignmentRepository extends BaseRepository {
     async findByRequestId(requestId) {
         return await VehicleAssignment.query().where('request_id', requestId);
     }
+
+    async checkConflict (requestId, start_time, end_time, vehicle_id, driver_id) {
+        const conflictCheckQuery = VehicleAssignment.query(trx)
+        .joinRelated('vehicle_request')
+        .where('vehicle_assignments.request_id', '!=', requestId) // Jangan cek bentrok dgn diri sendiri
+        .whereIn('vehicle_request.status', ['Approved', 'In Progress']) // Hanya cek vs request aktif
+        .andWhere(timeBuilder => {
+            // Logika overlap waktu
+            timeBuilder.where('vehicle_request.start_time', '<', end_time)
+                       .andWhere('vehicle_request.end_time', '>', start_time);
+        })
+        .andWhere(assetBuilder => {
+            // Cek bentrok di vehicle ATAU driver
+            assetBuilder.where('vehicle_assignments.vehicle_id', vehicle_id);
+            if (driver_id) {
+                assetBuilder.orWhere('vehicle_assignments.driver_id', driver_id);
+            }
+        });
+        conflictCheckQuery.first();
+        
+    }
 }
 
 module.exports = new VehicleAssignmentRepository();
