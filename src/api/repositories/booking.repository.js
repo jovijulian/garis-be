@@ -225,7 +225,6 @@ class BookingRepository extends BaseRepository {
             .modifiers({
                 selectUsername: builder => builder.select('nama_user')
             })
-            .first();
 
         return query;
     }

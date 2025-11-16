@@ -323,15 +323,15 @@ class BookingService {
             error.statusCode = 400;
             throw error;
         }
-        const conflict = await bookingRepository.findFirstApprovedConflict(room_id, start_time, end_time);
-
-        if (conflict) {
+        const conflicts = await bookingRepository.findFirstApprovedConflict(room_id, start_time, end_time);
+        if (conflicts && conflicts.length > 0) {
             return {
                 is_available: false,
-                conflictingBooking: {
+                conflictingBookings: conflicts.map(conflict => ({
                     purpose: conflict.purpose,
-                    booked_by: conflict.user.nama_user
-                }
+                    status: conflict.status,
+                    booked_by: conflict.user ? conflict.user.nama_user : 'User Tidak Dikenal'
+                }))
             };
         }
 
