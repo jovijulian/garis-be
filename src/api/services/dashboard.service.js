@@ -3,7 +3,8 @@ const userRepository = require('../repositories/user.repository');
 const moment = require('moment');
 const _ = require('lodash');
 class DashboardService {
-    async getDashboardData(queryParams = {}) {
+    async getDashboardData(queryParams = {}, request) {
+        const siteId = request.user.sites
         const startDate = queryParams.startDate ?
             moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
             moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
@@ -22,13 +23,13 @@ class DashboardService {
             topTopics,
             topAmenities
         ] = await Promise.all([
-            dashboardRepository.getTotalBookingsInRange(startDate, endDate),
-            dashboardRepository.getPendingBookingsCount(),
+            dashboardRepository.getTotalBookingsInRange(startDate, endDate, siteId),
+            dashboardRepository.getPendingBookingsCount(siteId),
             dashboardRepository.getMostPopularRoomInRange(startDate, endDate),
             dashboardRepository.getMostPopularTopicInRange(startDate, endDate),
-            dashboardRepository.getBookingTrendInRange(startDate, endDate),
+            dashboardRepository.getBookingTrendInRange(startDate, endDate, siteId),
             dashboardRepository.getRoomUtilizationInRange(startDate, endDate),
-            dashboardRepository.getStatusDistributionInRange(startDate, endDate),
+            dashboardRepository.getStatusDistributionInRange(startDate, endDate, siteId),
             dashboardRepository.getTopTopicsInRange(startDate, endDate),
             dashboardRepository.getTopAmenitiesInRange(startDate, endDate)
         ]);
@@ -52,7 +53,8 @@ class DashboardService {
         };
     }
 
-    async getOrderDashboardData(queryParams = {}) {
+    async getOrderDashboardData(queryParams = {}, request) {
+        const siteId = request.user.sites
         const startDate = queryParams.startDate ?
             moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
             moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
@@ -69,11 +71,11 @@ class DashboardService {
             topRequesterResult,
             topConsumptionTypesByQty,
         ] = await Promise.all([
-            dashboardRepository.getTotalOrdersInRange(startDate, endDate),
-            dashboardRepository.getPendingOrdersCount(),
-            dashboardRepository.getOrderTrendInRange(startDate, endDate),
-            dashboardRepository.getOrderStatusDistributionInRange(startDate, endDate),
-            dashboardRepository.getTopRequesterIdInRange(startDate, endDate),
+            dashboardRepository.getTotalOrdersInRange(startDate, endDate, siteId),
+            dashboardRepository.getPendingOrdersCount(siteId),
+            dashboardRepository.getOrderTrendInRange(startDate, endDate, siteId),
+            dashboardRepository.getOrderStatusDistributionInRange(startDate, endDate, siteId),
+            dashboardRepository.getTopRequesterIdInRange(startDate, endDate, siteId),
 
             dashboardRepository.getTopConsumptionTypesByQtyInRange(startDate, endDate, 5),
         ]);
@@ -106,7 +108,8 @@ class DashboardService {
         };
     }
 
-    async getVehicleRequestDashboardData(queryParams = {}) {
+    async getVehicleRequestDashboardData(queryParams = {}, request) {
+        const siteId = request.user.sites
         const startDate = queryParams.startDate ?
             moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
             moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
@@ -129,11 +132,11 @@ class DashboardService {
             driverCountsById,
             allBranches
         ] = await Promise.all([
-            dashboardRepository.getTotalRequestsInRange(startDate, endDate),
-            dashboardRepository.getPendingRequestsCount(),
-            dashboardRepository.getRequestTrendInRange(startDate, endDate),
-            dashboardRepository.getRequestStatusDistributionInRange(startDate, endDate),
-            dashboardRepository.getTopRequesterIdInRange(startDate, endDate),
+            dashboardRepository.getTotalRequestsInRange(startDate, endDate, siteId),
+            dashboardRepository.getPendingRequestsCount(siteId),
+            dashboardRepository.getRequestTrendInRange(startDate, endDate, siteId),
+            dashboardRepository.getRequestStatusDistributionInRange(startDate, endDate, siteId),
+            dashboardRepository.getTopRequesterIdInRange(startDate, endDate, siteId),
             dashboardRepository.getTopVehicleTypesRequestedInRange(startDate, endDate, 5),
             dashboardRepository.getTopVehiclesUsedInRange(startDate, endDate, 5),
             dashboardRepository.getTopDriversAssignedInRange(startDate, endDate, 5),
@@ -191,16 +194,17 @@ class DashboardService {
         };
     }
 
-    async getPendingRequestsCount() {
+    async getPendingRequestsCount(request) {
+        const siteId = request.user.sites
         const status = 'Submit'
         const [
             pendingBooking,
             pendingVehicles,
             pendingOrders,
         ] = await Promise.all([
-            dashboardRepository.getPendingBookingCount(status),
-            dashboardRepository.getPendingVehiclesCount(status),
-            dashboardRepository.getPendingOrderCount(status),
+            dashboardRepository.getPendingBookingCount(status, siteId),
+            dashboardRepository.getPendingVehiclesCount(status, siteId),
+            dashboardRepository.getPendingOrderCount(status, siteId),
         ]);
         return {
             pending_bookings: pendingBooking,

@@ -18,23 +18,35 @@ const Driver = require('../models/Driver')
 class DashboardRepository {
 
     //pending
-    getPendingBookingCount(status) {
-        return Booking.query().where('status', status).resultSize();
+    getPendingBookingCount(status, siteId) {
+        return Booking.query().where('status', status).where('cab_id', siteId).resultSize();
     }
-    getPendingVehiclesCount(status) {
-        return VehicleRequest.query().where('status', status).resultSize();
+    getPendingVehiclesCount(status, siteId) {
+        return VehicleRequest.query().where('status', status).where('cab_id', siteId).resultSize();
     }
-    getPendingOrderCount(status) {
-        return Order.query().where('status', status).resultSize();
+    getPendingOrderCount(status, siteId) {
+        return Order.query().where('status', status).where('cab_id', siteId).resultSize();
     }
 
     // booking
-    getTotalBookingsInRange(startDate, endDate) {
-        return Booking.query().whereBetween('start_time', [startDate, endDate]).resultSize();
+    getTotalBookingsInRange(startDate, endDate, siteId) {
+        return Booking.query().modify(q => {
+            if (siteId) {
+                q.whereExists(
+                    Booking.relatedQuery('room').where('cab_id', siteId)
+                );
+            }
+        }).whereBetween('start_time', [startDate, endDate]).resultSize();
     }
 
-    getPendingBookingsCount() {
-        return Booking.query().where('status', 'Submit').resultSize();
+    getPendingBookingsCount(siteId) {
+        return Booking.query().modify(q => {
+            if (siteId) {
+                q.whereExists(
+                    Booking.relatedQuery('room').where('cab_id', siteId)
+                );
+            }
+        }).where('status', 'Submit').resultSize();
     }
 
     async getMostPopularRoomInRange(startDate, endDate) {
@@ -58,9 +70,16 @@ class DashboardRepository {
     }
 
     // Grafik & Peringkat
-    getBookingTrendInRange(startDate, endDate) {
+    getBookingTrendInRange(startDate, endDate, siteId) {
         return Booking.query()
             .select(knexBooking.raw('DATE(start_time) as date'), knexBooking.raw('count(id) as count'))
+            .modify(q => {
+                if (siteId) {
+                    q.whereExists(
+                        Booking.relatedQuery('room').where('cab_id', siteId)
+                    );
+                }
+            })
             .whereBetween('start_time', [startDate, endDate])
             .groupByRaw('DATE(start_time)')
             .orderBy('date', 'asc');
@@ -76,9 +95,16 @@ class DashboardRepository {
             .limit(5);
     }
 
-    getStatusDistributionInRange(startDate, endDate) {
+    getStatusDistributionInRange(startDate, endDate, siteId) {
         return Booking.query()
             .select('status', knexBooking.raw('count(id) as count'))
+            .modify(q => {
+                if (siteId) {
+                    q.whereExists(
+                        Booking.relatedQuery('room').where('cab_id', siteId)
+                    );
+                }
+            })
             .whereBetween('start_time', [startDate, endDate])
             .groupBy('status');
     }
@@ -105,35 +131,38 @@ class DashboardRepository {
     }
 
     // order 
-    getTotalOrdersInRange(startDate, endDate) {
-        return Order.query().whereBetween('order_date', [startDate, endDate]).resultSize();
+    getTotalOrdersInRange(startDate, endDate, siteId) {
+        return Order.query().whereBetween('order_date', [startDate, endDate]).where('cab_id', siteId).resultSize();
     }
 
-    getPendingOrdersCount() {
-        return Order.query().where('status', 'Submit').resultSize();
+    getPendingOrdersCount(siteId) {
+        return Order.query().where('status', 'Submit').where('cab_id', siteId).resultSize();
     }
 
-    getTopRequesterIdInRange(startDate, endDate) {
+    getTopRequesterIdInRange(startDate, endDate, siteId) {
         return Order.query()
             .select('user_id')
             .count('id as order_count')
             .whereBetween('order_date', [startDate, endDate])
+            .where('cab_id', siteId)
             .groupBy('user_id')
             .orderBy('order_count', 'desc')
             .first();
     }
 
-    getOrderTrendInRange(startDate, endDate) {
+    getOrderTrendInRange(startDate, endDate, siteId) {
         return Order.query()
             .select(knexBooking.raw('DATE(order_date) as date'), knexBooking.raw('count(id) as count'))
             .whereBetween('order_date', [startDate, endDate])
+            .where('cab_id', siteId)
             .groupByRaw('DATE(order_date)')
             .orderBy('date', 'asc');
     }
 
-    getOrderStatusDistributionInRange(startDate, endDate) {
+    getOrderStatusDistributionInRange(startDate, endDate, siteId) {
         return Order.query()
             .select('status', knexBooking.raw('count(id) as count'))
+            .where('cab_id', siteId)
             .whereBetween('order_date', [startDate, endDate])
             .groupBy('status');
     }
@@ -172,33 +201,36 @@ class DashboardRepository {
     }
 
     //vehicle request
-    getTotalRequestsInRange(startDate, endDate) {
-        return VehicleRequest.query().whereBetween('start_time', [startDate, endDate]).resultSize();
+    getTotalRequestsInRange(startDate, endDate, siteId) {
+        return VehicleRequest.query().whereBetween('start_time', [startDate, endDate]).where('cab_id', siteId).resultSize();
     }
 
-    getPendingRequestsCount() {
-        return VehicleRequest.query().where('status', 'Submit').resultSize();
+    getPendingRequestsCount(siteId) {
+        return VehicleRequest.query().where('status', 'Submit').where('cab_id', siteId).resultSize();
     }
 
-    getRequestTrendInRange(startDate, endDate) {
+    getRequestTrendInRange(startDate, endDate, siteId) {
         return VehicleRequest.query()
             .select(knexBooking.raw('DATE(start_time) as date'), knexBooking.raw('count(id) as count'))
+            .where('cab_id', siteId)
             .whereBetween('start_time', [startDate, endDate])
             .groupByRaw('DATE(start_time)')
             .orderBy('start_time', 'asc');
     }
 
-    getRequestStatusDistributionInRange(startDate, endDate) {
+    getRequestStatusDistributionInRange(startDate, endDate, siteId) {
         return VehicleRequest.query()
             .select('status', knexBooking.raw('count(id) as count'))
+            .where('cab_id', siteId)
             .whereBetween('start_time', [startDate, endDate])
             .groupBy('status');
     }
 
-    getTopVehicleRequesterIdInRange(startDate, endDate) {
+    getTopVehicleRequesterIdInRange(startDate, endDate, siteId) {
         return VehicleRequest.query()
             .select('id_user')
             .count('id as request_count')
+            .where('cab_id', siteId)
             .whereBetween('start_time', [startDate, endDate])
             .groupBy('id_user')
             .orderBy('request_count', 'desc')
