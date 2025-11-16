@@ -41,7 +41,7 @@ class VehicleAssignmentRepository extends BaseRepository {
         return await VehicleAssignment.query().where('request_id', requestId);
     }
 
-    async checkConflict (requestId, start_time, end_time, vehicle_id, driver_id) {
+    async checkConflict (requestId, start_time, end_time, vehicle_id, driver_id, trx) {
         const conflictCheckQuery = VehicleAssignment.query(trx)
         .joinRelated('vehicle_request')
         .where('vehicle_assignments.request_id', '!=', requestId) // Jangan cek bentrok dgn diri sendiri
@@ -59,7 +59,7 @@ class VehicleAssignmentRepository extends BaseRepository {
             }
         });
         conflictCheckQuery.first();
-        
+
     }
 }
 

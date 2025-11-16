@@ -338,7 +338,7 @@ class VehicleRequestService {
                 //         }
                 //     });
     
-                const conflictingAssignment = await vehicleAssignmentRepository.checkConflict(requestId, start_time, end_time, vehicle_id, driver_id) 
+                const conflictingAssignment = await vehicleAssignmentRepository.checkConflict(requestId, start_time, end_time, vehicle_id, driver_id, trx) 
     
                 if (conflictingAssignment) {
                     let conflictSource = '';
