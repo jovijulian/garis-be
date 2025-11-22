@@ -7,6 +7,7 @@ const createSchema = z.object({
         capacity: z.number({ required_error: 'Capacity is required' }),
         location: z.string({ required_error: 'Location is required' }),
         description: z.string().nullable().optional(),
+        amenity_ids: z.array(z.number()).optional(),
     }),
 });
 
@@ -20,6 +21,7 @@ const updateSchema = z.object({
         capacity: z.number({ required_error: 'Capacity is required' }),
         location: z.string({ required_error: 'Location is required' }),
         description: z.string().nullable().optional(),
+        amenity_ids: z.array(z.number()).optional(),
     }).refine(data => Object.keys(data).length > 0, {
         message: 'At least one field must be provided for an update',
     }),

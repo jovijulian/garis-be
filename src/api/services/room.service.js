@@ -20,11 +20,16 @@ class RoomService {
     async create(payload) {
         try {
             return knexBooking.transaction(async (trx) => {
-                payload.created_at = formatDateTime();
-                payload.updated_at = formatDateTime();
+                const { amenity_ids, ...roomData } = payload; 
 
-                const data = await roomRepository.create(payload, trx);
-                return data;
+                roomData.created_at = formatDateTime();
+                roomData.updated_at = formatDateTime();
+                const createdRoom = await roomRepository.create(roomData, trx);
+                if (amenity_ids && Array.isArray(amenity_ids)) {
+                    await roomRepository.syncAmenities(createdRoom.id, amenity_ids, trx);
+                }
+
+                return createdRoom;
             });
         } catch (error) {
             throw error;
@@ -35,10 +40,16 @@ class RoomService {
         await this.detail(id);
         try {
             return knexBooking.transaction(async (trx) => {
-                payload.updated_at = formatDateTime();
+                const { amenity_ids, ...roomData } = payload;
+                
+                roomData.updated_at = formatDateTime();
 
-                const data = await roomRepository.update(id, payload, trx);
-                return data;
+                const updatedRoom = await roomRepository.update(id, roomData, trx);
+                if (amenity_ids && Array.isArray(amenity_ids)) {
+                    await roomRepository.syncAmenities(id, amenity_ids, trx);
+                }
+
+                return updatedRoom;
             });
         } catch (error) {
             throw error;

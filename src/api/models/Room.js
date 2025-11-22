@@ -23,6 +23,7 @@ class Room extends BaseModelBooking {
 
     static get relationMappings() {
         const Site = require('./Site');
+        const Amenity = require('./Amenity');
         return {
             cabang: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -32,6 +33,18 @@ class Room extends BaseModelBooking {
                     to: 'tb_cab.id_cab'
                 }
             },
+            amenities: {
+                relation: BaseModelBooking.ManyToManyRelation,
+                modelClass: Amenity,
+                join: {
+                    from: 'rooms.id',
+                    through: {
+                        from: 'room_amenities.room_id', 
+                        to: 'room_amenities.amenity_id'
+                    },
+                    to: 'amenities.id'
+                }
+            }
         };
     }
 

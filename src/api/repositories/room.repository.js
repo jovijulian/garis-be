@@ -14,9 +14,12 @@ class RoomRepository extends BaseRepository {
 
         const query = Room.query()
             .select('*')
-            .withGraphFetched('[cabang]')
+            .withGraphFetched('[cabang, amenities]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
+            })
+            .modifyGraph('amenities', builder => {
+                builder.select('id', 'name');
             })
             .where('is_active', 1)
             .page(page - 1, per_page)
@@ -90,6 +93,22 @@ class RoomRepository extends BaseRepository {
     async findByIdsSite(siteIds) {
         if (!siteIds || siteIds.length === 0) return [];
         return Site.query().whereIn('id_cab', siteIds);
+    }
+
+    async syncAmenities(roomId, amenityIds, trx) {
+        const db = trx || Room.knex();
+        const PIVOT_TABLE = 'room_amenities';
+        await db(PIVOT_TABLE)
+            .where('room_id', roomId)
+            .delete();
+        if (amenityIds && amenityIds.length > 0) {
+            const dataToInsert = amenityIds.map(amenityId => ({
+                room_id: roomId,
+                amenity_id: amenityId
+            }));
+
+            await db(PIVOT_TABLE).insert(dataToInsert);
+        }
     }
 
 }
