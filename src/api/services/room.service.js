@@ -8,7 +8,7 @@ class RoomService {
     }
 
     async detail(id) {
-        const data = await roomRepository.findByIdWithRelations(id, '[cabang]');
+        const data = await roomRepository.findByIdWithRelations(id, '[cabang, amenities]');
         if (!data) {
             const error = new Error('Room not found.');
             error.statusCode = 404;

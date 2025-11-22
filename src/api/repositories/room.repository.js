@@ -46,9 +46,12 @@ class RoomRepository extends BaseRepository {
     async options(params, site) {
         const query = Room.query()
             .select('id', 'name', 'capacity', 'location', 'cab_id')
-            .withGraphFetched('[cabang]')
+            .withGraphFetched('[cabang, amenities]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
+            })
+            .modifyGraph('amenities', builder => {
+                builder.select('id', 'name');
             })
             .where('is_active', 1)
 
@@ -59,10 +62,7 @@ class RoomRepository extends BaseRepository {
         if (params) {
             query.where('name', 'like', `%${params}%`)
                 .orWhere('location', 'like', `%${params}%`)
-            // .orWhereExists(
-            //     Room.relatedQuery('cabang')
-            //         .where('nama_cab', 'like', `%${params}%`)
-            // )
+         
         }
 
         const data = await query;
