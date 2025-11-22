@@ -96,13 +96,9 @@ class VehicleRequestController {
         try {
             const id = req.params.id;
 
-            const pdfBuffer = await vehicleRequestService.generateSPJPdf(id);
-            const data = await vehicleRequestService.detail(id);
-            const filename = `SPJ_Request_${id}_${moment(data.start_time).format('YYYYMMDD')}.pdf`;
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-
-            res.send(pdfBuffer);
+            const htmlContent = await vehicleRequestService.generateSPJHtml(id);
+            res.setHeader('Content-Type', 'text/html');
+            res.send(htmlContent);
 
         } catch (err) {
             console.error("Error in downloadSPJ:", err);

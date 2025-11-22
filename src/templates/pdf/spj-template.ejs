@@ -5,21 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Surat Perintah Jalan - Request #<%= request.id %></title>
     <style>
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-          }
-          
-          @page {
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+        }
+
+        @page {
             size: A4;
-            margin: 1.5cm;
+            margin: 20px;
+        }
+        @media print {
+          body {
+              -webkit-print-color-adjust: exact;
           }
-          
+          /* Sembunyikan elemen yang tidak perlu dicetak jika ada */
+          .no-print {
+              display: none;
+          }
+      }
           body {
             font-family: "Times New Roman", Times, serif;
             background: white;
-            padding: 0;
             color: #000;
             line-height: 1.4; 
             font-size: 11pt; 

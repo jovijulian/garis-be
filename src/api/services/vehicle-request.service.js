@@ -613,6 +613,35 @@ class VehicleRequestService {
             timeSlots: timeSlots
         };
     }
+
+    async generateSPJHtml(id) { 
+        const data = await this.detail(id);
+        
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'pdf', 'spj-template.ejs');
+        const logoPath = path.join(__dirname, '..', '..', 'public', 'images', 'logo.png');
+        
+        let base64Logo = '';
+        try {
+            const logoBuffer = await fs.readFile(logoPath);
+            base64Logo = logoBuffer.toString('base64');
+        } catch (err) {
+            console.error("Gagal membaca file logo:", err);
+        }
+    
+        const templateData = {
+            request: data,
+            moment: moment,
+            logoBase64: base64Logo 
+        };
+    
+        try {
+            const html = await ejs.renderFile(templatePath, templateData);
+            return html; 
+        } catch (error) {
+            console.error("Error rendering EJS:", error);
+            throw new Error("Failed to render SPJ HTML.");
+        }
+    }
 }
 
 module.exports = new VehicleRequestService();
