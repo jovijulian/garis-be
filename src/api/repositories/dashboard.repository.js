@@ -22,7 +22,7 @@ class DashboardRepository {
         return Booking.query().modify(q => {
             if (siteId) {
                 q.whereExists(
-                    Booking.relatedQuery('room').where('cab_id', siteId)
+                    Booking.relatedQuery('room').where('cab1_id', siteId)
                 );
             }
         }).where('status', status).resultSize();

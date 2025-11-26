@@ -10,10 +10,11 @@ app.use(cors({
     methods: "*",
     allowedHeaders: "*",
 }));
-app.use(requestLogger);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src', 'public')));
+app.use(requestLogger);
 app.use('/api/v1', mainRouter);
 
 app.use(errorHandler);
