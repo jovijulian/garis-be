@@ -2,7 +2,6 @@
 const mysql = require('mysql2');
 
 // --- KONFIGURASI DATABASE ---
-// Pastikan username, password, dan nama database BENAR
 const db = mysql.createPool({
     host: '153.92.5.159',      // Ganti dengan host database Anda
     user: 'HRISC1sangkan',           // Ganti dengan user database Anda
@@ -13,31 +12,49 @@ const db = mysql.createPool({
     queueLimit: 0
 });
 
-// Cek koneksi saat server nyala pertama kali
-db.getConnection((err, connection) => {
-    if (err) {
-        console.error('❌ FATAL: Tidak bisa konek ke Database untuk Logger!', err.message);
-    } else {
-        console.log('✅ Logger berhasil terhubung ke Database.');
-        connection.release();
-    }
-});
-
 const requestLogger = (req, res, next) => {
     const start = Date.now();
+    
+    // --- TEKNIK INTERSEPSI (MONKEY PATCHING) ---
+    // 1. Simpan fungsi asli res.send ke variabel sementara
+    const originalSend = res.send;
+
+    // 2. Buat variabel untuk menampung respon body
+    let savedResponseBody = null;
+
+    // 3. Timpa res.send dengan fungsi kita sendiri
+    res.send = function (body) {
+        // Simpan body yang mau dikirim ke variabel kita
+        savedResponseBody = body;
+        
+        // Kembalikan fungsi asli agar respon tetap terkirim ke user
+        return originalSend.call(this, body);
+    };
+    // -------------------------------------------
 
     res.on('finish', () => {
         const duration = Date.now() - start;
         
-        // 1. Ambil Payload
-        // Kita harus ubah Object jadi String JSON agar bisa masuk MySQL
-        // Jika body kosong, kita simpan string "{}" atau null
-        let payloadData = null;
+        // A. Proses Request Payload (Apa yang dikirim user)
+        let requestPayload = null;
         if (req.body && Object.keys(req.body).length > 0) {
             try {
-                payloadData = JSON.stringify(req.body);
+                requestPayload = JSON.stringify(req.body);
+            } catch (e) {}
+        }
+
+        // B. Proses Response Body (Pesan Error/Sukses dari server)
+        let responseMessage = null;
+        if (savedResponseBody) {
+            try {
+                // Cek apakah outputnya Object/JSON atau String biasa
+                if (typeof savedResponseBody === 'object') {
+                    responseMessage = JSON.stringify(savedResponseBody);
+                } else {
+                    responseMessage = savedResponseBody;
+                }
             } catch (e) {
-                payloadData = "Error parsing JSON";
+                responseMessage = "Error parsing response";
             }
         }
 
@@ -47,18 +64,15 @@ const requestLogger = (req, res, next) => {
             status_code: res.statusCode,
             response_time_ms: duration,
             ip_address: req.ip || req.socket.remoteAddress,
-            payload: payloadData // <--- Masukkan ke data insert
+            payload: requestPayload,        // Request dari user
+            response_body: responseMessage  // <--- Balasan dari server (Error/Sukses)
         };
 
         const query = 'INSERT INTO request_logs SET ?';
 
         db.query(query, logData, (err, result) => {
             if (err) {
-                // Tampilkan error lengkap ke terminal agar ketahuan salahnya
-                console.error("⚠️ Gagal Insert Log:", err.sqlMessage || err);
-            } else {
-                // Opsional: Nyalakan ini jika ingin memastikan log masuk
-                // console.log(`✅ Log tersimpan ID: ${result.insertId}`);
+                console.error("⚠️ Gagal Insert Log:", err.message);
             }
         });
     });
