@@ -19,7 +19,14 @@ class DashboardRepository {
 
     //pending
     getPendingBookingCount(status, siteId) {
-        return Booking.query().where('status', status).where('cab_id', siteId).resultSize();
+        return Booking.query().modify(q => {
+            if (siteId) {
+                q.whereExists(
+                    Booking.relatedQuery('room').where('cab_id', siteId)
+                );
+            }
+        }).where('status', status).resultSize();
+        // return Booking.query().where('status', status).where('cab_id', siteId).resultSize();
     }
     getPendingVehiclesCount(status, siteId) {
         return VehicleRequest.query().where('status', status).where('cab_id', siteId).resultSize();
