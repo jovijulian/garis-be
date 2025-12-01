@@ -80,6 +80,7 @@ class RoomRepository extends BaseRepository {
     async optionsSite(params) {
         const query = Site.query()
             .select('*')
+            .whereNotNull('no_cab')
 
         if (params) {
             query.where('nama_cab', 'like', `%${params}%`)
