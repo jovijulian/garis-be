@@ -303,12 +303,12 @@
                 <tr>
                     <td>Tanggal & Waktu Keberangkatan</td>
                     <td>:</td>
-                    <td><%= moment(request.start_time).format('dddd, DD MMMM YYYY') %> Pukul <%= moment(request.start_time).format('HH:mm') %> WIB</td>
+                    <td><%= moment(request.start_time).format('dddd, DD MMMM YYYY') %> Pukul <%= moment(request.start_time).add(7, 'hours').format('HH:mm') %> WIB</td>
                 </tr>
                 <tr>
                     <td>Tanggal & Waktu Kembali</td>
                     <td>:</td>
-                    <td><%= request.end_time ? moment(request.end_time).format('dddd, DD MMMM YYYY') + ' Pukul ' + moment(request.end_time).format('HH:mm') + ' WIB' : 'Belum Ditentukan' %></td>
+                    <td><%= request.end_time ? moment(request.end_time).format('dddd, DD MMMM YYYY') + ' Pukul ' + moment(request.end_time).add(7, 'hours').format('HH:mm') + ' WIB' : 'Belum Ditentukan' %></td>
                 </tr>
                 <tr>
                     <td>Jumlah Penumpang</td>
