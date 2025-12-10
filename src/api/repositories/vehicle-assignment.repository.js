@@ -61,6 +61,8 @@ class VehicleAssignmentRepository extends BaseRepository {
         conflictCheckQuery.first();
 
     }
+
+  
 }
 
 module.exports = new VehicleAssignmentRepository();

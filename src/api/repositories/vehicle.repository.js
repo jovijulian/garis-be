@@ -120,6 +120,41 @@ class VehicleRepository extends BaseRepository {
         return data;
 
     }
+
+    async findAvailableForBooking(params) {
+        const { start_time, end_time, cab_id, vehicle_type_id, search } = params;
+        const busyVehicleIds = VehicleAssignment.query()
+            .joinRelated('vehicle_request')
+            .whereIn('vehicle_request.status', ['Approved', 'In Progress'])
+            .andWhere(builder => {
+                builder.where('vehicle_request.start_time', '<', end_time)
+                       .andWhere('vehicle_request.end_time', '>', start_time);
+            })
+            .select('vehicle_assignments.vehicle_id');
+        const query = Vehicle.query()
+            .select('id', 'name', 'license_plate', 'vehicle_type_id', 'passenger_capacity', 'status', 'cab_id')
+            .where('is_active', 1)
+            .where('status', 'Available') 
+            .whereNotIn('id', busyVehicleIds)
+            .withGraphFetched('[vehicle_type, cabang]')
+            .modifyGraph('vehicle_type', builder => builder.select('id', 'name'))
+            .modifyGraph('cabang', builder => builder.select('id_cab', 'nama_cab'));
+
+        if (cab_id) {
+            query.where('cab_id', cab_id);
+        }
+        if (vehicle_type_id) {
+            query.where('vehicle_type_id', vehicle_type_id);
+        }
+        if (search) {
+            query.where(builder => {
+                builder.where('name', 'like', `%${search}%`)
+                       .orWhere('license_plate', 'like', `%${search}%`);
+            });
+        }
+
+        return await query.orderBy('name');
+    }
 }
 
 module.exports = new VehicleRepository();

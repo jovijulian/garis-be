@@ -80,12 +80,14 @@ class VehicleService {
     }
 
     async options(params) {
-        const data = await vehicleRepository.options(params);
+        if (params.start_time && params.end_time) {
+            return vehicleRepository.findAvailableForBooking(params);
+        }
 
+        const data = await vehicleRepository.options(params);
         if (!data || data.length === 0) {
             return [];
         }
-
         return data;
     }
 

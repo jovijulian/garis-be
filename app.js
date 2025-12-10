@@ -5,6 +5,7 @@ const errorHandler = require('./src/middlewares/errorHandler');
 const requestLogger = require('./src/middlewares/requestLogger');
 const path = require('path');
 const app = express();
+const initScheduler = require('./src/cron/request-scheduler');
 app.use(cors({
     origin: "*",
     methods: "*",
@@ -16,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 app.use(requestLogger);
 app.use('/api/v1', mainRouter);
-
+initScheduler();
 app.use(errorHandler);
 
 module.exports = app;

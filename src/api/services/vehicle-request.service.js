@@ -245,124 +245,81 @@ class VehicleRequestService {
         const trx = await knexBooking.transaction();
         let createdAssignmentsData = [];
         let requestDetails;
-        
-        const vehiclesToUpdate = new Set(); 
-        const driversToUpdate = new Set();
-    
-    
+
         try {
             const { details } = req.body;
-    
+
             requestDetails = await vehicleRequestRepository.findByIdWithRelations(requestId, '[user, vehicle_type, cabang]', trx);
+
             if (!requestDetails) {
                 const error = new Error('Vehicle Request not found.');
                 error.statusCode = 404;
                 throw error;
             }
             if (requestDetails.status !== 'Approved') {
-                const error = new Error(`Request cannot be assigned because its status is '${requestDetails.status}'.`);
+                const error = new Error(`Request cannot be assigned because status is '${requestDetails.status}'.`);
                 error.statusCode = 400;
                 throw error;
             }
-    
-            const existingAssignments = await vehicleAssignmentRepository.findByRequestId(requestId, trx);
-            const oldVehicleIds = new Set(
-                existingAssignments.map(a => a.vehicle_id).filter(Boolean)
-            );
-            const oldDriverIds = new Set(
-                existingAssignments.map(a => a.driver_id).filter(Boolean)
-            );
+
+            const { start_time, end_time } = requestDetails;
+
             await vehicleAssignmentRepository.deleteByRequestId(requestId, trx);
-    
+
             for (const assignmentDetail of details) {
                 const { vehicle_id, driver_id, note_for_driver } = assignmentDetail;
-    
+
                 const vehicle = await vehicleRepository.findById(vehicle_id, trx);
-                if (!vehicle || (vehicle.status !== 'Available' && !oldVehicleIds.has(vehicle_id)) ) {
-                    if (!vehicle) {
-                         const error = new Error(`Vehicle with ID ${vehicle_id} not found.`);
-                         error.statusCode = 400;
-                         throw error;
-                    }
-                    if (vehicle.status !== 'Available' && !oldVehicleIds.has(vehicle_id)) {
-                        const error = new Error(`Vehicle with ID ${vehicle_id} is not available.`);
-                        error.statusCode = 400;
-                        throw error;
-                    }
+                if (!vehicle) throw new Error(`Vehicle ID ${vehicle_id} not found.`);
+
+                if (vehicle.status !== 'Available') {
+                    throw new Error(`Vehicle ${vehicle.license_plate} sedang tidak beroperasi (Status fisik: ${vehicle.status}).`);
                 }
+
+                const isVehicleConflict = await vehicleAssignmentRepository.checkConflict(
+                    requestId, start_time, end_time, vehicle_id, null, trx
+                );
+                if (isVehicleConflict) {
+                    throw new Error(`Vehicle ${vehicle.license_plate} bentrok dengan jadwal lain di jam tersebut.`);
+                }
+
                 let driver = null;
                 if (driver_id) {
                     driver = await driverRepository.findById(driver_id, trx);
-                     if (!driver || (driver.status !== 'Available' && !oldDriverIds.has(driver_id))) {
-                        if (!driver) {
-                            const error = new Error(`Driver with ID ${driver_id} not found.`);
-                            error.statusCode = 400;
-                            throw error;
-                        }
-                        if (driver.status !== 'Available' && !oldDriverIds.has(driver_id)) {
-                            const error = new Error(`Driver with ID ${driver_id} is not available.`);
-                            error.statusCode = 400;
-                            throw error;
-                        }
+                    if (!driver) throw new Error(`Driver ID ${driver_id} not found.`);
+
+                    if (driver.status !== 'Available') {
+                        throw new Error(`Driver ${driver.name} sedang tidak aktif.`);
                     }
-                } else if (requestDetails.requires_driver) {
-                    console.warn(`Warning: Assignment for request ${requestId} requires a driver but none provided for vehicle ${vehicle_id}.`);
-                    const error = new Error(`Driver is required but not provided for vehicle ${vehicle_id}.`);
-                    error.statusCode = 400;
-                    throw error;
+
+                    const isDriverConflict = await vehicleAssignmentRepository.checkConflict(
+                        requestId, start_time, end_time, vehicle_id, driver_id, trx
+                    );
+                    if (isDriverConflict) {
+                        throw new Error(`Driver ${driver.name} bentrok dengan jadwal lain.`);
+                    }
                 }
-    
+
                 const assignmentPayload = {
                     request_id: Number(requestId),
                     vehicle_id: Number(vehicle_id),
-                    driver_id: driver ? Number(driver_id) : null,
+                    driver_id: driver_id ? Number(driver_id) : null,
                     note_for_driver: note_for_driver || null,
                     created_at: formatDateTime(),
                     updated_at: formatDateTime(),
                 };
                 const newAssignment = await vehicleAssignmentRepository.create(assignmentPayload, trx);
-    
                 createdAssignmentsData.push({ ...newAssignment, vehicle, driver });
-    
-                vehiclesToUpdate.add(vehicle_id);
-                if (driver_id) {
-                    driversToUpdate.add(driver_id);
-                }
             }
-    
-            const updatePromises = [];
-    
-            const vehiclesToSetAvailable = [...oldVehicleIds].filter(
-                id => !vehiclesToUpdate.has(id) 
-            );
-            const driversToSetAvailable = [...oldDriverIds].filter(
-                id => !driversToUpdate.has(id) 
-            );
-            
-            vehiclesToSetAvailable.forEach(id => {
-                updatePromises.push(vehicleRepository.update(id, { status: 'Available' }, trx));
-            });
-            driversToSetAvailable.forEach(id => {
-                updatePromises.push(driverRepository.update(id, { status: 'Available' }, trx));
-            });
-    
-    
-            vehiclesToUpdate.forEach(id => {
-                updatePromises.push(vehicleRepository.update(id, { status: 'Not Available' }, trx));
-            });
-            driversToUpdate.forEach(id => {
-                updatePromises.push(driverRepository.update(id, { status: 'Not Available' }, trx));
-            });
-    
-            await Promise.all(updatePromises);
-    
+
+
             await trx.commit();
-    
+
         } catch (error) {
             await trx.rollback();
             throw error;
         }
-    
+
         try {
             for (const assignment of createdAssignmentsData) {
                 if (assignment.driver && assignment.driver.id_user) {
@@ -384,7 +341,7 @@ class VehicleRequestService {
         } catch (emailError) {
             console.error('Failed to send assignment notification emails:', emailError);
         }
-    
+
         return createdAssignmentsData;
     }
 
@@ -403,7 +360,7 @@ class VehicleRequestService {
         const templateData = {
             request: data,
             moment: moment,
-            logoBase64: base64Logo 
+            logoBase64: base64Logo
         };
 
         const html = await ejs.renderFile(templatePath, templateData);
@@ -588,7 +545,7 @@ class VehicleRequestService {
                 return {
                     id: assignment.id,
                     requestId: request.id,
-                    vehicleTypeId: request.requested_vehicle_type_id, 
+                    vehicleTypeId: request.requested_vehicle_type_id,
                     vehicleId: assignment.vehicle_id,
                     destination: request.destination,
                     startTime: startTimeISO,
@@ -614,12 +571,12 @@ class VehicleRequestService {
         };
     }
 
-    async generateSPJHtml(id) { 
+    async generateSPJHtml(id) {
         const data = await this.detail(id);
-        
+
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'pdf', 'spj-template.ejs');
         const logoPath = path.join(__dirname, '..', '..', 'public', 'images', 'logo.png');
-        
+
         let base64Logo = '';
         try {
             const logoBuffer = await fs.readFile(logoPath);
@@ -627,16 +584,16 @@ class VehicleRequestService {
         } catch (err) {
             console.error("Gagal membaca file logo:", err);
         }
-    
+
         const templateData = {
             request: data,
             moment: moment,
-            logoBase64: base64Logo 
+            logoBase64: base64Logo
         };
-    
+
         try {
             const html = await ejs.renderFile(templatePath, templateData);
-            return html; 
+            return html;
         } catch (error) {
             console.error("Error rendering EJS:", error);
             throw new Error("Failed to render SPJ HTML.");

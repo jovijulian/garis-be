@@ -66,14 +66,17 @@ class DriverService {
     }
 
     async options(params) {
-        const data = await driverRepository.options(params);
+        if (params.start_time && params.end_time) {
+            return driverRepository.findAvailableForBooking(params);
+        }
 
+        const data = await driverRepository.options(params);
         if (!data || data.length === 0) {
             return [];
         }
-
         return data;
     }
+
 
     async updateStatus(id, payload) {
         await this.detail(id);

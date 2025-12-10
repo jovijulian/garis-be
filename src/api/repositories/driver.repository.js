@@ -84,6 +84,31 @@ class DriverRepository extends BaseRepository {
         return driver.status;
     }
 
+    async findAvailableForBooking(params) {
+        const { start_time, end_time, cab_id, search } = params;
+        const busyDriverIds = VehicleAssignment.query()
+            .joinRelated('vehicle_request')
+            .whereNotNull('driver_id')
+            .whereIn('vehicle_request.status', ['Approved', 'In Progress'])
+            .andWhere(builder => {
+                builder.where('vehicle_request.start_time', '<', end_time)
+                       .andWhere('vehicle_request.end_time', '>', start_time);
+            })
+            .select('vehicle_assignments.driver_id');
+    
+        const query = Driver.query()
+            .where('is_active', 1)
+            .where('status', 'Available') 
+            .whereNotIn('id', busyDriverIds)
+            .withGraphFetched('[cabang]')
+            .modifyGraph('cabang', builder => builder.select('id_cab', 'nama_cab'));
+    
+        if (cab_id) query.where('cab_id', cab_id);
+        if (search) query.where('name', 'like', `%${search}%`);
+    
+        return await query.orderBy('name');
+    }
+
 }
 
 module.exports = new DriverRepository();
