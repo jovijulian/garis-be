@@ -5,8 +5,8 @@ const moment = require('moment');
 const initScheduler = () => {
     // cron.schedule('* * * * *', async () => {
     cron.schedule('*/10 * * * * *', async () => {
-        const nowWIB = moment().format('YYYY-MM-DD HH:mm:ss');
-        const nowForQuery = moment().subtract(7, 'hours').format('YYYY-MM-DD HH:mm:ss');
+        const nowWIB = moment().tz("Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
+        const nowForQuery = moment().utc().format("YYYY-MM-DD HH:mm:ss");
         console.log(`[Scheduler] Checking.. Real Time (WIB): ${nowWIB} | DB Time (UTC): ${nowForQuery}`);
 
         try {
