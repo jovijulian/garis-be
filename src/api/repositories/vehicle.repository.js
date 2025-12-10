@@ -1,4 +1,5 @@
 const BaseRepository = require('./base.repository');
+const VehicleAssignment = require('../models/VehicleAssignment');
 const Vehicle = require('../models/Vehicle');
 
 class VehicleRepository extends BaseRepository {
