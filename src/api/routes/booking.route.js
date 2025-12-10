@@ -9,8 +9,7 @@ const {
     bookingIdSchema
 } = require('../../validations/booking.validation');
 const verifyToken = require('../../middlewares/verifyToken');
-const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = require('../../middlewares/upload');
 
 router.use(verifyToken);
 

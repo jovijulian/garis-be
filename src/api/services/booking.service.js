@@ -218,7 +218,7 @@ class BookingService {
 
     async updateBookingStatus(bookingId, request) {
         const payload = request.body;
-        const authUser = getUserId(request); 
+        const authUser = getUserId(request);
 
         const bookingToUpdate = await this.getBookingById(bookingId);
 
@@ -229,7 +229,7 @@ class BookingService {
         }
 
         let updatedBooking;
-        const rejectedBookingsForEmail = []; 
+        const rejectedBookingsForEmail = [];
 
         const trx = await knexBooking.transaction();
 
@@ -248,7 +248,7 @@ class BookingService {
                     const error = new Error(
                         "Gagal, jadwal ini bentrok dengan booking lain yang sudah disetujui."
                     );
-                    error.statusCode = 409; 
+                    error.statusCode = 409;
                     throw error;
                 }
 
@@ -287,7 +287,7 @@ class BookingService {
         } catch (dbError) {
             await trx.rollback();
             console.error("Gagal update status booking (Database Error):", dbError);
-            throw dbError; 
+            throw dbError;
         }
 
         try {
@@ -345,36 +345,36 @@ class BookingService {
             error.statusCode = 404;
             throw error;
         }
-    
+
         let updatedBooking;
         const trx = await knexBooking.transaction();
-    
+
         try {
-            const updatePayload = { 
-                status: 'Canceled', 
-                updated_at: formatDateTime() 
+            const updatePayload = {
+                status: 'Canceled',
+                updated_at: formatDateTime()
             };
-            
+
             updatedBooking = await bookingRepository.update(bookingId, updatePayload, trx);
-            
+
             await trx.commit();
-    
+
         } catch (dbError) {
             await trx.rollback();
             console.error("Gagal membatalkan booking (Database Error):", dbError);
             throw dbError;
         }
-    
-        
+
+
         try {
             const bookingDetailsForEmail = { ...existingBooking, status: 'Canceled' };
             await sendAdminCancellationEmail(bookingDetailsForEmail);
-        
+
         } catch (emailError) {
             console.error(`Booking ${bookingId} berhasil dibatalkan, TAPI gagal mengirim email notifikasi.`);
             console.error(emailError);
         }
-    
+
         return updatedBooking;
     }
 
@@ -421,22 +421,32 @@ class BookingService {
         if (!file) throw { statusCode: 400, message: 'Tidak ada file yang diupload.' };
 
         const trx = await knexBooking.transaction();
+
         try {
             const booking = await bookingRepository.findById(bookingId, null, trx);
-            if (!booking) throw { statusCode: 404, message: 'Booking tidak ditemukan.' };
+            if (!booking) {
+                const fs = require('fs');
+                if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
 
-            const fileName = `proof-booking-${bookingId}-${Date.now()}.${file.originalname.split('.').pop()}`;
+                throw { statusCode: 404, message: 'Booking tidak ditemukan.' };
+            }
 
-            const blob = await put(fileName, file.buffer, { access: 'public' });
-            const updatedBooking = await bookingRepository.updateProofPath(bookingId, blob.pathname, admin_note, trx);
+            const fileUrl = `uploads/${file.filename}`;
+            const updatedBooking = await bookingRepository.updateProofPath(bookingId, fileUrl, admin_note, trx);
 
             await trx.commit();
 
-            return { ...updatedBooking, proof_url: blob.url };
+            return { ...updatedBooking, proof_url: fileUrl };
+
         } catch (error) {
             await trx.rollback();
+            if (file && file.path) {
+                const fs = require('fs');
+                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            }
+
             console.error("Upload proof error:", error);
-            throw { statusCode: 500, message: 'Gagal mengupload file bukti.' };
+            throw error;
         }
     }
 
