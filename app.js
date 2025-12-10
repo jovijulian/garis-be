@@ -14,7 +14,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'src', 'public')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 app.use(requestLogger);
 app.use('/api/v1', mainRouter);
 initScheduler();
