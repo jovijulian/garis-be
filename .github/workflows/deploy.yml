@@ -55,6 +55,7 @@ jobs:
             docker run -d \
               --name ${{ env.CONTAINER_NAME }} \
               --restart always \
+              -e TZ=Asia/Jakarta \
               -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
               -v /www/upload/docker/api-garis/.env:/app/.env \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
