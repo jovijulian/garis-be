@@ -57,6 +57,7 @@ jobs:
               --restart always \
               -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
               -v /www/upload/docker/api-garis/.env:/app/.env \
+              -v /www/upload/docker/api-garis/public/uploads:/app/public/uploads \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
             docker image prune -f
