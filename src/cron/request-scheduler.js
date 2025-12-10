@@ -3,8 +3,8 @@ const VehicleRequest = require('@/../../src/api/models/VehicleRequest'); //
 const moment = require('moment');
 
 const initScheduler = () => {
-    // cron.schedule('* * * * *', async () => {
-    cron.schedule('*/10 * * * * *', async () => {
+    cron.schedule('* * * * *', async () => {
+        // cron.schedule('*/10 * * * * *', async () => {
         const nowWIB = moment().tz("Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
         const nowForQuery = moment().utc().format("YYYY-MM-DD HH:mm:ss");
         console.log(`[Scheduler] Checking.. Real Time (WIB): ${nowWIB} | DB Time (UTC): ${nowForQuery}`);
@@ -16,7 +16,7 @@ const initScheduler = () => {
                 .whereExists(VehicleRequest.relatedQuery('detail'))
                 .patch({
                     status: 'In Progress',
-                    updated_at: nowWIB
+                    updated_at: nowForQuery
                 });
 
             await VehicleRequest.query()
@@ -24,7 +24,7 @@ const initScheduler = () => {
                 .andWhere('end_time', '<=', nowForQuery)
                 .patch({
                     status: 'Completed',
-                    updated_at: nowWIB
+                    updated_at: nowForQuery
                 });
 
             console.log("[Scheduler] Check Completed");
