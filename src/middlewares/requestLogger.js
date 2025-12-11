@@ -1,8 +1,8 @@
 const mysql = require('mysql2');
 const db = mysql.createPool({
-    host: '153.92.5.159',     
-    user: 'HRISC1sangkan',          
-    password: 'Hr12C1s4n6k4n',          
+    host: '31.97.50.130',     
+    user: 'c1s4ngka_ptc124n',          
+    password: 'r4h421ah74h',          
     database: 'garisDB', 
     waitForConnections: true,
     connectionLimit: 10,
