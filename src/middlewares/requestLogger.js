@@ -21,6 +21,13 @@ const requestLogger = (req, res, next) => {
 
     res.on('finish', () => {
         const duration = Date.now() - start;
+        let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+        if (ip && ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+        if (ip && ip.includes('::ffff:')) {
+            ip = ip.replace('::ffff:', '');
+        }
         let requestPayload = null;
         if (req.body && Object.keys(req.body).length > 0) {
             try {
@@ -51,7 +58,7 @@ const requestLogger = (req, res, next) => {
             url: req.originalUrl,
             status_code: res.statusCode,
             response_time_ms: duration,
-            ip_address: req.ip || req.socket.remoteAddress,
+            ip_address: ip,
             payload: requestPayload,    
             id_user: userId,    
             response_body: responseMessage  
