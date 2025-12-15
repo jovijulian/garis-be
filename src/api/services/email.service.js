@@ -25,7 +25,7 @@ const sendBookingStatusEmail = async (bookingDetails) => {
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{bookingPurpose}}/g, purpose);
         htmlContent = htmlContent.replace(/{{roomName}}/g, room.name);
-        const bookingTime = `${moment(start_time).format('DD MMM YYYY, HH:mm')} - ${moment(end_time).format('HH:mm')}`;
+        const bookingTime = `${moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm')} - ${moment(end_time).utcOffset('+07:00').format('HH:mm')}`;
         htmlContent = htmlContent.replace(/{{bookingTime}}/g, bookingTime);
         htmlContent = htmlContent.replace(/{{status}}/g, status);
 
@@ -57,7 +57,7 @@ const sendNewBookingNotificationEmail = async (adminEmails, bookingDetails) => {
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{bookingPurpose}}/g, purpose);
         htmlContent = htmlContent.replace(/{{roomName}}/g, room.name);
-        const bookingTime = `${moment(start_time).format('DD MMM YYYY, HH:mm')} - ${moment(end_time).format('HH:mm')}`;
+        const bookingTime = `${moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm')} - ${moment(end_time).utcOffset('+07:00').format('HH:mm')}`;
         htmlContent = htmlContent.replace(/{{bookingTime}}/g, bookingTime);
 
         const adminLink = `${process.env.FRONTEND_URL}/manage-booking/${id}`;
@@ -88,7 +88,7 @@ const sendBookingUpdatedNotificationEmail = async (adminEmails, bookingDetails) 
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{bookingPurpose}}/g, purpose);
         htmlContent = htmlContent.replace(/{{roomName}}/g, room.name);
-        const bookingTime = `${moment(start_time).format('DD MMM YYYY, HH:mm')} - ${moment(end_time).format('HH:mm')}`;
+        const bookingTime = `${moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm')} - ${moment(end_time).utcOffset('+07:00').format('HH:mm')}`;
         htmlContent = htmlContent.replace(/{{bookingTime}}/g, bookingTime);
 
         const adminLink = `${process.env.FRONTEND_URL}/manage-booking/${id}`;
@@ -119,7 +119,7 @@ const sendRescheduleNotificationEmail = async (bookingDetails) => {
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{bookingPurpose}}/g, purpose);
         htmlContent = htmlContent.replace(/{{roomName}}/g, room.name);
-        const bookingTime = `${moment(start_time).format('DD MMM YYYY, HH:mm')} - ${moment(end_time).format('HH:mm')}`;
+        const bookingTime = `${moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm')} - ${moment(end_time).utcOffset('+07:00').format('HH:mm')}`;
         htmlContent = htmlContent.replace(/{{bookingTime}}/g, bookingTime);
 
         const userLink = `${process.env.FRONTEND_URL}/manage-booking/my-bookings`;
@@ -151,7 +151,7 @@ const sendAutoRejectionEmail = async (rejectedBooking) => {
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{bookingPurpose}}/g, purpose);
         htmlContent = htmlContent.replace(/{{roomName}}/g, room.name);
-        const bookingTime = `${moment(start_time).format('DD MMM YYYY, HH:mm')} - ${moment(end_time).format('HH:mm')}`;
+        const bookingTime = `${moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm')} - ${moment(end_time).utcOffset('+07:00').format('HH:mm')}`;
         htmlContent = htmlContent.replace(/{{bookingTime}}/g, bookingTime);
 
         // Link ke halaman pengajuan booking baru di frontend
@@ -184,7 +184,7 @@ const sendAdminCancellationEmail = async (bookingDetails) => {
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{bookingPurpose}}/g, purpose);
         htmlContent = htmlContent.replace(/{{roomName}}/g, room.name);
-        const bookingTime = `${moment(start_time).format('DD MMM YYYY, HH:mm')} - ${moment(end_time).format('HH:mm')}`;
+        const bookingTime = `${moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm')} - ${moment(end_time).utcOffset('+07:00').format('HH:mm')}`;
         htmlContent = htmlContent.replace(/{{bookingTime}}/g, bookingTime);
 
         const mailOptions = {
@@ -214,14 +214,14 @@ const sendNewOrderNotificationEmail = async (adminEmails, orderDetails) => {
                 <td>${item.consumption_type ? item.consumption_type.name : 'N/A'}</td>
                 <td>${item.menu || '-'}</td>
                 <td>${item.qty}</td>
-                <td>${moment(item.delivery_time).format('DD MMM YYYY, HH:mm')}</td>
+                <td>${moment(item.delivery_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm')}</td>
             </tr>
         `).join('');
 
         const location = room ? room.name : (location_text || (cabang ? cabang.nama_cab : 'N/A'));
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
-        htmlContent = htmlContent.replace(/{{orderDate}}/g, order_date ? moment(order_date).format('DD MMM YYYY') : '-');
+        htmlContent = htmlContent.replace(/{{orderDate}}/g, order_date ? moment(order_date).utcOffset('+07:00').format('DD MMM YYYY') : '-');
         htmlContent = htmlContent.replace(/{{orderPurpose}}/g, purpose || '-');
         htmlContent = htmlContent.replace(/{{location}}/g, location);
         htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
@@ -257,7 +257,7 @@ const sendReorderNotificationEmail = async (adminEmails, orderDetails) => {
                 <td>${item.consumption_type ? item.consumption_type.name : 'N/A'}</td>
                 <td>${item.menu || '-'}</td>
                 <td>${item.qty}</td>
-                <td>${moment(item.delivery_time).format('DD MMM YYYY, HH:mm')}</td>
+                <td>${moment(item.delivery_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm')}</td>
             </tr>
         `).join('');
 
@@ -265,7 +265,7 @@ const sendReorderNotificationEmail = async (adminEmails, orderDetails) => {
 
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
-        htmlContent = htmlContent.replace(/{{orderDate}}/g, order_date ? moment(order_date).format('DD MMM YYYY') : '-');
+        htmlContent = htmlContent.replace(/{{orderDate}}/g, order_date ? moment(order_date).utcOffset('+07:00').format('DD MMM YYYY') : '-');
         htmlContent = htmlContent.replace(/{{orderPurpose}}/g, purpose || '-');
         htmlContent = htmlContent.replace(/{{location}}/g, location);
         htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
@@ -318,7 +318,7 @@ const sendOrderStatusUpdateEmail = async (email, orderDetails) => {
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{message}}/g, message);
         htmlContent = htmlContent.replace(/{{location}}/g, location);
-        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).format('DD MMM YYYY, HH:mm'));
+        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm'));
 
         const mailOptions = {
             from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
@@ -343,7 +343,7 @@ const sendAdminCancellationOrderEmail = async (bookingDetails) => {
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{roomName}}/g, room?.name || location_text);
-        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).format('DD MMM YYYY, HH:mm'));
+        htmlContent = htmlContent.replace(/{{orderTime}}/g, moment(order_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm'));
 
         const mailOptions = {
             from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
@@ -375,7 +375,7 @@ const sendNewVehicleRequestNotificationEmail = async (adminEmails, requestDetail
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user?.nama_user || 'N/A');
         htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
-        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).format('DD MMM YYYY, HH:mm') : '-');
+        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm') : '-');
         htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
         htmlContent = htmlContent.replace(/{{location}}/g, location);
         htmlContent = htmlContent.replace(/{{passengerCount}}/g, passenger_count || '0');
@@ -417,7 +417,7 @@ const sendUpdateVehicleRequestNotificationEmail = async (adminEmails, requestDet
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user?.nama_user || 'N/A');
         htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
-        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).format('DD MMM YYYY, HH:mm') : '-');
+        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm') : '-');
         htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
         htmlContent = htmlContent.replace(/{{location}}/g, location);
         htmlContent = htmlContent.replace(/{{passengerCount}}/g, passenger_count || '0');
@@ -474,7 +474,7 @@ const sendRequestStatusUpdateEmail = async (email, requestDetail) => {
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{message}}/g, message);
         htmlContent = htmlContent.replace(/{{purpose}}/g, purpose);
-        htmlContent = htmlContent.replace(/{{start_time}}/g, moment(start_time).format('DD MMM YYYY, HH:mm'));
+        htmlContent = htmlContent.replace(/{{start_time}}/g, moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm'));
 
         const mailOptions = {
             from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
@@ -501,7 +501,7 @@ const sendAdminCancellationRequestEmail = async (requestDetail) => {
 
         htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
         htmlContent = htmlContent.replace(/{{purpose}}/g, purpose);
-        htmlContent = htmlContent.replace(/{{startTime}}/g, moment(start_time).format('DD MMM YYYY, HH:mm'));
+        htmlContent = htmlContent.replace(/{{startTime}}/g, moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm'));
 
         const mailOptions = {
             from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
@@ -531,7 +531,7 @@ const sendAssignmentNotificationEmail = async (driverEmail, assignmentDetails, r
         htmlContent = htmlContent.replace(/{{requesterName}}/g, user?.nama_user || 'N/A');
         htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
         htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
-        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).format('DD MMM YYYY, HH:mm') : '-');
+        htmlContent = htmlContent.replace(/{{startTime}}/g, start_time ? moment(start_time).utcOffset('+07:00').format('DD MMM YYYY, HH:mm') : '-');
         htmlContent = htmlContent.replace(/{{vehicleInfo}}/g, `${vehicleName} (${vehiclePlate})`);
         htmlContent = htmlContent.replace(/{{passengerCount}}/g, passenger_count || '0');
         htmlContent = htmlContent.replace(/{{passengerNames}}/g, passenger_names || '-');
