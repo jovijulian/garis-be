@@ -7,6 +7,7 @@ const moment = require('moment');
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
+const { sendNewAccommodationNotificationEmail, sendRenewAccommodationNotificationEmail, sendAccommodationStatusUpdateEmail, sendAdminCancellationAccommodationEmail } = require('./email.service');
 
 class AccommodationOrderService {
 
@@ -24,7 +25,7 @@ class AccommodationOrderService {
     }
 
     async detail(id) {
-        const data = await accommodationOrderRepository.findByIdWithRelations(id, '[guests, cabang, user]');
+        const data = await accommodationOrderRepository.findByIdWithRelations(id, '[guests, cabang, user.[employee]]');
         if (!data) {
             const error = new Error('Accommodation order not found.');
             error.statusCode = 404;
@@ -82,14 +83,14 @@ class AccommodationOrderService {
             throw error;
         }
 
-        // try {
-        //     const admins = await userRepository.findAdminsBySiteId(newOrder.cab_id);
-        //     if (admins.length > 0) {
-        //         // await sendNewAccommodationNotificationEmail(admins.map(a => a.email), newOrder);
-        //     }
-        // } catch (error) {
-        //     console.error('Failed to send accommodation notification.');
-        // }
+        try {
+            const admins = await userRepository.findAdminsBySiteId(newOrder.cab_id);
+            if (admins.length > 0) {
+                await sendNewAccommodationNotificationEmail(admins.map(a => a.email), newOrder);
+            }
+        } catch (error) {
+            console.error('Failed to send accommodation notification.');
+        }
 
         return newOrder;
     }
@@ -135,6 +136,15 @@ class AccommodationOrderService {
             throw error;
         }
 
+        try {
+            const admins = await userRepository.findAdminsBySiteId(updatedOrder.cab_id);
+            if (admins.length > 0) {
+                await sendRenewAccommodationNotificationEmail(admins.map(a => a.email), updatedOrder);
+            }
+        } catch (error) {
+            console.error('Failed to send accommodation notification.');
+        }
+
         return updatedOrder;
     }
 
@@ -154,21 +164,38 @@ class AccommodationOrderService {
 
     async updateOrderStatus(id, request) {
         const userId = await getUserId(request);
+        const existingOrder = await this.detail(id);
+        if (!existingOrder) {
+            const error = new Error("Order not found.");
+            error.statusCode = 404;
+            throw error;
+        }
         const { status } = request.body;
-
+        let updatedOrder;
         const trx = await knexBooking.transaction();
         try {
-            const updated = await accommodationOrderRepository.update(id, {
+            updatedOrder = await accommodationOrderRepository.update(id, {
                 status: status,
                 approved_by: userId,
                 updated_at: formatDateTime()
             }, trx);
             await trx.commit();
-            return updated;
+
         } catch (error) {
             await trx.rollback();
             throw error;
         }
+        try {
+            const requester = await userRepository.findByIdWithRelations(existingOrder.user_id, '[employee]');
+            if (requester) {
+                const email = requester.employee.email;
+                const orderDetails = await this.detail(id);
+                await sendAccommodationStatusUpdateEmail(email, orderDetails);
+            }
+        } catch (error) {
+            console.error('Failed to send notification email to requester.');
+        }
+        return updatedOrder;
     }
 
     async cancelOrder(orderId) {
@@ -181,8 +208,8 @@ class AccommodationOrderService {
 
         return knexBooking.transaction(async (trx) => {
             const updatedOrder = await accommodationOrderRepository.update(orderId, { status: 'Canceled', updated_at: formatDateTime() }, trx);
-            // const orderDetailForEmail = { ...existingOrder, status: 'Canceled' };
-            // await sendAdminCancellationOrderEmail(orderDetailForEmail);
+            const orderDetailForEmail = { ...existingOrder, status: 'Canceled' };
+            await sendAdminCancellationAccommodationEmail(orderDetailForEmail);
             return updatedOrder;
         });
     }
@@ -225,7 +252,7 @@ class AccommodationOrderService {
 
     async exportOrdersToExcel(queryParams) {
         const orders = await accommodationOrderRepository.findAllForExport(queryParams);
-    
+
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Laporan Pesanan Akomodasi');
         worksheet.columns = [
@@ -239,17 +266,17 @@ class AccommodationOrderService {
             { header: 'Total Orang', key: 'total_pax', width: 12 },
             { header: 'Laki-laki', key: 'male', width: 10 },
             { header: 'Perempuan', key: 'female', width: 10 },
-            { header: 'Daftar Nama Tamu', key: 'guest_list', width: 60 }, 
+            { header: 'Daftar Nama Tamu', key: 'guest_list', width: 60 },
             { header: 'Catatan', key: 'note', width: 60 },
         ];
-    
+
         worksheet.getRow(1).font = { bold: true };
-    
+
         orders.forEach(order => {
-            const guestListNames = order.guests && order.guests.length > 0 
+            const guestListNames = order.guests && order.guests.length > 0
                 ? order.guests.map(g => `${g.guest_name} (${g.gender})`).join(', ')
                 : '-';
-    
+
             worksheet.addRow({
                 order_id: order.id,
                 status: order.status,
@@ -261,11 +288,11 @@ class AccommodationOrderService {
                 total_pax: order.total_pax || 0,
                 male: order.total_male || 0,
                 female: order.total_female || 0,
-                guest_list: guestListNames, 
+                guest_list: guestListNames,
                 note: order.note || '-',
             });
         });
-    
+
         return workbook;
     }
 }

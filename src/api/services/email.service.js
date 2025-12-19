@@ -555,6 +555,171 @@ const sendAssignmentNotificationEmail = async (driverEmail, assignmentDetails, r
     }
 };
 
+const sendNewAccommodationNotificationEmail = async (adminEmails, orderDetails) => {
+    try {
+        const { 
+            id, user, cabang, check_in_date, check_out_date, 
+            room_needed, total_pax, total_male, total_female, 
+            note, guests 
+        } = orderDetails; 
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'new-accommodation-notification.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        const guestItemsHtml = guests.map((guest, index) => `
+            <tr>
+                <td style="text-align: center;">${index + 1}</td>
+                <td>${guest.guest_name}</td>
+                <td>${guest.gender}</td>
+            </tr>
+        `).join('');
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{siteName}}/g, cabang ? cabang.nama_cab : '-');
+        htmlContent = htmlContent.replace(/{{checkIn}}/g, moment(check_in_date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{checkOut}}/g, moment(check_out_date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{roomNeeded}}/g, room_needed || '-');
+        htmlContent = htmlContent.replace(/{{totalPax}}/g, total_pax || 0);
+        htmlContent = htmlContent.replace(/{{male}}/g, total_male || 0);
+        htmlContent = htmlContent.replace(/{{female}}/g, total_female || 0);
+        htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+        htmlContent = htmlContent.replace(/{{guestItems}}/g, guestItemsHtml);
+        const adminLink = `${process.env.FRONTEND_URL}/accommodations/manage-order/${id}`;
+        htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[TINJAU] Pengajuan Akomodasi Baru dari ${user.nama_user}`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi akomodasi baru terkirim ke admin.`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi akomodasi baru ke admin:", error);
+    }
+};
+
+const sendRenewAccommodationNotificationEmail = async (adminEmails, orderDetails) => {
+    try {
+        const { 
+            id, user, cabang, check_in_date, check_out_date, 
+            room_needed, total_pax, total_male, total_female, 
+            note, guests 
+        } = orderDetails; 
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'update-accommodation-notification.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        const guestItemsHtml = guests.map((guest, index) => `
+            <tr>
+                <td style="text-align: center;">${index + 1}</td>
+                <td>${guest.guest_name}</td>
+                <td>${guest.gender}</td>
+            </tr>
+        `).join('');
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{siteName}}/g, cabang ? cabang.nama_cab : '-');
+        htmlContent = htmlContent.replace(/{{checkIn}}/g, moment(check_in_date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{checkOut}}/g, moment(check_out_date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{roomNeeded}}/g, room_needed || '-');
+        htmlContent = htmlContent.replace(/{{totalPax}}/g, total_pax || 0);
+        htmlContent = htmlContent.replace(/{{male}}/g, total_male || 0);
+        htmlContent = htmlContent.replace(/{{female}}/g, total_female || 0);
+        htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+        htmlContent = htmlContent.replace(/{{guestItems}}/g, guestItemsHtml);
+        const adminLink = `${process.env.FRONTEND_URL}/accommodations/manage-order/${id}`;
+        htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[TINJAU] Pengajuan Akomodasi Baru dari ${user.nama_user}`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi akomodasi baru terkirim ke admin.`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi akomodasi baru ke admin:", error);
+    }
+};
+
+const sendAccommodationStatusUpdateEmail = async (email, orderDetails) => {
+    try {
+        const { 
+            id, user, cabang, status, check_in_date, check_out_date, room_needed 
+        } = orderDetails; 
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'accommodation-status-update.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        let subject, headerClass, message;
+        if (status === 'Approved') {
+            subject = `[DISETUJUI] Pesanan Akomodasi Anda #${id}`;
+            headerClass = 'header-approved';
+            message = 'Kabar baik! Pesanan akomodasi Anda telah disetujui oleh Admin. Silakan berkoordinasi dengan pihak terkait untuk proses check-in.';
+        } else if (status === 'Rejected') {
+            subject = `[DITOLAK] Pesanan Akomodasi Anda #${id}`;
+            headerClass = 'header-rejected';
+            message = 'Mohon maaf, pengajuan akomodasi Anda tidak dapat disetujui saat ini. Silakan hubungi Admin GA untuk informasi lebih lanjut.';
+        } else {
+            subject = `[UPDATE] Status Pesanan Akomodasi #${id}`;
+            headerClass = 'header-approved';
+            message = `Status pesanan akomodasi Anda telah diperbarui menjadi "${status}".`;
+        }
+
+        htmlContent = htmlContent.replace(/{{headerClass}}/g, headerClass);
+        htmlContent = htmlContent.replace(/{{status}}/g, status);
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{message}}/g, message);
+        htmlContent = htmlContent.replace(/{{orderId}}/g, id);
+        htmlContent = htmlContent.replace(/{{siteName}}/g, cabang ? cabang.nama_cab : '-');
+        htmlContent = htmlContent.replace(/{{roomNeeded}}/g, room_needed || '-');
+        htmlContent = htmlContent.replace(/{{checkIn}}/g, moment(check_in_date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{checkOut}}/g, moment(check_out_date).format('DD MMMM YYYY'));
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: email,
+            subject: subject,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi status akomodasi #${id} terkirim ke ${email}`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi status akomodasi:", error);
+    }
+};
+
+const sendAdminCancellationAccommodationEmail = async (bookingDetails) => {
+    try {
+        const { user, check_in_date, check_out_date, room_needed } = bookingDetails;
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'accommodation-canceled-by-admin.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        console.log(user)
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{roomName}}/g, room_needed);
+        htmlContent = htmlContent.replace(/{{checkIn}}/g, moment(check_in_date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{checkOut}}/g, moment(check_out_date).format('DD MMMM YYYY'));
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: user.employee.email,
+            subject: `[DIBATALKAN] Order Anda`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.employee.email}`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi pembatalan oleh admin:", error);
+    }
+};
+
 module.exports = {
     sendBookingStatusEmail,
     sendNewBookingNotificationEmail,
@@ -570,5 +735,9 @@ module.exports = {
     sendUpdateVehicleRequestNotificationEmail,
     sendRequestStatusUpdateEmail,
     sendAdminCancellationRequestEmail,
-    sendAssignmentNotificationEmail
+    sendAssignmentNotificationEmail,
+    sendNewAccommodationNotificationEmail,
+    sendRenewAccommodationNotificationEmail,
+    sendAccommodationStatusUpdateEmail,
+    sendAdminCancellationAccommodationEmail,
 };

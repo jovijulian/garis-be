@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Update Status Pesanan Akomodasi</title>
+    <style>
+      body { font-family: Arial, sans-serif; color: #333; }
+      .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+      .header { padding: 15px; text-align: center; border-radius: 8px 8px 0 0; color: white; }
+      .header-approved { background-color: #28a745; }
+      .header-rejected { background-color: #dc3545; }
+      .content { padding: 20px; }
+      .footer { text-align: center; font-size: 0.8em; color: #777; margin-top: 20px; }
+      .details-table { width: 100%; border-collapse: collapse; margin: 15px 0; background-color: #f9f9f9; }
+      .details-table td { padding: 8px; border: 1px solid #eee; }
+      .details-table td:first-child { width: 40%; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header {{headerClass}}">
+        <h2>Status Pesanan: {{status}}</h2>
+      </div>
+      <div class="content">
+        <p>Halo <strong>{{userName}}</strong>,</p>
+        <p>{{message}}</p>
+
+        <table class="details-table">
+          <tr><td>ID Pesanan:</td><td>#{{orderId}}</td></tr>
+          <tr><td>Site / Cabang:</td><td>{{siteName}}</td></tr>
+          <tr><td>Kebutuhan Kamar:</td><td>{{roomNeeded}}</td></tr>
+          <tr><td>Check-In:</td><td>{{checkIn}}</td></tr>
+          <tr><td>Check-Out:</td><td>{{checkOut}}</td></tr>
+        </table>
+
+        <p>Anda dapat melihat detail lengkap pesanan melalui aplikasi GARIS.</p>
+      </div>
+      <div class="footer">
+        <p>&copy; 2025 GARIS | PT. Cisangkan</p>
+      </div>
+    </div>
+  </body>
+</html>
