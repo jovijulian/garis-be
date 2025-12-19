@@ -24,6 +24,7 @@ class VehicleAssignmentRepository extends BaseRepository {
             .where('driver_id', driverUserId)
             .withGraphFetched('[vehicle_request.[user, vehicle_type, cabang], vehicle]')
             .joinRelated('vehicle_request')
+            .where('vehicle_request.is_active', '=', 1)
             .orderBy('vehicle_request.start_time', 'desc')
             .page(page - 1, per_page)
 
@@ -45,6 +46,7 @@ class VehicleAssignmentRepository extends BaseRepository {
         const conflictCheckQuery = VehicleAssignment.query(trx)
         .joinRelated('vehicle_request')
         .where('vehicle_assignments.request_id', '!=', requestId) // Jangan cek bentrok dgn diri sendiri
+        .where('vehicle_request.is_active', '=', 1) // Jangan cek bentrok dgn diri sendiri
         .whereIn('vehicle_request.status', ['Approved', 'In Progress']) // Hanya cek vs request aktif
         .andWhere(timeBuilder => {
             // Logika overlap waktu

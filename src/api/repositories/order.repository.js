@@ -30,6 +30,7 @@ class OrderRepository extends BaseRepository {
             .modifyGraph('room', builder => {
                 builder.select('id', 'name', 'location');
             })
+            .where('is_active', 1)
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
 
@@ -75,7 +76,7 @@ class OrderRepository extends BaseRepository {
 
         const query = Order.query()
             .select('*')
-
+            .where('is_active', 1)
             .withGraphFetched('[cabang, user, booking, room]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
@@ -182,6 +183,7 @@ class OrderRepository extends BaseRepository {
                         b.select('id', 'name');
                     });
             })
+            .where('is_active', 1)
             .orderBy('id', 'DESC');
 
 

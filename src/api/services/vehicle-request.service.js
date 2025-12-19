@@ -134,10 +134,8 @@ class VehicleRequestService {
         }
 
         return knexBooking.transaction(async (trx) => {
-            await vehicleAssignmentRepository.deleteByRequestId(id, trx);
-
-            await vehicleRequestRepository.delete(id, trx);
-
+            // await vehicleAssignmentRepository.deleteByRequestId(id, trx);
+            await vehicleRequestRepository.update(id, { is_active: 0 }, trx);
             return { message: 'Vehicle Request has been deleted successfully.' };
         });
     }

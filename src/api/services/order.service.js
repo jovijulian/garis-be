@@ -193,8 +193,8 @@ class OrderService {
             throw error;
         }
         return knexBooking.transaction(async (trx) => {
-            await orderRepository.delete(id, trx);
-            await orderDetailRepository.deleteByOrderId(id, trx);
+            await orderRepository.update(id, { is_active: 0 }, trx);
+            // await orderDetailRepository.deleteByOrderId(id, trx);
             return { message: 'Order has been deleted successfully.' };
         });
     }

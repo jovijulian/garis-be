@@ -16,6 +16,7 @@ const vehicleRoutes = require('./vehicle.route');
 const driverRoutes = require('./driver.route');
 const vehicleRequestRoutes = require('./vehicle-request.route');
 const portalRoutes = require('./portal.route');
+const accommodationRoutes = require('./accommodation.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -32,5 +33,6 @@ router.use('/vehicles', vehicleRoutes);
 router.use('/drivers', driverRoutes);
 router.use('/vehicle-requests', vehicleRequestRoutes);
 router.use('/portal', portalRoutes);
+router.use('/accommodations', accommodationRoutes);
 
 module.exports = router;

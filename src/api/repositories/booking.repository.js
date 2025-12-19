@@ -24,6 +24,7 @@ class BookingRepository extends BaseRepository {
                 selectRoomName: builder => builder.select('id', 'name'),
                 selectTopicName: builder => builder.select('id', 'name')
             })
+            .where('is_active', 1)
             .orderBy('created_at', 'DESC');
 
         if (startDate && endDate) {
@@ -109,7 +110,7 @@ class BookingRepository extends BaseRepository {
             .modifyGraph('amenities', builder => {
                 builder.select('amenities.id as id', 'amenities.name');
             })
-
+            .where('is_active', 1)
             .where('id_user', id_user)
             .page(page - 1, per_page)
             .orderBy('created_at', 'DESC');
@@ -188,6 +189,7 @@ class BookingRepository extends BaseRepository {
     async findApprovedConflicts(roomId, startTime, endTime, bookingIdToExclude = null, trx) {
         const query = Booking.query(trx)
             .where('room_id', roomId)
+            .where('is_active', 1)
             .andWhere('status', 'Approved')
             .where(builder => {
                 builder.where('start_time', '<', endTime)
@@ -216,6 +218,7 @@ class BookingRepository extends BaseRepository {
     async findFirstApprovedConflict(roomId, startTime, endTime, trx) {
         const query = this.model.query(trx)
             .where('room_id', roomId)
+            .where('is_active', 1)
             .whereIn('status', ['Submit', 'Approved'])
             .andWhere(builder => {
                 builder.where('start_time', '<', endTime)
@@ -248,6 +251,7 @@ class BookingRepository extends BaseRepository {
         const { startDate, endDate, status } = queryParams;
 
         const query = Booking.query()
+            .where('is_active', 1)
             .withGraphFetched('[user(selectUsername), room(selectRoomWithCabId), topic(selectTopicName), amenities(selectAmenityName)]')
             .modifiers({
                 selectUsername: builder => builder.select('id_user', 'nama_user', 'email'),
@@ -269,6 +273,7 @@ class BookingRepository extends BaseRepository {
     async options(userId, search) {
         const query = Booking.query()
             .select('*')
+            .where('is_active', 1)
             .whereIn('status', ['Submit', 'Approved'])
 
         if (search) {
@@ -284,7 +289,7 @@ class BookingRepository extends BaseRepository {
         if (userId) {
             query.where('id_user', userId);
         }
-        
+
 
         const data = await query;
 

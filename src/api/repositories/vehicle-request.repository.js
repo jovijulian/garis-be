@@ -13,6 +13,7 @@ class VehicleRequestRepository extends BaseRepository {
 
         const query = VehicleRequest.query()
             .select('*')
+            .where('is_active', 1)
             .withGraphFetched('[cabang, user, vehicle_type, detail.[vehicle, driver]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
@@ -73,6 +74,7 @@ class VehicleRequestRepository extends BaseRepository {
 
         const query = VehicleRequest.query()
             .select('*')
+            .where('is_active', 1)
             .withGraphFetched('[cabang, user, vehicle_type, detail.[vehicle, driver]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
@@ -135,6 +137,7 @@ class VehicleRequestRepository extends BaseRepository {
 
         const query = VehicleRequest.query()
             .select('*')
+            .where('is_active', 1)
             .withGraphFetched('[cabang, user, vehicle_type, detail.[vehicle, driver]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
@@ -171,6 +174,7 @@ class VehicleRequestRepository extends BaseRepository {
         const endOfDay = moment(endDate).endOf('day').toISOString();
         const query = VehicleRequest.query()
             .whereIn('status', statuses)
+            .where('is_active', 1)
             .whereBetween('start_time', [startOfDay, endOfDay])
             .withGraphFetched('[cabang(selectCabang), user(selectUser), detail(selectDetail).[vehicle(selectVehicle), driver(selectDriver)]]')
             .modifiers({
