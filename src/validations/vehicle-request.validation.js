@@ -16,7 +16,7 @@ const requestBodySchema = z.object({
     }).int().positive('Passenger count must be a positive number'),
     passenger_names: z.string().optional().nullable(),
     requested_vehicle_type_id: z.number().int().positive().optional().nullable(),
-    requested_vehicle_count: z.number().int().positive().optional().nullable(),
+    requested_vehicle_count: z.number().int().nonnegative().optional().nullable(),
     // requested_vehicle_type_id: z.number({
     //     required_error: 'Requested vehicle type ID is required'
     // }).int().positive(),
