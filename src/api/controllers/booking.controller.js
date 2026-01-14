@@ -34,7 +34,7 @@ class RoomController {
         try {
             const id = req.params.id;
             const data = await bookingService.getBookingById(id);
-            return success(res, 200, data, 'Room retrieved successfully');
+            return success(res, 200, data, 'Booking retrieved successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }
@@ -45,7 +45,7 @@ class RoomController {
             const id = req.params.id;
 
             const data = await bookingService.updateBooking(id, req);
-            return success(res, 200, data, 'Room updated successfully');
+            return success(res, 200, data, 'Booking updated successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }
@@ -56,7 +56,7 @@ class RoomController {
             const id = req.params.id;
 
             const data = await bookingService.updateBookingUser(id, req);
-            return success(res, 200, data, 'Room updated successfully');
+            return success(res, 200, data, 'Booking updated successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }
@@ -66,7 +66,7 @@ class RoomController {
         try {
             const id = req.params.id;
             await bookingService.deleteBooking(id);
-            return success(res, 200, null, 'Room has been deleted successfully.');
+            return success(res, 200, null, 'Booking has been deleted successfully.');
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }
@@ -78,7 +78,7 @@ class RoomController {
             const payload = req.body;
 
             const data = await bookingService.updateBookingStatus(id, req);
-            return success(res, 200, data, 'Room updated successfully');
+            return success(res, 200, data, 'Booking updated successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }

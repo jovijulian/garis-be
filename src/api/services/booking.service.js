@@ -211,7 +211,7 @@ class BookingService {
 
         return knexBooking.transaction(async (trx) => {
             // await bookingRepository.deleteAmenitiesByBookingId(bookingId, trx);
-            bookingRepository.update(bookingId, { is_active: 0 }, trx);
+            await bookingRepository.update(bookingId, { is_active: 0 }, trx);
             return { message: 'Booking has been deleted successfully.' };
         });
     }
