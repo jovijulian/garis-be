@@ -8,7 +8,7 @@ class VehicleAssignment extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['request_id', 'vehicle_id', 'driver_id'],
+            required: ['request_id'],
             properties: {
                 id: { type: 'integer' },
                 request_id: { type: 'integer' },
