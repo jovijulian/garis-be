@@ -267,18 +267,22 @@ class VehicleRequestService {
             for (const assignmentDetail of details) {
                 const { vehicle_id, driver_id, note_for_driver } = assignmentDetail;
 
-                const vehicle = await vehicleRepository.findById(vehicle_id, trx);
-                if (!vehicle) throw new Error(`Vehicle ID ${vehicle_id} not found.`);
+                let vehicle = null;
 
-                if (vehicle.status !== 'Available') {
-                    throw new Error(`Vehicle ${vehicle.license_plate} sedang tidak beroperasi (Status fisik: ${vehicle.status}).`);
-                }
-
-                const isVehicleConflict = await vehicleAssignmentRepository.checkConflict(
-                    requestId, start_time, end_time, vehicle_id, null, trx
-                );
-                if (isVehicleConflict) {
-                    throw new Error(`Vehicle ${vehicle.license_plate} bentrok dengan jadwal lain di jam tersebut.`);
+                if (vehicle_id) {
+                    vehicle = await vehicleRepository.findById(vehicle_id, trx);
+                    if (!vehicle) throw new Error(`Vehicle ID ${vehicle_id} not found.`);
+                    
+                    if (vehicle.status !== 'Available') {
+                         throw new Error(`Vehicle ${vehicle.license_plate} sedang tidak beroperasi.`);
+                    }
+                    
+                    const isVehicleConflict = await vehicleAssignmentRepository.checkConflict(
+                        requestId, start_time, end_time, vehicle_id, null, trx
+                    );
+                    if (isVehicleConflict) {
+                        throw new Error(`Vehicle ${vehicle.license_plate} bentrok dengan jadwal lain.`);
+                    }
                 }
 
                 let driver = null;
@@ -296,11 +300,13 @@ class VehicleRequestService {
                     if (isDriverConflict) {
                         throw new Error(`Driver ${driver.name} bentrok dengan jadwal lain.`);
                     }
-                }
+                } else {
+                    if (!vehicle_id) throw new Error("Assignment harus memiliki minimal Kendaraan atau Driver.");
+               }
 
                 const assignmentPayload = {
                     request_id: Number(requestId),
-                    vehicle_id: Number(vehicle_id),
+                    vehicle_id: vehicle_id ? Number(vehicle_id) : null,
                     driver_id: driver_id ? Number(driver_id) : null,
                     note_for_driver: note_for_driver || null,
                     created_at: formatDateTime(),

@@ -15,12 +15,14 @@ const requestBodySchema = z.object({
         required_error: 'Passenger count is required'
     }).int().positive('Passenger count must be a positive number'),
     passenger_names: z.string().optional().nullable(),
-    requested_vehicle_type_id: z.number({
-        required_error: 'Requested vehicle type ID is required'
-    }).int().positive(),
-    requested_vehicle_count: z.number({
-        required_error: 'Requested vehicle count is required'
-    }).int().positive(),
+    requested_vehicle_type_id: z.number().int().positive().optional().nullable(),
+    requested_vehicle_count: z.number().int().positive().optional().nullable(),
+    // requested_vehicle_type_id: z.number({
+    //     required_error: 'Requested vehicle type ID is required'
+    // }).int().positive(),
+    // requested_vehicle_count: z.number({
+    //     required_error: 'Requested vehicle count is required'
+    // }).int().positive(),
     purpose: z.string({
         required_error: 'Purpose of the request is required'
     }).min(5, 'Purpose must be at least 5 characters'),
@@ -31,6 +33,15 @@ const requestBodySchema = z.object({
 .refine(data => data.cab_id || data.pickup_location_text, {
     message: 'Either Cabang ID or Pickup Location Text must be provided',
     path: ['cab_id', 'pickup_location_text'], 
+})
+.refine(data => {
+    if (!data.requested_vehicle_type_id) {
+        return data.requires_driver === true;
+    }
+    return true;
+}, {
+    message: 'Jika tidak memilih kendaraan, Anda wajib mencentang butuh supir.',
+    path: ['requires_driver'],
 });
 
 
