@@ -24,8 +24,8 @@ const assignDriverSchema = z.object({
 
 const detailAssignSchema = z.object({
     request_id: z.number({ required_error: 'Request ID is required' }),
-    vehicle_id: z.number({ required_error: 'Vehicle is required' }),
-    driver_id: z.number().int().positive().optional().nullable(),
+    vehicle_id: z.number().int().nonnegative().optional().nullable(),
+    driver_id: z.number().int().nonnegative().optional().nullable(),
     note_for_driver: z.string().optional().nullable(),
 });
 
