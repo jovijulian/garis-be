@@ -12,7 +12,7 @@ class VehicleAssignment extends BaseModelBooking {
             properties: {
                 id: { type: 'integer' },
                 request_id: { type: 'integer' },
-                vehicle_id: { type: 'integer' },
+                vehicle_id: { type: 'integer', nullable: true },
                 driver_id: { type: 'integer', nullable: true },
                 note_for_driver: { type: 'string', nullable: true },
             }
