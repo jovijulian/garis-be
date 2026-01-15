@@ -175,7 +175,10 @@ class VehicleRequestRepository extends BaseRepository {
         const query = VehicleRequest.query()
             .whereIn('status', statuses)
             .where('is_active', 1)
-            .whereBetween('start_time', [startOfDay, endOfDay])
+            .where(builder => {
+                builder.where('start_time', '<', endOfDay) 
+                       .andWhere('end_time', '>', startOfDay);
+            })
             .withGraphFetched('[cabang(selectCabang), user(selectUser), detail(selectDetail).[vehicle(selectVehicle), driver(selectDriver)]]')
             .modifiers({
                 selectCabang: builder => builder.select('id_cab', 'nama_cab'),
