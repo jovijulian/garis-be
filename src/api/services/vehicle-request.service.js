@@ -543,8 +543,8 @@ class VehicleRequestService {
 
             return request.detail.map(assignment => {
 
-                const startTimeISO = moment(request.start_time).format();
-                const endTimeISO = moment(request.end_time).format();
+                const startTimeISO = moment(request.start_time).add(7, 'hours').format();
+                const endTimeISO = moment(request.end_time).add(7, 'hours').format();
 
                 return {
                     id: assignment.id,
