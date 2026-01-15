@@ -55,6 +55,7 @@ class DashboardService {
 
     async getOrderDashboardData(queryParams = {}, request) {
         const siteId = request.user.sites
+       
         const startDate = queryParams.startDate ?
             moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
             moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
@@ -171,7 +172,6 @@ class DashboardService {
         })).sort((a, b) => b.driver_count - a.driver_count);
 
         const mostRequestedVehicleType = topVehicleTypesRequested.length > 0 ? topVehicleTypesRequested[0].name : 'N/A';
-
         return {
             kpi: {
                 total_requests_in_range: totalRequests,

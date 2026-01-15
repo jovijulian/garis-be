@@ -25,14 +25,14 @@ class DashboardRepository {
                     Booking.relatedQuery('room').where('cab_id', siteId)
                 );
             }
-        }).where('status', status).resultSize();
+        }).where('status', status).where('is_active', 1).resultSize();
         // return Booking.query().where('status', status).where('cab_id', siteId).resultSize();
     }
     getPendingVehiclesCount(status, siteId) {
-        return VehicleRequest.query().where('status', status).where('cab_id', siteId).resultSize();
+        return VehicleRequest.query().where('status', status).where('is_active', 1).where('cab_id', siteId).resultSize();
     }
     getPendingOrderCount(status, siteId) {
-        return Order.query().where('status', status).where('cab_id', siteId).resultSize();
+        return Order.query().where('status', status).where('is_active', 1).where('cab_id', siteId).resultSize();
     }
 
     // booking
@@ -43,7 +43,7 @@ class DashboardRepository {
                     Booking.relatedQuery('room').where('cab_id', siteId)
                 );
             }
-        }).whereBetween('start_time', [startDate, endDate]).resultSize();
+        }).whereBetween('start_time', [startDate, endDate]).where('is_active', 1).resultSize();
     }
 
     getPendingBookingsCount(siteId) {
@@ -53,12 +53,13 @@ class DashboardRepository {
                     Booking.relatedQuery('room').where('cab_id', siteId)
                 );
             }
-        }).where('status', 'Submit').resultSize();
+        }).where('status', 'Submit').where('is_active', 1).resultSize();
     }
 
     async getMostPopularRoomInRange(startDate, endDate) {
         return Room.query()
             .select('rooms.name')
+            .where('rooms.is_active', 1)
             .join('bookings', 'rooms.id', 'bookings.room_id')
             .whereBetween('bookings.start_time', [startDate, endDate])
             .groupBy('rooms.name')
@@ -69,6 +70,7 @@ class DashboardRepository {
     async getMostPopularTopicInRange(startDate, endDate) {
         return Topic.query()
             .select('topics.name')
+            .where('topics.is_active', 1)
             .join('bookings', 'topics.id', 'bookings.topic_id')
             .whereBetween('bookings.start_time', [startDate, endDate])
             .groupBy('topics.name')
@@ -88,6 +90,7 @@ class DashboardRepository {
                 }
             })
             .whereBetween('start_time', [startDate, endDate])
+            .where('is_active', 1)
             .groupByRaw('DATE(start_time)')
             .orderBy('date', 'asc');
     }
@@ -95,6 +98,7 @@ class DashboardRepository {
     getRoomUtilizationInRange(startDate, endDate) {
         return Room.query()
             .select('rooms.name', knexBooking.raw('count(bookings.id) as booking_count'))
+            .where('rooms.is_active', 1)
             .join('bookings', 'rooms.id', 'bookings.room_id')
             .whereBetween('bookings.start_time', [startDate, endDate])
             .groupBy('rooms.name')
@@ -105,6 +109,7 @@ class DashboardRepository {
     getStatusDistributionInRange(startDate, endDate, siteId) {
         return Booking.query()
             .select('status', knexBooking.raw('count(id) as count'))
+            .where('is_active', 1)
             .modify(q => {
                 if (siteId) {
                     q.whereExists(
@@ -119,6 +124,7 @@ class DashboardRepository {
     getTopTopicsInRange(startDate, endDate) {
         return Topic.query()
             .select('topics.name', knexBooking.raw('count(bookings.id) as booking_count'))
+            .where('topics.is_active', 1)
             .join('bookings', 'topics.id', 'bookings.topic_id')
             .whereBetween('bookings.start_time', [startDate, endDate])
             .groupBy('topics.name')
@@ -139,11 +145,11 @@ class DashboardRepository {
 
     // order 
     getTotalOrdersInRange(startDate, endDate, siteId) {
-        return Order.query().whereBetween('order_date', [startDate, endDate]).where('cab_id', siteId).resultSize();
+        return Order.query().whereBetween('order_date', [startDate, endDate]).where('is_active', 1).where('cab_id', siteId).resultSize();
     }
 
     getPendingOrdersCount(siteId) {
-        return Order.query().where('status', 'Submit').where('cab_id', siteId).resultSize();
+        return Order.query().where('status', 'Submit').where('is_active', 1).where('cab_id', siteId).resultSize();
     }
 
     getTopRequesterIdInRange(startDate, endDate, siteId) {
@@ -152,6 +158,7 @@ class DashboardRepository {
             .count('id as order_count')
             .whereBetween('order_date', [startDate, endDate])
             .where('cab_id', siteId)
+            .where('is_active', 1)
             .groupBy('user_id')
             .orderBy('order_count', 'desc')
             .first();
@@ -162,6 +169,7 @@ class DashboardRepository {
             .select(knexBooking.raw('DATE(order_date) as date'), knexBooking.raw('count(id) as count'))
             .whereBetween('order_date', [startDate, endDate])
             .where('cab_id', siteId)
+            .where('is_active', 1)
             .groupByRaw('DATE(order_date)')
             .orderBy('date', 'asc');
     }
@@ -170,6 +178,7 @@ class DashboardRepository {
         return Order.query()
             .select('status', knexBooking.raw('count(id) as count'))
             .where('cab_id', siteId)
+            .where('is_active', 1)
             .whereBetween('order_date', [startDate, endDate])
             .groupBy('status');
     }
@@ -177,6 +186,7 @@ class DashboardRepository {
     getTopConsumptionTypesByQtyInRange(startDate, endDate, limit = 5) {
         return ConsumptionType.query()
             .select('consumption_types.name')
+            .where('consumption_types.is_active', 1)
             .join('order_details as od', 'consumption_types.id', 'od.consumption_type_id')
             .join('orders as o', 'od.order_id', 'o.id')
             .whereBetween('o.order_date', [startDate, endDate])
@@ -189,6 +199,7 @@ class DashboardRepository {
     async getTotalItemsOrderedInRange(startDate, endDate) {
         const result = await OrderDetail.query()
             .join('orders as o', 'order_details.order_id', 'o.id')
+            .where('o.is_active', 1)
             .whereBetween('o.order_date', [startDate, endDate])
             .sum('qty as total_items')
             .first();
@@ -200,6 +211,7 @@ class DashboardRepository {
         return OrderDetail.query()
             .select('menu')
             .join('orders as o', 'order_details.order_id', 'o.id')
+            .where('o.is_active', 1)
             .whereBetween('o.order_date', [startDate, endDate])
             .whereNotNull('menu')
             .groupBy('menu')
@@ -209,17 +221,18 @@ class DashboardRepository {
 
     //vehicle request
     getTotalRequestsInRange(startDate, endDate, siteId) {
-        return VehicleRequest.query().whereBetween('start_time', [startDate, endDate]).where('cab_id', siteId).resultSize();
+        return VehicleRequest.query().whereBetween('start_time', [startDate, endDate]).where('is_active', 1).where('cab_id', siteId).resultSize();
     }
 
     getPendingRequestsCount(siteId) {
-        return VehicleRequest.query().where('status', 'Submit').where('cab_id', siteId).resultSize();
+        return VehicleRequest.query().where('status', 'Submit').where('cab_id', siteId).where('is_active', 1).where('is_active', 1).resultSize();
     }
 
     getRequestTrendInRange(startDate, endDate, siteId) {
         return VehicleRequest.query()
             .select(knexBooking.raw('DATE(start_time) as date'), knexBooking.raw('count(id) as count'))
             .where('cab_id', siteId)
+            .where('is_active', 1)
             .whereBetween('start_time', [startDate, endDate])
             .groupByRaw('DATE(start_time)')
             .orderBy('start_time', 'asc');
@@ -229,6 +242,7 @@ class DashboardRepository {
         return VehicleRequest.query()
             .select('status', knexBooking.raw('count(id) as count'))
             .where('cab_id', siteId)
+            .where('is_active', 1)
             .whereBetween('start_time', [startDate, endDate])
             .groupBy('status');
     }
@@ -238,6 +252,7 @@ class DashboardRepository {
             .select('id_user')
             .count('id as request_count')
             .where('cab_id', siteId)
+            .where('is_active', 1)
             .whereBetween('start_time', [startDate, endDate])
             .groupBy('id_user')
             .orderBy('request_count', 'desc')
@@ -285,6 +300,7 @@ class DashboardRepository {
             .count('id as request_count')
             .whereBetween('start_time', [startDate, endDate])
             .whereNotNull('cab_id')
+            .where('is_active', 1)
             .groupBy('cab_id');
     }
 
