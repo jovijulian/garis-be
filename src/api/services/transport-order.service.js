@@ -267,7 +267,7 @@ class TransportOrderService {
             { header: 'Total Pax', key: 'total_pax', width: 10 },
             { header: 'Daftar Penumpang', key: 'passenger_list', width: 50 },
             { header: 'Kelas Transportasi', key: 'transport_class', width: 20 },
-            { header: 'Penyedia layanan pilihan', key: 'preferred_provider', width: 20 },
+            { header: 'Provider / Maskapai', key: 'preferred_provider', width: 20 },
             { header: 'Catatan', key: 'note', width: 30 },
         ];
 
