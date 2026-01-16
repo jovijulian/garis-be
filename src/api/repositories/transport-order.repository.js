@@ -66,7 +66,7 @@ class TransportOrderRepository extends BaseRepository {
         const query = TransportOrder.query()
             .select('*')
 
-            .withGraphFetched('[cabang, user]')
+            .withGraphFetched('[cabang, user, transport_type]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
