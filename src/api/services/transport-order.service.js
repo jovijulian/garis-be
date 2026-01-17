@@ -7,8 +7,7 @@ const moment = require('moment');
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
-// Pastikan Anda membuat fungsi email yang sesuai untuk transport atau gunakan yang generic
-// const { sendNewTransportNotificationEmail, ... } = require('./email.service');
+const { sendNewTransportOrderNotificationEmail, sendRenewTransportOrderNotificationEmail, sendTransportOrderStatusUpdateEmail, sendAdminCancellationTransportOrderEmail } = require('./email.service');
 
 class TransportOrderService {
 
@@ -82,14 +81,14 @@ class TransportOrderService {
             throw error;
         }
 
-        // try {
-        //     const admins = await userRepository.findAdminsBySiteId(newOrder.cab_id);
-        //     if (admins.length > 0) {
-        //         // await sendNewTransportNotificationEmail(admins.map(a => a.email), newOrder);
-        //     }
-        // } catch (error) {
-        //     console.error('Failed to send transport notification.');
-        // }
+        try {
+            const admins = await userRepository.findAdminsBySiteId(newOrder.cab_id);
+            if (admins.length > 0) {
+                await sendNewTransportOrderNotificationEmail(admins.map(a => a.email), newOrder);
+            }
+        } catch (error) {
+            console.error('Failed to send transport notification.');
+        }
 
         return newOrder;
     }
@@ -137,6 +136,15 @@ class TransportOrderService {
             throw error;
         }
 
+        try {
+            const admins = await userRepository.findAdminsBySiteId(updatedOrder.cab_id);
+            if (admins.length > 0) {
+                await sendRenewTransportOrderNotificationEmail(admins.map(a => a.email), updatedOrder);
+            }
+        } catch (error) {
+            console.error('Failed to send accommodation notification.');
+        }
+
         return updatedOrder;
     }
 
@@ -148,7 +156,6 @@ class TransportOrderService {
             throw error;
         }
         return knexBooking.transaction(async (trx) => {
-            // Soft delete (is_active = 0) atau Hard delete tergantung kebijakan
             await transportOrderRepository.update(id, { is_active: 0, updated_at: formatDateTime() }, trx);
             return { message: 'Transport order deleted successfully.' };
         });
@@ -179,15 +186,16 @@ class TransportOrderService {
             throw error;
         }
 
-        // Email Notifikasi ke User (Opsional)
-        /*
         try {
             const requester = await userRepository.findByIdWithRelations(existingOrder.user_id, '[employee]');
             if (requester) {
-                await sendTransportStatusUpdateEmail(requester.employee.email, updatedOrder);
+                const email = requester.employee.email;
+                const orderDetails = await this.detail(id);
+                await sendTransportOrderStatusUpdateEmail(email, orderDetails);
             }
-        } catch (error) { console.error('Failed email...'); }
-        */
+        } catch (error) {
+            console.error('Failed to send notification email to requester.');
+        }
 
         return updatedOrder;
     }
@@ -205,8 +213,8 @@ class TransportOrderService {
                 updated_at: formatDateTime()
             }, trx);
 
-            // Email notifikasi pembatalan ke Admin (Opsional)
-            // await sendAdminCancellationTransportEmail({...existingOrder, status: 'Canceled'});
+            const orderDetailForEmail = { ...existingOrder, status: 'Canceled' };
+            await sendAdminCancellationTransportOrderEmail(orderDetailForEmail);
 
             return updatedOrder;
         });

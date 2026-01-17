@@ -527,7 +527,7 @@ const sendAssignmentNotificationEmail = async (driverEmail, assignmentDetails, r
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'assignment-notification.html');
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
 
-        htmlContent = htmlContent.replace(/{{driverName}}/g, assignmentDetails.driver?.name || 'Supir'); 
+        htmlContent = htmlContent.replace(/{{driverName}}/g, assignmentDetails.driver?.name || 'Supir');
         htmlContent = htmlContent.replace(/{{requesterName}}/g, user?.nama_user || 'N/A');
         htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
         htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
@@ -537,12 +537,12 @@ const sendAssignmentNotificationEmail = async (driverEmail, assignmentDetails, r
         htmlContent = htmlContent.replace(/{{passengerNames}}/g, passenger_names || '-');
         htmlContent = htmlContent.replace(/{{adminNote}}/g, note_for_driver || '-');
 
-        const driverAppLink = `${process.env.FRONTEND_URL}/vehicles/my-assignments`; 
+        const driverAppLink = `${process.env.FRONTEND_URL}/vehicles/my-assignments`;
         htmlContent = htmlContent.replace(/{{driverAppLink}}/g, driverAppLink);
 
         const mailOptions = {
             from: `"Notifikasi Tugas GARIS" <${process.env.SMTP_USERNAME}>`,
-            to: driverEmail, 
+            to: driverEmail,
             subject: `[TUGAS BARU] Penugasan Kendaraan: ${purpose || ''}`,
             html: htmlContent
         };
@@ -557,11 +557,11 @@ const sendAssignmentNotificationEmail = async (driverEmail, assignmentDetails, r
 
 const sendNewAccommodationNotificationEmail = async (adminEmails, orderDetails) => {
     try {
-        const { 
-            id, user, cabang, check_in_date, check_out_date, 
-            room_needed, total_pax, total_male, total_female, 
-            note, guests 
-        } = orderDetails; 
+        const {
+            id, user, cabang, check_in_date, check_out_date,
+            room_needed, total_pax, total_male, total_female,
+            note, guests
+        } = orderDetails;
 
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'new-accommodation-notification.html');
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
@@ -582,7 +582,7 @@ const sendNewAccommodationNotificationEmail = async (adminEmails, orderDetails) 
         htmlContent = htmlContent.replace(/{{female}}/g, total_female || 0);
         htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
         htmlContent = htmlContent.replace(/{{guestItems}}/g, guestItemsHtml);
-        const adminLink = `${process.env.FRONTEND_URL}/accommodations/manage-order/${id}`;
+        const adminLink = `${process.env.FRONTEND_URL}/orders/manage-order-accommodation/${id}`;
         htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
 
         const mailOptions = {
@@ -602,11 +602,11 @@ const sendNewAccommodationNotificationEmail = async (adminEmails, orderDetails) 
 
 const sendRenewAccommodationNotificationEmail = async (adminEmails, orderDetails) => {
     try {
-        const { 
-            id, user, cabang, check_in_date, check_out_date, 
-            room_needed, total_pax, total_male, total_female, 
-            note, guests 
-        } = orderDetails; 
+        const {
+            id, user, cabang, check_in_date, check_out_date,
+            room_needed, total_pax, total_male, total_female,
+            note, guests
+        } = orderDetails;
 
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'update-accommodation-notification.html');
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
@@ -647,9 +647,9 @@ const sendRenewAccommodationNotificationEmail = async (adminEmails, orderDetails
 
 const sendAccommodationStatusUpdateEmail = async (email, orderDetails) => {
     try {
-        const { 
-            id, user, cabang, status, check_in_date, check_out_date, room_needed 
-        } = orderDetails; 
+        const {
+            id, user, cabang, status, check_in_date, check_out_date, room_needed
+        } = orderDetails;
 
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'accommodation-status-update.html');
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
@@ -720,6 +720,174 @@ const sendAdminCancellationAccommodationEmail = async (bookingDetails) => {
     }
 };
 
+const sendNewTransportOrderNotificationEmail = async (adminEmails, orderDetails) => {
+    try {
+        const {
+            id, user, cabang, date, time, purpose, origin, destination, total_pax, note, passengers, transport_type
+        } = orderDetails;
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'new-transport-order-notification.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        const passengerItemHtml = passengers.map((guest, index) => `
+            <tr>
+                <td style="text-align: center;">${index + 1}</td>
+                <td>${guest.passenger_name}</td>
+                <td>${guest.phone_number}</td>
+            </tr>
+        `).join('');
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{transportType}}/g, transport_type.name);
+        htmlContent = htmlContent.replace(/{{siteName}}/g, cabang ? cabang.nama_cab : '-');
+        htmlContent = htmlContent.replace(/{{date}}/g, moment(date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{time}}/g, time || '-');
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
+        htmlContent = htmlContent.replace(/{{origin}}/g, origin || '-');
+        htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
+        htmlContent = htmlContent.replace(/{{totalPax}}/g, total_pax || 0);
+        htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+        htmlContent = htmlContent.replace(/{{passengerItem}}/g, passengerItemHtml);
+        const adminLink = `${process.env.FRONTEND_URL}/orders/manage-order-transport/${id}`;
+        htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[TINJAU] Pengajuan Transportasi Baru dari ${user.nama_user}`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi transportasi baru terkirim ke admin.`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi transportasi baru ke admin:", error);
+    }
+};
+
+const sendRenewTransportOrderNotificationEmail = async (adminEmails, orderDetails) => {
+    try {
+        const {
+            id, user, cabang, date, time, purpose, origin, destination, total_pax, note, passengers, transport_type
+        } = orderDetails;
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'update-transport-order-notification.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        const passengerItemHtml = passengers.map((guest, index) => `
+        <tr>
+            <td style="text-align: center;">${index + 1}</td>
+            <td>${guest.passenger_name}</td>
+            <td>${guest.phone_number}</td>
+        </tr>
+    `).join('');
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{transportType}}/g, transport_type.name);
+        htmlContent = htmlContent.replace(/{{siteName}}/g, cabang ? cabang.nama_cab : '-');
+        htmlContent = htmlContent.replace(/{{date}}/g, moment(date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{time}}/g, time || '-');
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
+        htmlContent = htmlContent.replace(/{{origin}}/g, origin || '-');
+        htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
+        htmlContent = htmlContent.replace(/{{totalPax}}/g, total_pax || 0);
+        htmlContent = htmlContent.replace(/{{note}}/g, note || '-');
+        htmlContent = htmlContent.replace(/{{passengerItem}}/g, passengerItemHtml);
+        const adminLink = `${process.env.FRONTEND_URL}/accommodations/manage-order/${id}`;
+        htmlContent = htmlContent.replace(/{{adminLink}}/g, adminLink);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[TINJAU] Pengajuan Akomodasi Baru dari ${user.nama_user}`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi transportasi baru terkirim ke admin.`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi transportasi baru ke admin:", error);
+    }
+};
+
+const sendTransportOrderStatusUpdateEmail = async (email, orderDetails) => {
+    try {
+        const {
+            id, user, cabang, date, time, purpose, origin, destination, total_pax, transport_type, status
+        } = orderDetails;
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'transport-order-status-update.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+
+        let subject, headerClass, message;
+        if (status === 'Approved') {
+            subject = `[DISETUJUI] Pesanan Transportasi Anda #${id}`;
+            headerClass = 'header-approved';
+            message = 'Kabar baik! Pesanan transportasi Anda telah disetujui oleh Admin. Silakan berkoordinasi dengan pihak terkait untuk proses check-in.';
+        } else if (status === 'Rejected') {
+            subject = `[DITOLAK] Pesanan Transportasi Anda #${id}`;
+            headerClass = 'header-rejected';
+            message = 'Mohon maaf, pengajuan transportasi Anda tidak dapat disetujui saat ini. Silakan hubungi Admin GA untuk informasi lebih lanjut.';
+        } else {
+            subject = `[UPDATE] Status Pesanan Transportasi #${id}`;
+            headerClass = 'header-approved';
+            message = `Status pesanan transportasi Anda telah diperbarui menjadi "${status}".`;
+        }
+
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{transportType}}/g, transport_type.name);
+        htmlContent = htmlContent.replace(/{{siteName}}/g, cabang ? cabang.nama_cab : '-');
+        htmlContent = htmlContent.replace(/{{date}}/g, moment(date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{time}}/g, time || '-');
+        htmlContent = htmlContent.replace(/{{status}}/g, status);
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
+        htmlContent = htmlContent.replace(/{{origin}}/g, origin || '-');
+        htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
+        htmlContent = htmlContent.replace(/{{totalPax}}/g, total_pax || 0);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: email,
+            subject: subject,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi status transportasi #${id} terkirim ke ${email}`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi status transportasi:", error);
+    }
+};
+
+const sendAdminCancellationTransportOrderEmail = async (bookingDetails) => {
+    try {
+        const { id, user, cabang, date, time, purpose, origin, destination, total_pax, transport_type } = bookingDetails;
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'transport-order-canceled-by-admin.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        htmlContent = htmlContent.replace(/{{userName}}/g, user.nama_user);
+        htmlContent = htmlContent.replace(/{{transportType}}/g, transport_type.name);
+        htmlContent = htmlContent.replace(/{{siteName}}/g, cabang ? cabang.nama_cab : '-');
+        htmlContent = htmlContent.replace(/{{date}}/g, moment(date).format('DD MMMM YYYY'));
+        htmlContent = htmlContent.replace(/{{time}}/g, time || '-');
+        htmlContent = htmlContent.replace(/{{purpose}}/g, purpose || '-');
+        htmlContent = htmlContent.replace(/{{origin}}/g, origin || '-');
+        htmlContent = htmlContent.replace(/{{destination}}/g, destination || '-');
+        htmlContent = htmlContent.replace(/{{totalPax}}/g, total_pax || 0);
+
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS" <${process.env.SMTP_USERNAME}>`,
+            to: user.employee.email,
+            subject: `[DIBATALKAN] Order Anda`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email notifikasi pembatalan oleh admin terkirim ke ${user.employee.email}`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email notifikasi pembatalan oleh admin:", error);
+    }
+};
+
 module.exports = {
     sendBookingStatusEmail,
     sendNewBookingNotificationEmail,
@@ -740,4 +908,8 @@ module.exports = {
     sendRenewAccommodationNotificationEmail,
     sendAccommodationStatusUpdateEmail,
     sendAdminCancellationAccommodationEmail,
+    sendNewTransportOrderNotificationEmail,
+    sendRenewTransportOrderNotificationEmail,
+    sendTransportOrderStatusUpdateEmail,
+    sendAdminCancellationTransportOrderEmail
 };

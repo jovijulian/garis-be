@@ -12,7 +12,7 @@ class TransportPassenger extends BaseModelBooking {
             properties: {
                 id: { type: 'integer' },
                 transport_order_id: { type: 'integer' },
-                guest_name: { type: 'string' },
+                passenger_name: { type: 'string' },
                 phone_number: { type: 'string', nullable: true },
             }
         };
