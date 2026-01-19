@@ -55,7 +55,7 @@ class DashboardService {
 
     async getOrderDashboardData(queryParams = {}, request) {
         const siteId = request.user.sites
-       
+
         const startDate = queryParams.startDate ?
             moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
             moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
@@ -69,41 +69,63 @@ class DashboardService {
             pendingOrdersCount,
             orderTrend,
             statusDistribution,
-            topRequesterResult,
-            topConsumptionTypesByQty,
+            topServiceOrder
         ] = await Promise.all([
             dashboardRepository.getTotalOrdersInRange(startDate, endDate, siteId),
             dashboardRepository.getPendingOrdersCount(siteId),
             dashboardRepository.getOrderTrendInRange(startDate, endDate, siteId),
             dashboardRepository.getOrderStatusDistributionInRange(startDate, endDate, siteId),
-            dashboardRepository.getTopRequesterIdInRange(startDate, endDate, siteId),
-
-            dashboardRepository.getTopConsumptionTypesByQtyInRange(startDate, endDate, 5),
+            dashboardRepository.topServiceOrder(startDate, endDate, siteId),
         ]);
 
+        // const [countFood, countHotel, countTransport] = await Promise.all([
+        //     Order.query().whereBetween('order_date', [startDate, endDate]).where('cab_id', siteId).where('is_active', 1).resultSize(),
+        //     AccommodationOrder.query().whereBetween('check_in_date', [startDate, endDate]).where('cab_id', siteId).where('is_active', 1).resultSize(),
+        //     TransportOrder.query().whereBetween('date', [startDate, endDate]).where('cab_id', siteId).where('is_active', 1).resultSize()
+        // ]);
+
+        // const serviceComposition = [
+        //     { name: 'Food & Bev', total_quantity: countFood },
+        //     { name: 'Accommodation', total_quantity: countHotel },
+        //     { name: 'Transport', total_quantity: countTransport }
+        // ].sort((a, b) => b.total_quantity - a.total_quantity);
+
+        // const mostPopularService = serviceComposition[0].total_quantity > 0 ? serviceComposition[0].name : '-';
+        const topRequesterResult = await dashboardRepository.getTopRequesterIdInRange(startDate, endDate, siteId);
         let topRequesterName = 'N/A';
         if (topRequesterResult && topRequesterResult.user_id) {
             const topUser = await userRepository.findById(topRequesterResult.user_id);
-            if (topUser) {
-                topRequesterName = topUser.nama_user;
-            }
+            if (topUser) topRequesterName = topUser.nama_user;
         }
 
-        const mostPopularConsumptionType = topConsumptionTypesByQty.length > 0 ? topConsumptionTypesByQty[0].name : 'N/A';
+        // return {
+        //     kpi: {
+        //         total_orders_in_range: totalOrders,
+        //         pending_orders_count: pendingOrdersCount,
+        //         most_popular_consumption_type: mostPopularConsumptionType,
+        //         top_requester: topRequesterName,
+        //     },
+        //     charts: {
+        //         order_trend: orderTrend,
 
+        //     },
+        //     rankings: {
+        //         top_consumption_types: topConsumptionTypesByQty,
+        //         status_distribution: statusDistribution,
+        //     }
+        // };
         return {
             kpi: {
                 total_orders_in_range: totalOrders,
                 pending_orders_count: pendingOrdersCount,
-                most_popular_consumption_type: mostPopularConsumptionType,
+                most_popular_consumption_type: topServiceOrder.most_popular_service, 
                 top_requester: topRequesterName,
             },
             charts: {
                 order_trend: orderTrend,
-
             },
             rankings: {
-                top_consumption_types: topConsumptionTypesByQty,
+                top_consumption_types: topServiceOrder.service_composition, 
                 status_distribution: statusDistribution,
             }
         };

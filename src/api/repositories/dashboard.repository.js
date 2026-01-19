@@ -15,6 +15,8 @@ const Vehicle = require('../models/Vehicle')
 const Driver = require('../models/Driver')
 const AccommodationOrder = require('../models/AccommodationOrder');
 const TransportOrder = require('../models/TransportOrder');
+const _ = require('lodash');
+const moment = require('moment');
 
 
 class DashboardRepository {
@@ -151,43 +153,151 @@ class DashboardRepository {
     }
 
     // order 
-    getTotalOrdersInRange(startDate, endDate, siteId) {
-        return Order.query().whereBetween('order_date', [startDate, endDate]).where('is_active', 1).where('cab_id', siteId).resultSize();
+    async getTotalOrdersInRange(startDate, endDate, siteId) {
+        const [food, accommodation, transport] = await Promise.all([
+            Order.query().whereBetween('order_date', [startDate, endDate]).where('is_active', 1).where('cab_id', siteId).resultSize(),
+            AccommodationOrder.query().whereBetween('check_in_date', [startDate, endDate]).where('is_active', 1).where('cab_id', siteId).resultSize(),
+            TransportOrder.query().whereBetween('date', [startDate, endDate]).where('is_active', 1).where('cab_id', siteId).resultSize()
+        ]);
+        return food + accommodation + transport;
     }
 
-    getPendingOrdersCount(siteId) {
-        return Order.query().where('status', 'Submit').where('is_active', 1).where('cab_id', siteId).resultSize();
+    async getPendingOrdersCount(siteId) {
+        const [food, accommodation, transport] = await Promise.all([
+            Order.query().where('status', 'Submit').where('is_active', 1).where('cab_id', siteId).resultSize(),
+            AccommodationOrder.query().where('status', 'Submit').where('is_active', 1).where('cab_id', siteId).resultSize(),
+            TransportOrder.query().where('status', 'Submit').where('is_active', 1).where('cab_id', siteId).resultSize()
+        ]);
+        return food + accommodation + transport;
     }
 
-    getTopRequesterIdInRange(startDate, endDate, siteId) {
-        return Order.query()
-            .select('user_id')
-            .count('id as order_count')
-            .whereBetween('order_date', [startDate, endDate])
-            .where('cab_id', siteId)
-            .where('is_active', 1)
-            .groupBy('user_id')
-            .orderBy('order_count', 'desc')
-            .first();
+    // getPendingOrdersCount(siteId) {
+    //     return Order.query().where('status', 'Submit').where('is_active', 1).where('cab_id', siteId).resultSize();
+    // }
+
+    async getTopRequesterIdInRange(startDate, endDate, siteId) {
+        const fetchUserCounts = (Model, dateCol) => {
+            return Model.query()
+                .select('user_id')
+                .count('id as order_count')
+                .whereBetween(dateCol, [startDate, endDate])
+                .where('cab_id', siteId)
+                .where('is_active', 1)
+                .groupBy('user_id');
+        };
+
+        const [foodCounts, hotelCounts, transportCounts] = await Promise.all([
+            fetchUserCounts(Order, 'order_date'),
+            fetchUserCounts(AccommodationOrder, 'check_in_date'),
+            fetchUserCounts(TransportOrder, 'date')
+        ]);
+
+        const allCounts = [...foodCounts, ...hotelCounts, ...transportCounts];
+        const userTotals = {};
+        allCounts.forEach(item => {
+            const userId = item.user_id;
+            const count = Number(item.order_count) || 0;
+
+            if (userTotals[userId]) {
+                userTotals[userId] += count;
+            } else {
+                userTotals[userId] = count;
+            }
+        });
+
+        let topUser = null;
+        let maxCount = -1;
+
+        for (const [userId, total] of Object.entries(userTotals)) {
+            if (total > maxCount) {
+                maxCount = total;
+                topUser = userId;
+            }
+        }
+
+        if (topUser) {
+            return { user_id: topUser, order_count: maxCount };
+        }
+        return null;
     }
 
-    getOrderTrendInRange(startDate, endDate, siteId) {
-        return Order.query()
-            .select(knexBooking.raw('DATE(order_date) as date'), knexBooking.raw('count(id) as count'))
-            .whereBetween('order_date', [startDate, endDate])
-            .where('cab_id', siteId)
-            .where('is_active', 1)
-            .groupByRaw('DATE(order_date)')
-            .orderBy('date', 'asc');
+    async getOrderTrendInRange(startDate, endDate, siteId) {
+        const fetchTrend = (Model, dateCol) => {
+            return Model.query()
+                .select(knexBooking.raw(`DATE(${dateCol}) as date`), knexBooking.raw('count(id) as count'))
+                .whereBetween(dateCol, [startDate, endDate])
+                .where('cab_id', siteId)
+                .where('is_active', 1)
+                .groupByRaw(`DATE(${dateCol})`);
+        };
+
+        const [foodTrend, hotelTrend, transportTrend] = await Promise.all([
+            fetchTrend(Order, 'order_date'),
+            fetchTrend(AccommodationOrder, 'check_in_date'),
+            fetchTrend(TransportOrder, 'date')
+        ]);
+
+        const combined = [...foodTrend, ...hotelTrend, ...transportTrend];
+
+        const mergedTrend = _(combined)
+            .groupBy(item => moment(item.date).format('YYYY-MM-DD'))
+            .map((items, date) => ({
+                date: date,
+                count: _.sumBy(items, item => Number(item.count))
+            }))
+            .sortBy('date')
+            .value();
+
+        return mergedTrend;
     }
 
-    getOrderStatusDistributionInRange(startDate, endDate, siteId) {
-        return Order.query()
-            .select('status', knexBooking.raw('count(id) as count'))
-            .where('cab_id', siteId)
-            .where('is_active', 1)
-            .whereBetween('order_date', [startDate, endDate])
-            .groupBy('status');
+    async getOrderStatusDistributionInRange(startDate, endDate, siteId) {
+        const fetchStatus = (Model, dateCol) => {
+            return Model.query()
+                .select('status', knexBooking.raw('count(id) as count'))
+                .where('cab_id', siteId)
+                .where('is_active', 1)
+                .whereBetween(dateCol, [startDate, endDate])
+                .groupBy('status');
+        };
+
+        const [foodStatus, hotelStatus, transportStatus] = await Promise.all([
+            fetchStatus(Order, 'order_date'),
+            fetchStatus(AccommodationOrder, 'check_in_date'),
+            fetchStatus(TransportOrder, 'date')
+        ]);
+
+        const combined = [...foodStatus, ...hotelStatus, ...transportStatus];
+
+        const mergedStatus = _(combined)
+            .groupBy('status')
+            .map((items, status) => ({
+                status: status,
+                count: _.sumBy(items, item => Number(item.count))
+            }))
+            .value();
+
+        return mergedStatus;
+    }
+
+    async topServiceOrder(startDate, endDate, siteId) {
+        const [countFood, countHotel, countTransport] = await Promise.all([
+            Order.query().whereBetween('order_date', [startDate, endDate]).where('cab_id', siteId).where('is_active', 1).resultSize(),
+            AccommodationOrder.query().whereBetween('check_in_date', [startDate, endDate]).where('cab_id', siteId).where('is_active', 1).resultSize(),
+            TransportOrder.query().whereBetween('date', [startDate, endDate]).where('cab_id', siteId).where('is_active', 1).resultSize()
+        ]);
+
+        const serviceComposition = [
+            { name: 'Konsumsi', total_quantity: countFood },
+            { name: 'Akomodasi / Hotel', total_quantity: countHotel },
+            { name: 'Transportasi', total_quantity: countTransport }
+        ].sort((a, b) => b.total_quantity - a.total_quantity);
+
+        const mostPopularService = serviceComposition[0].total_quantity > 0 ? serviceComposition[0].name : '-';
+        return {
+            most_popular_service: mostPopularService,
+            service_composition: serviceComposition
+        }
     }
 
     getTopConsumptionTypesByQtyInRange(startDate, endDate, limit = 5) {
