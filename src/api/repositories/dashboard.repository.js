@@ -13,6 +13,8 @@ const VehicleAssignment = require('../models/VehicleAssignment');
 const Site = require('../models/Site');
 const Vehicle = require('../models/Vehicle')
 const Driver = require('../models/Driver')
+const AccommodationOrder = require('../models/AccommodationOrder');
+const TransportOrder = require('../models/TransportOrder');
 
 
 class DashboardRepository {
@@ -31,8 +33,13 @@ class DashboardRepository {
     getPendingVehiclesCount(status, siteId) {
         return VehicleRequest.query().where('status', status).where('is_active', 1).where('cab_id', siteId).resultSize();
     }
-    getPendingOrderCount(status, siteId) {
-        return Order.query().where('status', status).where('is_active', 1).where('cab_id', siteId).resultSize();
+    async getPendingOrderCount(status, siteId) {
+        const countAccommodation = await AccommodationOrder.query().where('status', status).where('is_active', 1).where('cab_id', siteId).resultSize();
+        const countTransport = await TransportOrder.query().where('status', status).where('is_active', 1).where('cab_id', siteId).resultSize();
+        const orderCount = await Order.query().where('status', status).where('is_active', 1).where('cab_id', siteId).resultSize();
+        return Promise.all([countAccommodation, countTransport, orderCount]).then(results => {
+            return results.reduce((total, count) => total + count, 0);
+        });
     }
 
     // booking
