@@ -4,6 +4,7 @@ const { knexBooking } = require('../../config/database');
 const User = require('../models/User');
 const Room = require('../models/Room');
 const OrderAmenity = require('../models/OrderAmenity');
+const moment = require('moment');
 class BookingRepository extends BaseRepository {
     constructor() {
         super(Booking);
@@ -294,6 +295,33 @@ class BookingRepository extends BaseRepository {
         const data = await query;
 
         return data;
+    }
+
+    async findScheduleData({ startDate, endDate, cab_id, statuses }) {
+       
+        const startOfDay = moment(startDate).startOf('day').toISOString();
+        const endOfDay = moment(endDate).endOf('day').toISOString();
+        const query = Booking.query()
+            .whereIn('bookings.status', statuses) 
+            .where('bookings.is_active', 1)
+            .where(builder => {
+                builder.where('bookings.start_time', '<', endOfDay)
+                       .andWhere('bookings.end_time', '>', startOfDay);
+            })
+            .withGraphFetched('[user(selectUsername), room(selectRoom), topic(selectTopicName)]')
+            .modifiers({
+                selectUsername: builder => builder.select('id_user', 'nama_user'),
+                selectRoom: builder => builder.select('id', 'name', 'cab_id'),
+                selectTopicName: builder => builder.select('id', 'name')
+            })
+            .orderBy('bookings.start_time', 'ASC');
+
+        if (cab_id) {
+            query.joinRelated('room')
+                 .where('room.cab_id', cab_id);
+        }
+
+        return query;
     }
 }
 

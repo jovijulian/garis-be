@@ -153,6 +153,15 @@ class RoomController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async getSchedule(req, res) {
+        try {
+            const data = await bookingService.getSchedule(req.query);
+            return success(res, 200, data, 'Booking schedule retrieved successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new RoomController();

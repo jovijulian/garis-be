@@ -112,6 +112,21 @@ class RoomRepository extends BaseRepository {
         }
     }
 
+    async findAllForSchedule(cab_id) {
+        const query = Room.query()
+            .select('id', 'name', 'capacity', 'location', 'cab_id', 'description')
+            .where('is_active', 1);
+    
+        if (cab_id) {
+            query.where('cab_id', cab_id);
+        }
+        
+        query.orderBy('name', 'ASC'); 
+    
+        const data = await query;
+        return data;
+    }
+
 }
 
 module.exports = new RoomRepository();

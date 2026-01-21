@@ -528,6 +528,58 @@ class BookingService {
 
         return data;
     }
+
+    async getSchedule(queryParams) {
+        const targetDate = queryParams.date ? moment(queryParams.date, 'YYYY-MM-DD') : moment();
+        const cab_id = queryParams.cab_id ? Number(queryParams.cab_id) : null;
+        const targetStartOfDay = targetDate.clone().startOf('day').toDate();
+        const targetEndOfDay = targetDate.clone().endOf('day').toDate();
+        const statuses = queryParams.statuses ? queryParams.statuses.split(',') : ['Approved', 'Submit'];
+
+        const rooms = await roomRepository.findAllForSchedule(cab_id);
+
+        const columns = rooms.map(r => ({
+            id: r.id,
+            name: r.name,
+            capacity: r.capacity,
+            location: r.location,
+            description: r.description
+        }));
+
+        const bookingsData = await bookingRepository.findScheduleData({
+            startDate: targetStartOfDay,
+            endDate: targetEndOfDay,
+            cab_id: cab_id,
+            statuses: statuses
+        });
+
+        const bookings = bookingsData.map(booking => {
+            return {
+                id: booking.id,
+                roomId: booking.room_id, 
+                topic: booking.topic ? booking.topic.name : '-',
+                purpose: booking.purpose,
+                startTime: booking.start_time,
+                endTime: booking.end_time,
+                requester: booking.user ? booking.user.nama_user : 'Unknown',
+                status: booking.status,
+                notes: booking.notes,
+                roomName: booking.room ? booking.room.name : 'Unknown Room' 
+            };
+        });
+
+        const timeSlots = [];
+        for (let i = 0; i < 24; i++) {
+            timeSlots.push(`${String(i).padStart(2, '0')}:00`);
+        }
+
+        return {
+            date: targetDate.format('YYYY-MM-DD'),
+            columns: columns,   
+            bookings: bookings, 
+            timeSlots: timeSlots
+        };
+    }
 }
 
 
