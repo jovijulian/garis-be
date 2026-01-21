@@ -543,7 +543,8 @@ class BookingService {
             name: r.name,
             capacity: r.capacity,
             location: r.location,
-            description: r.description
+            description: r.description,
+            cab_id: r.cab_id
         }));
 
         const bookingsData = await bookingRepository.findScheduleData({
