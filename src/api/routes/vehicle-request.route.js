@@ -27,7 +27,7 @@ router.get('/spj/:id', validate(requestIdSchema), VehicleRequestController.downl
 router.put('/:id', validate(updateRequestSchema), VehicleRequestController.update);
 router.put('/status/:id', validate(updateStatusSchema), VehicleRequestController.updateVehicleRequestStatus);
 router.put('/assignment/:requestId', validate(assignSchema), VehicleRequestController.assign);
-router.delete('/cancel/:id', validate(requestIdSchema), VehicleRequestController.cancelRequest);
+router.put('/cancel/:id', validate(requestIdSchema), VehicleRequestController.cancelRequest);
 router.delete('/:id', validate(requestIdSchema), VehicleRequestController.delete);
 
 module.exports = router;
