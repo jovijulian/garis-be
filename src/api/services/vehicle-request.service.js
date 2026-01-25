@@ -478,7 +478,7 @@ class VehicleRequestService {
                 assigned_drivers: assignedDrivers,
                 driver_notes: driverNotes,
                 approved_by: request.approved_by || '-',
-                created_at: request.created_at ? moment.utc(request.created_at).format('YYYY-MM-DD HH:mm') : '-',
+                created_at: request.created_at ? moment(request.created_at).format('YYYY-MM-DD HH:mm') : '-',
             });
 
             const lastRow = worksheet.lastRow;

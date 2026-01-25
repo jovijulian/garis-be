@@ -263,7 +263,7 @@ class OrderService {
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
 
         const menuItemsHtml = order.details.map(item => {
-            const deliveryTime = moment.utc(item.delivery_time).format('HH:mm')
+            const deliveryTime = moment(item.delivery_time).format('HH:mm')
             return `
                 <tr>
                     <td>${item.consumption_type.name}</td>
@@ -350,7 +350,7 @@ class OrderService {
                     consumption_type: item.consumption_type ? item.consumption_type.name : '-',
                     menu_description: item.menu,
                     qty: item.qty,
-                    delivery_time: moment.utc(item.delivery_time).format('YYYY-MM-DD HH:mm'),
+                    delivery_time: moment(item.delivery_time).format('YYYY-MM-DD HH:mm'),
                 });
             });
         });
