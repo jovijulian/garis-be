@@ -473,7 +473,7 @@ class BookingService {
             { header: 'Ruangan', key: 'room', width: 30 },
             { header: 'Cabang', key: 'site', width: 20 },
             { header: 'Pemesan', key: 'user_name', width: 30 },
-            { header: 'Email Pemesan', key: 'user_email', width: 30 },
+   
             { header: 'Waktu Mulai', key: 'start_time', width: 22 },
             { header: 'Waktu Selesai', key: 'end_time', width: 22 },
             { header: 'Durasi (Menit)', key: 'duration', width: 15 },
@@ -497,7 +497,6 @@ class BookingService {
                 room: booking.room ? booking.room.name : '-',
                 site: booking.room ? booking.room.site_name : '-',
                 user_name: booking.user ? booking.user.nama_user : '-',
-                user_email: booking.user ? booking.user.email : '-',
                 start_time: startTimeWIB,
                 end_time: endTimeWIB,
                 duration: booking.duration_minutes,

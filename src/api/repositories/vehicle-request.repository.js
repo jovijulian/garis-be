@@ -170,8 +170,8 @@ class VehicleRequestRepository extends BaseRepository {
     }
 
     async findScheduleData({startDate, endDate, cab_id, statuses}) {
-        const startOfDay = moment(startDate).startOf('day').toISOString();
-        const endOfDay = moment(endDate).endOf('day').toISOString();
+        const startOfDay = moment(startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const endOfDay = moment(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss');
         const query = VehicleRequest.query()
             .whereIn('status', statuses)
             .where('is_active', 1)

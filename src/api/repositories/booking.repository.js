@@ -255,7 +255,7 @@ class BookingRepository extends BaseRepository {
             .where('is_active', 1)
             .withGraphFetched('[user(selectUsername), room(selectRoomWithCabId), topic(selectTopicName), amenities(selectAmenityName)]')
             .modifiers({
-                selectUsername: builder => builder.select('id_user', 'nama_user', 'email'),
+                selectUsername: builder => builder.select('id_user', 'nama_user'),
                 selectRoomWithCabId: builder => builder.select('id', 'name', 'cab_id'),
                 selectTopicName: builder => builder.select('id', 'name'),
                 selectAmenityName: builder => builder.select('amenities.id', 'amenities.name')
@@ -299,8 +299,8 @@ class BookingRepository extends BaseRepository {
 
     async findScheduleData({ startDate, endDate, cab_id, statuses }) {
        
-        const startOfDay = moment(startDate).startOf('day').toISOString();
-        const endOfDay = moment(endDate).endOf('day').toISOString();
+        const startOfDay = moment(startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const endOfDay = moment(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss');
         const query = Booking.query()
             .whereIn('bookings.status', statuses) 
             .where('bookings.is_active', 1)
