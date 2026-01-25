@@ -263,7 +263,7 @@ class OrderService {
         let htmlContent = fs.readFileSync(templatePath, 'utf-8');
 
         const menuItemsHtml = order.details.map(item => {
-            const deliveryTime = moment.utc(item.delivery_time).utcOffset('+07:00').format('HH:mm')
+            const deliveryTime = moment.utc(item.delivery_time).format('HH:mm')
             return `
                 <tr>
                     <td>${item.consumption_type.name}</td>
@@ -276,7 +276,7 @@ class OrderService {
 
         htmlContent = htmlContent.replace('{{orderId}}', order.id);
         htmlContent = htmlContent.replace('{{purpose}}', order.purpose);
-        htmlContent = htmlContent.replace('{{orderDate}}', moment(order.order_date).utcOffset('+07:00').format('DD MMM YYYY'));
+        htmlContent = htmlContent.replace('{{orderDate}}', moment(order.order_date).format('DD MMM YYYY'));
         htmlContent = htmlContent.replace('{{requesterName}}', order.user.nama_user);
 
         const location = order.room ? order.room.name : order.location_text;
@@ -350,7 +350,7 @@ class OrderService {
                     consumption_type: item.consumption_type ? item.consumption_type.name : '-',
                     menu_description: item.menu,
                     qty: item.qty,
-                    delivery_time: moment.utc(item.delivery_time).utcOffset('+07:00').format('YYYY-MM-DD HH:mm'),
+                    delivery_time: moment.utc(item.delivery_time).format('YYYY-MM-DD HH:mm'),
                 });
             });
         });

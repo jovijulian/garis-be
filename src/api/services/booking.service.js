@@ -487,8 +487,8 @@ class BookingService {
         worksheet.getRow(1).font = { bold: true };
 
         bookings.forEach(booking => {
-            const startTimeWIB = moment(booking.start_time).add(7, 'hours').format('YYYY-MM-DD HH:mm');
-            const endTimeWIB = moment(booking.end_time).add(7, 'hours').format('YYYY-MM-DD HH:mm');
+            const startTimeWIB = moment(booking.start_time).format('YYYY-MM-DD HH:mm');
+            const endTimeWIB = moment(booking.end_time).format('YYYY-MM-DD HH:mm');
             worksheet.addRow({
                 id: booking.id,
                 status: booking.status,
@@ -504,7 +504,7 @@ class BookingService {
                 amenities: booking.amenities.map(a => a.name).join(', '),
                 notes: booking.notes,
                 admin_note: booking.admin_note,
-                created_at: moment(booking.created_at).add(7, 'hours').format('YYYY-MM-DD HH:mm'),
+                created_at: moment(booking.created_at).format('YYYY-MM-DD HH:mm'),
                 approved_by: booking.approved_by || '-',
             });
         });

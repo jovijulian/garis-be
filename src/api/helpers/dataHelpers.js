@@ -1,13 +1,12 @@
-const moment = require("moment");
-require("moment/locale/id");
+const moment = require('moment-timezone');
 
 function formatDateTime(date = null) {
     if (!date) {
-        date = new Date();
+        return moment().tz("Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
     }
-    return moment(date).locale("id").format("YYYY-MM-DD HH:mm:ss");
+    
+    return moment(date).tz("Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
 }
-
 function formatRupiah(amount = number) {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',

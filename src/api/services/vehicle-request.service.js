@@ -454,8 +454,8 @@ class VehicleRequestService {
             const assignedVehiclesName = request.detail?.map(d => d.vehicle?.name || '?').join('\n') || '-';
             const assignedDrivers = request.detail?.map(d => d.driver?.name || (request.requires_driver ? 'Belum Ditugaskan' : '-')).join('\n') || (request.requires_driver ? 'Belum Ditugaskan' : '-');
             const driverNotes = request.detail?.map(d => d.note_for_driver || '-').join('\n') || '-';
-            const startTimeWIB = request.start_time ? moment(request.start_time).add(7, 'hours').format('YYYY-MM-DD HH:mm') : null
-            const endTimeWIB = request.end_time ? moment(request.end_time).add(7, 'hours').format('YYYY-MM-DD HH:mm') : null;
+            const startTimeWIB = request.start_time ? moment(request.start_time).format('YYYY-MM-DD HH:mm') : null
+            const endTimeWIB = request.end_time ? moment(request.end_time).format('YYYY-MM-DD HH:mm') : null;
 
             worksheet.addRow({
                 request_id: request.id,
@@ -478,7 +478,7 @@ class VehicleRequestService {
                 assigned_drivers: assignedDrivers,
                 driver_notes: driverNotes,
                 approved_by: request.approved_by || '-',
-                created_at: request.created_at ? moment.utc(request.created_at).utcOffset('+07:00').format('YYYY-MM-DD HH:mm') : '-',
+                created_at: request.created_at ? moment.utc(request.created_at).format('YYYY-MM-DD HH:mm') : '-',
             });
 
             const lastRow = worksheet.lastRow;

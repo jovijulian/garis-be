@@ -237,8 +237,8 @@ class AccommodationOrderService {
         htmlContent = htmlContent.replace('{{orderId}}', order.id);
         htmlContent = htmlContent.replace('{{siteName}}', order.cabang ? order.cabang.nama_cab : '-');
         htmlContent = htmlContent.replace('{{requesterName}}', order.user ? order.user.nama_user : '-');
-        htmlContent = htmlContent.replace('{{checkIn}}', moment(order.check_in_date).utcOffset('+07:00').format('DD MMM YYYY'));
-        htmlContent = htmlContent.replace('{{checkOut}}', moment(order.check_out_date).utcOffset('+07:00').format('DD MMM YYYY'));
+        htmlContent = htmlContent.replace('{{checkIn}}', moment(order.check_in_date).format('DD MMM YYYY'));
+        htmlContent = htmlContent.replace('{{checkOut}}', moment(order.check_out_date).format('DD MMM YYYY'));
         htmlContent = htmlContent.replace('{{roomNeeded}}', order.room_needed || '-');
         htmlContent = htmlContent.replace('{{totalPax}}', order.total_pax);
         htmlContent = htmlContent.replace('{{male}}', order.total_male);
