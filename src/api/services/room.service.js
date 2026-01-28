@@ -27,6 +27,8 @@ class RoomService {
                 const createdRoom = await roomRepository.create(roomData, trx);
                 if (amenity_ids && Array.isArray(amenity_ids)) {
                     await roomRepository.syncAmenities(createdRoom.id, amenity_ids, trx);
+                } else {
+                    await roomRepository.syncAmenities(createdRoom.id, [], trx);
                 }
 
                 return createdRoom;

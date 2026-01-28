@@ -1,6 +1,7 @@
 const BaseRepository = require('./base.repository');
 const VehicleAssignment = require('../models/VehicleAssignment');
 const Vehicle = require('../models/Vehicle');
+const VehicleDepartment = require('../models/VehicleDepartment');
 
 class VehicleRepository extends BaseRepository {
     constructor() {
@@ -156,6 +157,22 @@ class VehicleRepository extends BaseRepository {
         }
 
         return await query.orderBy('name');
+    }
+
+    async syncDepartment(vehicleId, departmentIds, trx) {
+        const db = trx || Vehicle.knex();
+        const PIVOT_TABLE = 'vehicle_departments';
+        await db(PIVOT_TABLE)
+            .where('vehicle_id', vehicleId)
+            .delete();
+        if (departmentIds && departmentIds.length > 0) {
+            const dataToInsert = departmentIds.map(departmentId => ({
+                vehicle_id: vehicleId,
+                id_dept: departmentId
+            }));
+
+            await db(PIVOT_TABLE).insert(dataToInsert);
+        }
     }
 }
 

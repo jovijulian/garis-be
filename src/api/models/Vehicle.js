@@ -46,6 +46,14 @@ class Vehicle extends BaseModelBooking {
                     from: 'vehicles.cab_id',
                     to: 'tb_cab.id_cab'
                 }
+            },
+            department_assignments: {
+                relation: BaseModelBooking.HasManyRelation,
+                modelClass: require('./VehicleDepartment'), 
+                join: {
+                    from: 'vehicles.id',
+                    to: 'vehicle_departments.vehicle_id'
+                }
             }
         };
     }

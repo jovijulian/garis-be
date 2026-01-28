@@ -32,12 +32,16 @@ class VehicleService {
                 error.statusCode = 400;
                 throw error;
             }
+            const { department_ids, ...vehicleData } = payload;
+            vehicleData.created_at = formatDateTime();
             return knexBooking.transaction(async (trx) => {
-                payload.created_at = formatDateTime();
-                payload.updated_at = formatDateTime();
+                const newVehicle = await vehicleRepository.create(vehicleData, trx);
 
-                const data = await vehicleRepository.create(payload, trx);
-                return data;
+                if (department_ids && Array.isArray(department_ids) && department_ids.length > 0) {
+                    await vehicleRepository.syncDepartment(newVehicle.id, department_ids, trx);
+                }
+
+                return newVehicle;
             });
         } catch (error) {
             throw error;
@@ -53,12 +57,20 @@ class VehicleService {
                 error.statusCode = 404;
                 throw error;
             }
+            const { department_ids, ...vehicleData } = payload;
+            vehicleData.updated_at = formatDateTime();
             return knexBooking.transaction(async (trx) => {
-                payload.updated_at = formatDateTime();
+                const newVehicle = await vehicleRepository.update(id, vehicleData, trx);
 
-                const data = await vehicleRepository.update(id, payload, trx);
-                return data;
+                if (department_ids && Array.isArray(department_ids) && department_ids.length > 0) {
+                    await vehicleRepository.syncDepartment(newVehicle.id, department_ids, trx);
+                } else {
+                    await vehicleRepository.syncDepartment(newVehicle.id, [], trx);
+                }
+
+                return newVehicle;
             });
+
         } catch (error) {
             throw error;
         }

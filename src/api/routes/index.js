@@ -19,6 +19,7 @@ const portalRoutes = require('./portal.route');
 const accommodationRoutes = require('./accommodation.route');
 const transportTypeRoutes = require('./transport-type.route');
 const transportOrderRoutes = require('./transport-order.route');    
+const departmentRoutes = require('./department.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -38,5 +39,7 @@ router.use('/portal', portalRoutes);
 router.use('/accommodations', accommodationRoutes);
 router.use('/transport-types', transportTypeRoutes);
 router.use('/transport-orders', transportOrderRoutes);
+router.use('/departments', departmentRoutes);
+
 
 module.exports = router;

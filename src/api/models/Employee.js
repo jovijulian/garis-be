@@ -19,7 +19,23 @@ class Employee extends BaseModelHr {
                 no_ktp: { type: 'string', minLength: 1, maxLength: 255 },
                 nama: { type: 'string', },
                 email: { type: 'string', format: 'email' },
+                id_dept: { type: 'integer' },
             }
+        };
+    }
+
+    static get relationMappings() {
+        const Department = require('./Department');
+        return {
+            department: {
+                relation: BaseModelHr.BelongsToOneRelation,
+                modelClass: Department,
+                join: {
+                    from: 'tb_karyawan.id_dept',
+                    to: 'tb_dept.id_dept'
+                },
+            }
+            
         };
     }
 
