@@ -85,6 +85,7 @@ class VehicleService {
         }
 
         const data = await vehicleRepository.options(params);
+        console.log(data)
         if (!data || data.length === 0) {
             return [];
         }

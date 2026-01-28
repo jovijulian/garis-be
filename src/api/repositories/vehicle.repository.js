@@ -131,7 +131,9 @@ class VehicleRepository extends BaseRepository {
                 builder.where('vehicle_request.start_time', '<', end_time)
                        .andWhere('vehicle_request.end_time', '>', start_time);
             })
+            .whereNotNull('vehicle_assignments.vehicle_id')
             .select('vehicle_assignments.vehicle_id');
+           
         const query = Vehicle.query()
             .select('id', 'name', 'license_plate', 'vehicle_type_id', 'passenger_capacity', 'status', 'cab_id')
             .where('is_active', 1)
@@ -140,7 +142,6 @@ class VehicleRepository extends BaseRepository {
             .withGraphFetched('[vehicle_type, cabang]')
             .modifyGraph('vehicle_type', builder => builder.select('id', 'name'))
             .modifyGraph('cabang', builder => builder.select('id_cab', 'nama_cab'));
-
         if (cab_id) {
             query.where('cab_id', cab_id);
         }
