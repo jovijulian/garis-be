@@ -95,6 +95,7 @@ class DriverRepository extends BaseRepository {
                 builder.where('vehicle_request.start_time', '<', end_time)
                        .andWhere('vehicle_request.end_time', '>', start_time);
             })
+            .whereNotNull('vehicle_assignments.driver_id')
             .select('vehicle_assignments.driver_id');
     
         const query = Driver.query()
