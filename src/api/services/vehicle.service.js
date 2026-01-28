@@ -9,13 +9,24 @@ class VehicleService {
     }
 
     async detail(id) {
-        const data = await vehicleRepository.findByIdWithRelations(id, '[vehicle_type, cabang]');
+        const data = await vehicleRepository.findByIdWithRelations(id, '[vehicle_type, cabang, pivot_departments.department]');
         if (!data) {
             const error = new Error('Vehicle not found.');
             error.statusCode = 404;
             throw error;
         }
-        return data;
+        let vehicle = data.toJSON ? data.toJSON() : data;
+
+        if (vehicle.pivot_departments && Array.isArray(vehicle.pivot_departments)) {
+
+            vehicle.departments = vehicle.pivot_departments
+                .map(pivot => pivot.department) 
+                .filter(dept => dept !== null && dept !== undefined); 
+            delete vehicle.pivot_departments;
+        } else {
+            vehicle.departments = [];
+        }
+        return vehicle;
     }
 
     async create(payload) {

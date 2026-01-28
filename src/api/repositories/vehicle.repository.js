@@ -2,6 +2,8 @@ const BaseRepository = require('./base.repository');
 const VehicleAssignment = require('../models/VehicleAssignment');
 const Vehicle = require('../models/Vehicle');
 const VehicleDepartment = require('../models/VehicleDepartment');
+const Department = require('../models/Department');
+
 
 class VehicleRepository extends BaseRepository {
     constructor() {
@@ -15,43 +17,59 @@ class VehicleRepository extends BaseRepository {
 
         const query = Vehicle.query()
             .select('*')
-            .withGraphFetched('[vehicle_type]')
+            .withGraphFetched('[vehicle_type, cabang, pivot_departments.department]')
+
             .modifyGraph('vehicle_type', builder => {
                 builder.select('id', 'name');
             })
-            .withGraphFetched('[cabang]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
-            .modifyGraph('vehicle_type', builder => {
-                builder.select('id', 'name');
+            .modifyGraph('pivot_departments.department', builder => {
+                builder.select('id_dept', 'nama_dept', 'no_dept');
             })
-            .where('is_active', 1)
 
+            .where('is_active', 1)
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
 
         if (search) {
-            query.where('name', 'like', `%${search}%`)
-                .where('is_active', 1)
-                .orWhere('license_plate', 'like', `%${search}%`)
-                .orWhereExists(
-                    Vehicle.relatedQuery('vehicle_type')
-                        .where('name', 'like', `%${search}%`)
-                )
-
+            query.where(builder => {
+                builder.where('name', 'like', `%${search}%`)
+                    .orWhere('license_plate', 'like', `%${search}%`)
+                    .orWhereExists(
+                        Vehicle.relatedQuery('vehicle_type')
+                            .where('name', 'like', `%${search}%`)
+                    );
+            });
         }
 
         const paginatedResult = await query;
+        let vehicles = paginatedResult.results;
+
+        vehicles = vehicles.map(vehicle => {
+            const vehicleJson = vehicle.toJSON ? vehicle.toJSON() : vehicle;
+
+            if (vehicleJson.pivot_departments && Array.isArray(vehicleJson.pivot_departments)) {
+                vehicleJson.departments = vehicleJson.pivot_departments
+                    .map(pivot => pivot.department)
+                    .filter(dept => dept);
+
+                delete vehicleJson.pivot_departments;
+            } else {
+                vehicleJson.departments = [];
+            }
+
+            return vehicleJson;
+        });
 
         return {
-            results: paginatedResult.results,
+            results: vehicles,
             total: paginatedResult.total,
             page: page,
             per_page: per_page,
         };
     }
-
     async options(params) {
         const search = params.search || '';
         const vehicleTypeId = params.vehicle_type_id || null;
@@ -130,15 +148,15 @@ class VehicleRepository extends BaseRepository {
             .whereIn('vehicle_request.status', ['Approved', 'In Progress'])
             .andWhere(builder => {
                 builder.where('vehicle_request.start_time', '<', end_time)
-                       .andWhere('vehicle_request.end_time', '>', start_time);
+                    .andWhere('vehicle_request.end_time', '>', start_time);
             })
             .whereNotNull('vehicle_assignments.vehicle_id')
             .select('vehicle_assignments.vehicle_id');
-           
+
         const query = Vehicle.query()
             .select('id', 'name', 'license_plate', 'vehicle_type_id', 'passenger_capacity', 'status', 'cab_id')
             .where('is_active', 1)
-            .where('status', 'Available') 
+            .where('status', 'Available')
             .whereNotIn('id', busyVehicleIds)
             .withGraphFetched('[vehicle_type, cabang]')
             .modifyGraph('vehicle_type', builder => builder.select('id', 'name'))
@@ -152,7 +170,7 @@ class VehicleRepository extends BaseRepository {
         if (search) {
             query.where(builder => {
                 builder.where('name', 'like', `%${search}%`)
-                       .orWhere('license_plate', 'like', `%${search}%`);
+                    .orWhere('license_plate', 'like', `%${search}%`);
             });
         }
 

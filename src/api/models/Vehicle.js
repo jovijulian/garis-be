@@ -30,6 +30,7 @@ class Vehicle extends BaseModelBooking {
     static get relationMappings() {
         const VehicleType = require('./VehicleType');
         const Site = require('./Site');
+        const VehicleDepartment = require('./VehicleDepartment');
         return {
             vehicle_type: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -47,9 +48,10 @@ class Vehicle extends BaseModelBooking {
                     to: 'tb_cab.id_cab'
                 }
             },
-            department_assignments: {
+            
+            pivot_departments: {
                 relation: BaseModelBooking.HasManyRelation,
-                modelClass: require('./VehicleDepartment'), 
+                modelClass: VehicleDepartment,
                 join: {
                     from: 'vehicles.id',
                     to: 'vehicle_departments.vehicle_id'
