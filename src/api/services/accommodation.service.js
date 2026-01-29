@@ -243,7 +243,7 @@ class AccommodationOrderService {
         htmlContent = htmlContent.replace('{{totalPax}}', order.total_pax);
         htmlContent = htmlContent.replace('{{male}}', order.total_male);
         htmlContent = htmlContent.replace('{{female}}', order.total_female);
-
+        htmlContent = htmlContent.replace('{{createdAt}}', moment(order.created_at).format('DD MMM YYYY'));
         htmlContent = htmlContent.replace('{{guestList}}', guestItemsHtml);
         htmlContent = htmlContent.replace('{{note}}', order.note || '-');
 

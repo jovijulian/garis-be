@@ -285,6 +285,7 @@ class OrderService {
         htmlContent = htmlContent.replace('{{pax}}', order.pax);
         htmlContent = htmlContent.replace('{{menuItems}}', menuItemsHtml);
         htmlContent = htmlContent.replace('{{note}}', order.note);
+        htmlContent = htmlContent.replace('{{createdAt}}', moment(order.created_at).format('DD MMM YYYY'));
 
         return htmlContent;
     }

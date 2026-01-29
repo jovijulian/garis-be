@@ -4,156 +4,138 @@
     <meta charset="UTF-8" />
     <title>Nota Pemesanan Konsumsi</title>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inconsolata:wght@500&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap");
+      
+      /* RESET */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
 
-      body {
-        font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      body { 
+        font-family: "Poppins", sans-serif; 
         font-size: 10pt; 
-        color: #222;
-        background-color: white;
-        margin: 0;
-        padding: 5px;
+        color: #222; 
+        background-color: white; 
       }
 
-      @page {
+      /* UKURAN KERTAS CUSTOM (LANDSCAPE 21.6cm x 14cm) */
+      @page { 
         size: 21.6cm 14cm; 
-        margin: 10mm;      
-        padding: 5mm;
+        margin: 10mm; 
       }
 
       .receipt-wrapper {
         width: 100%;
-        box-sizing: border-box;
+        min-height: 95vh;
         display: flex;
         flex-direction: column;
-        min-height: 95vh;
       }
 
+      /* HEADER SECTION */
       .receipt-header {
-        text-align: center;
-        margin-bottom: 10px;
         border-bottom: 2px solid #222;
         padding-bottom: 5px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
       }
 
-      .receipt-header h1 {
-        margin: 0;
-        font-size: 14pt;
+      .header-left { text-align: left; }
+      .header-right { text-align: right; }
+
+      .company-name {
+        font-size: 10pt;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-      .receipt-header p {
         margin: 0;
-        font-size: 9pt;
-        color: #555;
-      }
-
-      .details-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr; 
-        gap: 20px;
-        margin-bottom: 10px;
-        font-size: 9pt;
-      }
-
-      .details-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      
-      .details-table td {
-        padding: 2px 0;
-        vertical-align: top;
-      }
-      
-      .details-table td:first-child {
-        width: 100px;
-        font-weight: 600;
         color: #444;
       }
 
+      .doc-title {
+        font-size: 12pt;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* DETAIL PESANAN (1 KOLOM FULL WIDTH - SAMAKAN DENGAN TRANSPORT) */
+      .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+        margin-bottom: 8px;
+      }
+
+      .details-table td {
+        padding: 2px 5px;
+        vertical-align: top;
+        border-bottom: 1px dotted #eee;
+      }
+
+      .details-table td:first-child {
+        width: 180px; /* Lebar label disamakan */
+        font-weight: 600;
+        color: #333;
+      }
+
+      .details-table td:nth-child(2) {
+        width: 15px;
+        text-align: center;
+      }
+
+      /* TABEL MENU */
       .items-table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 5px;
         font-size: 9pt;
-        border: 1px solid #ddd;
+        border: 1px solid #aaa;
       }
 
       .items-table thead th {
         background-color: #f4f4f4;
         font-weight: 600;
         text-align: left;
-        padding: 6px 8px;
+        padding: 4px 8px;
         border-bottom: 1px solid #222;
-        text-transform: uppercase;
-        font-size: 8pt;
+        font-size: 9pt;
       }
 
       .items-table tbody td {
-        padding: 6px 8px;
+        padding: 3px 8px;
         border-bottom: 1px solid #eee;
-        vertical-align: top;
+        vertical-align: middle;
       }
 
       .items-table tbody tr:last-child td {
         border-bottom: none;
       }
 
-      .items-table .col-qty, 
-      .items-table .col-time {
-        text-align: center;
-        width: 15%;
-      }
-      
-      .col-menu {
-        width: 35%;
-      }
-
+      /* CATATAN */
       .notes-section {
-        margin-top: 10px;
-        padding: 8px;
-        border: 1px solid #eee;
-        background-color: #fafafa;
+        margin-top: 8px;
+        padding: 5px;
+        background: #fafafa;
+        border: 1px dashed #ccc;
         border-radius: 4px;
       }
-      
-      .notes-section h4 {
-        margin: 0 0 2px 0;
-        font-size: 9pt;
-        font-weight: 600;
-      }
-      
-      .notes-section p {
-        margin: 0;
-        font-size: 9pt;
-        color: #444;
-        font-style: italic;
-      }
+      .notes-section h4 { margin: 0; font-size: 9pt; }
+      .notes-section p { margin: 0; font-size: 9pt; font-style: italic; color: #555; }
 
+      /* FOOTER */
       .receipt-footer {
-        margin-top: auto; 
-        padding-top: 10px;
+        margin-top: auto;
+        padding-top: 5px;
         border-top: 1px solid #ccc;
         text-align: center;
         font-size: 8pt;
-      }
-
-      .footer-note {
-        color: #555;
-        margin-bottom: 2px;
-      }
-      
-      .footer-brand {
-        color: #888;
-        font-size: 7pt;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
       }
 
       @media print {
         body { margin: 0; }
-        .receipt-wrapper { width: 100%; box-shadow: none; }
-        @page { margin: 0; } 
+        .receipt-wrapper { box-shadow: none; }
+        @page { margin: 0; }
       }
     </style>
   </head>
@@ -161,49 +143,51 @@
     <div class="receipt-wrapper">
       
       <div class="receipt-header">
-        <h1>Nota Konsumsi</h1>
-        <p>PT. CISANGKAN</p>
+        <div class="header-left">
+          <p class="company-name">PT. CISANGKAN</p>
+          <p style="font-size: 8pt;">Nota Pemesanan Konsumsi</p>
+        </div>
+        <div class="header-right">
+          <h1 class="doc-title">NOTA #{{orderId}}</h1>
+          <p style="font-size: 8pt;">Dibuat pada: {{createdAt}}</p>
+        </div>
       </div>
 
-      <div class="details-container">
-        <table class="details-table">
-          <tr>
-            <td>ID Pesanan</td>
-            <td>: #{{orderId}}</td>
-          </tr>
-          <tr>
-            <td>Tanggal</td>
-            <td>: {{orderDate}}</td>
-          </tr>
-          <tr>
-            <td>Pemesan</td>
-            <td>: {{requesterName}}</td>
-          </tr>
-        </table>
-
-        <table class="details-table">
-          <tr>
-            <td>Keperluan</td>
-            <td>: {{purpose}}</td>
-          </tr>
-          <tr>
-            <td>Lokasi</td>
-            <td>: {{location}}</td>
-          </tr>
-          <tr>
-            <td>Jml. Orang</td>
-            <td>: {{pax}} orang</td>
-          </tr>
-        </table>
-      </div>
+      <table class="details-table">
+        <tr>
+          <td>Tanggal Pesanan</td>
+          <td>:</td>
+          <td>{{orderDate}}</td>
+        </tr>
+        <tr>
+          <td>Pemesan</td>
+          <td>:</td>
+          <td>{{requesterName}}</td>
+        </tr>
+        <tr>
+          <td>Keperluan</td>
+          <td>:</td>
+          <td>{{purpose}}</td>
+        </tr>
+        <tr>
+          <td>Lokasi / Ruangan</td>
+          <td>:</td>
+          <td>{{location}}</td>
+        </tr>
+        <tr>
+          <td>Jumlah Peserta</td>
+          <td>:</td>
+          <td>{{pax}} orang</td>
+        </tr>
+      </table>
 
       <table class="items-table">
         <thead>
           <tr>
-            <th class="col-menu">Jenis Konsumsi</th>
-            <th class="col-menu">Menu</th>
-            <th class="col-qty">Qty</th>
-            <th class="col-time">Waktu</th>
+            <th style="width: 25%;">Jenis Konsumsi</th>
+            <th style="width: 45%;">Menu</th>
+            <th style="width: 15%; text-align: center;">Qty</th>
+            <th style="width: 15%; text-align: center;">Waktu</th>
           </tr>
         </thead>
         <tbody>
@@ -212,13 +196,13 @@
       </table>
 
       <div class="notes-section">
-        <h4>Keterangan / Catatan:</h4>
+        <h4>Catatan:</h4>
         <p>{{note}}</p>
       </div>
 
       <div class="receipt-footer">
-        <p class="footer-note">Harap serahkan nota ini ke bagian pembelian sebagai bukti pemesanan.</p>
-        <p class="footer-brand">Generated by GARIS</p>
+        <span>Harap serahkan nota ini ke bagian pembelian.</span>
+        <span>Generated by GARIS</span>
       </div>
 
     </div>
