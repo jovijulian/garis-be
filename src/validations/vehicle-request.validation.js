@@ -28,6 +28,7 @@ const requestBodySchema = z.object({
     }).min(5, 'Purpose must be at least 5 characters'),
     note: z.string().optional().nullable(),
     id_user: z.string().optional(),
+    id_dept: z.number().optional(),
     requires_driver: z.boolean().optional().nullable(),
 })
 .refine(data => data.cab_id || data.pickup_location_text, {

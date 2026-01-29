@@ -22,14 +22,15 @@ class PortalService {
             throw error;
         }
 
-        const getEmailUser = await userRepository.findEmailUser(user.id_user);
+        const getEmployData = await userRepository.findEmployData(user.id_user);
 
         const jwtPayload = {
             id_user: user.id_user,
             name: user.nama_user,
-            email: getEmailUser.employee ? getEmailUser.employee.email : null,
+            email: getEmployData.employee ? getEmployData.employee.email : null,
             role: user.role_garis,
             sites: user.permissions.length > 0 ? user.permissions[0].cab_id : null,
+            id_dept: getEmployData.employee ? getEmployData.employee.id_dept : null,
         };
 
         const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });

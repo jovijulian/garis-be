@@ -26,6 +26,7 @@ class VehicleRequest extends BaseModelBooking {
                 status: { type: 'string', enum: ['Submit', 'Approved', 'Rejected', 'Completed', 'Canceled', 'In Progress'] },
                 rejection_reason: { type: 'string', nullable: true },
                 approved_by: { type: 'string', nullable: true },
+                id_dept: { type: 'integer', nullable: true },
             }
         };
     }
@@ -37,6 +38,7 @@ class VehicleRequest extends BaseModelBooking {
         const RequestAssignedDriver = require('./RequestAssignedDriver');
         const VehicleType = require('./VehicleType');
         const VehicleAssigment = require('./VehicleAssignment');
+        const Department = require('./Department');
         return {
             cabang: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -70,23 +72,15 @@ class VehicleRequest extends BaseModelBooking {
                     to: 'vehicle_assignments.request_id'
                 }
             },
-            // assigned_vehicles: {
-            //     relation: BaseModelBooking.HasManyRelation,
-            //     modelClass: RequestAssignedVehicle,
-            //     join: {
-            //         from: 'vehicle_requests.id',
-            //         to: 'request_assigned_vehicles.request_id'
-            //     }
-            // },
-            // assigned_drivers: {
-            //     relation: BaseModelBooking.HasManyRelation,
-            //     modelClass: RequestAssignedDriver,
-            //     join: {
-            //         from: 'vehicle_requests.id',
-            //         to: 'request_assigned_drivers.request_id'
-            //     }
-            // }
-
+            department: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: Department,
+                join: {
+                    from: 'vehicle_requests.id_dept',
+                    to: 'tb_dept.id_dept'
+                }
+            }
+            
         };
     }
 

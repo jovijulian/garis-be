@@ -1,5 +1,5 @@
 const vehicleRequestRepository = require('../repositories/vehicle-request.repository');
-const { getUserId, formatDateTime, parseMenuDescription } = require('../helpers/dataHelpers');
+const { getUserId, formatDateTime, parseMenuDescription, getDeptId } = require('../helpers/dataHelpers');
 const { knexBooking } = require('../../config/database');
 const vehicleAssignmentRepository = require('../repositories/vehicle-assignment.repository');
 const driverRepository = require('../repositories/driver.repository');
@@ -29,7 +29,7 @@ class VehicleRequestService {
 
     async detail(id) {
         const data = await vehicleRequestRepository.findByIdWithRelations(id,
-            '[cabang, user.[employee], vehicle_type, detail.[vehicle, driver]]'
+            '[cabang, user.[employee], vehicle_type, detail.[vehicle, driver], department]'
         );
         if (!data) {
             const error = new Error('Vehicle Request not found.');
@@ -52,10 +52,20 @@ class VehicleRequestService {
                 throw error;
             }
 
+            let deptId;
+
+            if (header.id_user) {
+                const getDeptId = await userRepository.findEmployData(header.id_user);
+                deptId = getDeptId.employee ? getDeptId.employee.id_dept : null;
+            } else {
+                deptId = getDeptId(request)
+            }
+
             const requestPayload = {
                 ...header,
                 id_user: header.id_user || loggedInUserId,
                 status: header.id_user ? 'Approved' : 'Submit',
+                id_dept: deptId || null,
                 created_at: formatDateTime(),
                 updated_at: formatDateTime(),
                 approved_by: header.id_user ? loggedInUserId : null,
@@ -272,11 +282,11 @@ class VehicleRequestService {
                 if (vehicle_id) {
                     vehicle = await vehicleRepository.findById(vehicle_id, trx);
                     if (!vehicle) throw new Error(`Vehicle ID ${vehicle_id} not found.`);
-                    
+
                     if (vehicle.status !== 'Available') {
-                         throw new Error(`Vehicle ${vehicle.license_plate} sedang tidak beroperasi.`);
+                        throw new Error(`Vehicle ${vehicle.license_plate} sedang tidak beroperasi.`);
                     }
-                    
+
                     const isVehicleConflict = await vehicleAssignmentRepository.checkConflict(
                         requestId, start_time, end_time, vehicle_id, null, trx
                     );
@@ -302,7 +312,7 @@ class VehicleRequestService {
                     }
                 } else {
                     if (!vehicle_id) throw new Error("Assignment harus memiliki minimal Kendaraan atau Driver.");
-               }
+                }
 
                 const assignmentPayload = {
                     request_id: Number(requestId),

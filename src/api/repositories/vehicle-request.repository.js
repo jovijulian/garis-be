@@ -14,7 +14,7 @@ class VehicleRequestRepository extends BaseRepository {
         const query = VehicleRequest.query()
             .select('*')
             .where('is_active', 1)
-            .withGraphFetched('[cabang, user, vehicle_type, detail.[vehicle, driver]]')
+            .withGraphFetched('[cabang, user, vehicle_type, detail.[vehicle, driver], department]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
@@ -29,6 +29,9 @@ class VehicleRequestRepository extends BaseRepository {
             })
             .modifyGraph('detail.driver', builder => {
                 builder.select('id', 'name', 'phone_number');
+            })
+            .modifyGraph('department', builder => {
+                builder.select('id_dept', 'nama_dept');
             })
 
             .page(page - 1, per_page)

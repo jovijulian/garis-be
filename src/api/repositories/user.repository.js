@@ -96,15 +96,16 @@ class UserRepository extends BaseRepository {
             .first();
     }
 
-    async findEmailUser(id_user) {
+    async findEmployData(id_user) {
         return User.query()
             .findById(id_user)
             .withGraphFetched('employee')
             .modifyGraph('employee', builder => {
-                builder.select('email');
+                builder.select('email', 'id_dept');
             })
             .select('id_user', 'nama_user');
     }
+
 
 
 }

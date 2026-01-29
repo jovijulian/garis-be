@@ -142,7 +142,7 @@ class VehicleRepository extends BaseRepository {
     }
 
     async findAvailableForBooking(params) {
-        const { start_time, end_time, cab_id, vehicle_type_id, search } = params;
+        const { start_time, end_time, cab_id, vehicle_type_id, search, id_dept } = params;
         const busyVehicleIds = VehicleAssignment.query()
             .joinRelated('vehicle_request')
             .whereIn('vehicle_request.status', ['Approved', 'In Progress'])
@@ -172,6 +172,12 @@ class VehicleRepository extends BaseRepository {
                 builder.where('name', 'like', `%${search}%`)
                     .orWhere('license_plate', 'like', `%${search}%`);
             });
+        }
+        if (id_dept) {
+            query.whereExists(
+                Vehicle.relatedQuery('pivot_departments')
+                    .where('id_dept', id_dept)
+            );
         }
 
         return await query.orderBy('name');

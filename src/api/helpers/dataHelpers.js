@@ -44,4 +44,11 @@ function getRoleUser(request) {
     return request.user.role;
 }
 
-module.exports = { formatDateTime, formatRupiah, getUserId, parseMenuDescription, getRoleUser };
+function getDeptId(request) {
+    if (!request.user || !request.user.id_dept) {
+        throw new Error("Dept ID not found in request user.");
+    }
+    return request.user.id_dept;
+}
+
+module.exports = { formatDateTime, formatRupiah, getUserId, parseMenuDescription, getRoleUser, getDeptId };
