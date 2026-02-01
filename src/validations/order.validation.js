@@ -18,6 +18,7 @@ const createSchema = z.object({
         details: z.array(orderDetailSchema).min(1, { message: 'Order must have at least one menu item.' }),
         status: z.enum(['Submit', 'Approved', 'Rejected', 'Completed', 'Canceled']).optional().nullable(),
         note: z.string().optional().nullable(),
+        purpose: z.string().optional().nullable(),
     }),
 });
 
@@ -35,6 +36,7 @@ const updateSchema = z.object({
         details: z.array(orderDetailSchema).min(1, { message: 'Order must have at least one menu item.' }),
         status: z.enum(['Submit', 'Approved', 'Rejected', 'Completed', 'Canceled']).optional().nullable(),
         note: z.string().optional().nullable(),
+        purpose: z.string().optional().nullable(),
     }),
 });
 
