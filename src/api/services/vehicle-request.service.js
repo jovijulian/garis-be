@@ -97,8 +97,8 @@ class VehicleRequestService {
     async update(id, request) {
         const existingRequest = await this.detail(id);
 
-        if (existingRequest.status !== 'Submit') {
-            const error = new Error('Request ini tidak dapat diubah karena sudah diproses.');
+        if (existingRequest.status !== 'Submit' || existingRequest.status !== 'Approved' || existingRequest.status !== 'In Progress') {
+            const error = new Error('Request ini tidak dapat diubah karena sudah selesai.');
             error.statusCode = 400;
             throw error;
         }
