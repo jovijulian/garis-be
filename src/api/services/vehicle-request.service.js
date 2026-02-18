@@ -264,11 +264,11 @@ class VehicleRequestService {
                 error.statusCode = 404;
                 throw error;
             }
-            if (requestDetails.status !== 'Approved') {
-                const error = new Error(`Request cannot be assigned because status is '${requestDetails.status}'.`);
-                error.statusCode = 400;
-                throw error;
-            }
+            // if (requestDetails.status !== 'Approved') {
+            //     const error = new Error(`Request cannot be assigned because status is '${requestDetails.status}'.`);
+            //     error.statusCode = 400;
+            //     throw error;
+            // }
 
             const { start_time, end_time } = requestDetails;
 
