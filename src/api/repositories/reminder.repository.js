@@ -14,17 +14,17 @@ class ReminderRepository extends BaseRepository {
 
         const query = Reminder.query()
             .select('*')
-            .withGraphFetched('[cabang, reminder_type, created_by, updated_by]')
+            .withGraphFetched('[cabang, reminder_type, created_by_user, updated_by_user]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
             .modifyGraph('reminder_type', builder => {
                 builder.select('id', 'name');
             })
-            .modifyGraph('created_by', builder => {
+            .modifyGraph('created_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
-            .modifyGraph('updated_by', builder => {
+            .modifyGraph('updated_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
             .where('is_active', 1)
@@ -49,17 +49,17 @@ class ReminderRepository extends BaseRepository {
     async options(params) {
         const query = Reminder.query()
             .select('id', 'title')
-            .withGraphFetched('[cabang, reminder_type, created_by, updated_by]')
+            .withGraphFetched('[cabang, reminder_type, created_by_user, updated_by_user]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
             .modifyGraph('reminder_type', builder => {
                 builder.select('id', 'name');
             })
-            .modifyGraph('created_by', builder => {
+            .modifyGraph('created_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
-            .modifyGraph('updated_by', builder => {
+            .modifyGraph('updated_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
             .where('is_active', 1)
