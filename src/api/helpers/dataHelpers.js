@@ -51,4 +51,11 @@ function getDeptId(request) {
     return request.user.id_dept;
 }
 
-module.exports = { formatDateTime, formatRupiah, getUserId, parseMenuDescription, getRoleUser, getDeptId };
+function getCabId(request){
+    if (!request.user || !request.user.sites) {
+        return null;
+    }
+    return request.user.sites;
+}
+
+module.exports = { formatDateTime, formatRupiah, getUserId, parseMenuDescription, getRoleUser, getDeptId, getCabId };

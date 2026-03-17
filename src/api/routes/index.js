@@ -21,6 +21,7 @@ const transportTypeRoutes = require('./transport-type.route');
 const transportOrderRoutes = require('./transport-order.route');    
 const departmentRoutes = require('./department.route');
 const reminderTypeRoutes = require('./reminder-type.route');
+const reminderRoutes = require('./reminder.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -42,6 +43,7 @@ router.use('/transport-types', transportTypeRoutes);
 router.use('/transport-orders', transportOrderRoutes);
 router.use('/departments', departmentRoutes);
 router.use('/reminder-types', reminderTypeRoutes);
+router.use('/reminders', reminderRoutes);
 
 
 module.exports = router;
