@@ -13,7 +13,7 @@ class ReminderService {
     }
 
     async detail(id) {
-        const data = await reminderRepository.findByIdWithRelations(id, '[cabang, reminder_type]');
+        const data = await reminderRepository.findByIdWithRelations(id, '[cabang, reminder_type, created_by, updated_by]');
         if (!data) {
             const error = new Error('Reminder not found.');
             error.statusCode = 404;
