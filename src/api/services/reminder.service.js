@@ -1,6 +1,10 @@
 const reminderRepository = require('../repositories/reminder.repository');
+const reminderLogRepository = require('../repositories/reminder-log.repository');
+const userRepository = require('../repositories/user.repository');
 const { formatDateTime, getCabId } = require("../helpers/dataHelpers");
+const moment = require('moment-timezone');
 const { knexBooking } = require('../../config/database');
+const { sendReminderNotificationEmail } = require('./email.service');
 class ReminderService {
 
     async getAll(request, queryParams) {
@@ -26,7 +30,7 @@ class ReminderService {
                 payload.created_at = formatDateTime();
                 payload.updated_at = formatDateTime();
                 const reminder = await reminderRepository.create(payload, trx);
-                
+
                 return reminder;
             });
         } catch (error) {
@@ -41,7 +45,7 @@ class ReminderService {
                 payload.created_at = formatDateTime();
                 payload.updated_at = formatDateTime();
                 const reminder = await reminderRepository.update(id, payload, trx);
-                
+
                 return reminder;
             });
         } catch (error) {
@@ -54,19 +58,19 @@ class ReminderService {
         try {
             return knexBooking.transaction(async (trx) => {
                 const data = await reminderRepository.update(id, { is_active: 0 }, trx);
-    
+
                 if (!data) {
                     const error = new Error('Failed to deleted reminder.');
                     error.statusCode = 500;
                     throw error;
                 }
-    
+
                 return { message: 'Reminder has been deleted successfully.' };
             });
         } catch (error) {
             throw error;
         }
-        
+
     }
 
     async options(params) {
@@ -79,6 +83,62 @@ class ReminderService {
         return data;
     }
 
+    async processDailyReminders() {
+        try {
+            console.log(`[CRON] Memulai Proses Pengecekan Reminder...`);
+
+            const currentWibTime = formatDateTime();
+            const currentDate = currentWibTime.substring(0, 10);
+
+            const activeReminders = await reminderRepository.checkExistingReminder(currentDate);
+
+            if (!activeReminders.length) {
+                console.log('[CRON] Tidak ada reminder aktif yang perlu diproses hari ini.');
+                return;
+            }
+
+            const today = moment().startOf('day');
+
+            for (const reminder of activeReminders) {
+                if (!reminder.reminder_type || !reminder.reminder_type.notification_intervals) continue;
+
+                let intervals = [];
+                try {
+                    intervals = JSON.parse(reminder.reminder_type.notification_intervals);
+                } catch (e) {
+                    console.error(`[CRON] Gagal parsing interval untuk Tipe Reminder ID ${reminder.reminder_type.id}`);
+                    continue;
+                }
+
+                const dueDate = moment(reminder.due_date).startOf('day');
+                const daysLeft = dueDate.diff(today, 'days');
+
+                if (intervals.includes(daysLeft)) {
+
+                    const existingLog = await reminderLogRepository.checkExistingLog(reminder.id, daysLeft);
+
+                    if (!existingLog) {
+                        // let adminEmails = [];
+                        // const adminsOfSite = await userRepository.findAdminsBySiteId(reminder.cab_id);
+                        // adminEmails = adminsOfSite.map(admin => admin.email);
+                        const adminEmails = ['azzaspotify123@gmail.com']
+                        await sendReminderNotificationEmail(adminEmails, reminder, daysLeft);
+                        const logPayload = {
+                            reminder_id: reminder.id,
+                            days_before: daysLeft,
+                            sent_at: formatDateTime()
+                        }
+                        await reminderLogRepository.create(logPayload);
+
+                        console.log(`[CRON] Berhasil mengirim & mencatat reminder: '${reminder.title}' (H-${daysLeft}).`);
+                    }
+                }
+            }
+            console.log(`[CRON] Proses Pengecekan Reminder Selesai.`);
+        } catch (error) {
+            console.error('[CRON] Error pada saat memproses reminder harian:', error);
+        }
+    }
 }
 
 module.exports = new ReminderService();

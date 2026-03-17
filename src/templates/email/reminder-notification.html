@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Pemberitahuan Jatuh Tempo</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header { padding: 15px; text-align: center; border-radius: 8px 8px 0 0; color: white; }
+        .header-warning { background-color: #f39c12; } /* Warna Oranye untuk H-7 / H-3 */
+        .header-danger { background-color: #dc3545; } /* Warna Merah untuk Hari H (0) */
+        .content { padding: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: #777; }
+        .details-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px; }
+        .details-table td { padding: 5px 0; vertical-align: top; border-bottom: 1px solid #eee; }
+        .details-table td:first-child { width: 35%; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header {{headerClass}}">
+            <h2 style="margin: 0;">[REMINDER] {{title}}</h2>
+        </div>
+        <div class="content">
+            <p>Halo Tim Admin,</p>
+            <p>Ini adalah sistem pengingat otomatis GARIS. Masa berlaku untuk item berikut akan segera habis:</p>
+            
+            <table class="details-table">
+                <tr><td>Jenis:</td><td>{{moduleName}}</td></tr>
+                <tr><td>Keterangan:</td><td>{{title}}</td></tr>
+                <tr><td>Cabang:</td><td>{{siteName}}</td></tr>
+                <tr><td>Jatuh Tempo:</td><td style="color: #dc3545; font-weight: bold;">{{dueDate}} ({{daysLeftText}})</td></tr>
+            </table>
+            
+            <p style="margin-top: 20px;">Mohon segera diproses untuk menghindari denda atau hal-hal yang tidak diinginkan.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 GARIS | PT. Cisangkan</p>
+        </div>
+    </div>
+</body>
+</html>

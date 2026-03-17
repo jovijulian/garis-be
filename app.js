@@ -7,6 +7,7 @@ const requestLogger = require('./src/middlewares/requestLogger');
 const path = require('path');
 const app = express();
 const initScheduler = require('./src/cron/request-scheduler');
+const initReminder = require('./src/cron/reminder-scheduler');
 const moment = require('moment-timezone');
 process.env.TZ = "Asia/Jakarta";
 app.use(cors({
@@ -25,6 +26,7 @@ app.use(requestLogger);
 app.use('/api/v1', mainRouter);
 app.use('/open-api/v1', openApiRouter);
 initScheduler();
+initReminder();
 app.use(errorHandler);
 
 module.exports = app;

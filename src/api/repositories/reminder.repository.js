@@ -68,6 +68,13 @@ class ReminderRepository extends BaseRepository {
         return Reminder.query().findById(id).withGraphFetched(relations);
     }
 
+    async checkExistingReminder(date) {
+        return Reminder.query()
+            .withGraphFetched('[cabang, reminder_type]')
+            .where('is_active', 1)
+            .where('due_date', '>=', date);
+    }
+
 }
 
 module.exports = new ReminderRepository();

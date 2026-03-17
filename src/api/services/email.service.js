@@ -888,6 +888,34 @@ const sendAdminCancellationTransportOrderEmail = async (bookingDetails) => {
     }
 };
 
+const sendReminderNotificationEmail = async (adminEmails, reminder, daysLeft) => {
+    try {
+        const { title, due_date, cabang, reminder_type } = reminder;
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'email', 'reminder-notification.html');
+        let htmlContent = fs.readFileSync(templatePath, 'utf-8');
+        let headerClass = daysLeft === 0 ? 'header-danger' : 'header-warning';
+        let daysLeftText = daysLeft === 0 ? 'HARI INI' : `H-${daysLeft}`;
+        htmlContent = htmlContent.replace(/{{headerClass}}/g, headerClass);
+        htmlContent = htmlContent.replace(/{{title}}/g, title);
+        htmlContent = htmlContent.replace(/{{moduleName}}/g, reminder_type?.name || '-');
+        htmlContent = htmlContent.replace(/{{siteName}}/g, cabang?.nama_cab || '-');
+        htmlContent = htmlContent.replace(/{{dueDate}}/g, moment(due_date).format('DD MMM YYYY'));
+        htmlContent = htmlContent.replace(/{{daysLeftText}}/g, daysLeftText);
+
+        const mailOptions = {
+            from: `"Notifikasi GARIS | PT. Cisangkan" <${process.env.SMTP_USERNAME}>`,
+            to: adminEmails.join(','),
+            subject: `[REMINDER] ${reminder_type?.name || 'Dokumen'}: ${title} - ${daysLeftText}`,
+            html: htmlContent
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+        console.log(`Email reminder '${title}' terkirim ke admin.`);
+
+    } catch (error) {
+        console.error("Gagal mengirim email reminder:", error);
+    }
+};
 module.exports = {
     sendBookingStatusEmail,
     sendNewBookingNotificationEmail,
@@ -911,5 +939,6 @@ module.exports = {
     sendNewTransportOrderNotificationEmail,
     sendRenewTransportOrderNotificationEmail,
     sendTransportOrderStatusUpdateEmail,
-    sendAdminCancellationTransportOrderEmail
+    sendAdminCancellationTransportOrderEmail,
+    sendReminderNotificationEmail,
 };
