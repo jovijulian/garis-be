@@ -118,14 +118,14 @@ class DashboardService {
             kpi: {
                 total_orders_in_range: totalOrders,
                 pending_orders_count: pendingOrdersCount,
-                most_popular_consumption_type: topServiceOrder.most_popular_service, 
+                most_popular_consumption_type: topServiceOrder.most_popular_service,
                 top_requester: topRequesterName,
             },
             charts: {
                 order_trend: orderTrend,
             },
             rankings: {
-                top_consumption_types: topServiceOrder.service_composition, 
+                top_consumption_types: topServiceOrder.service_composition,
                 status_distribution: statusDistribution,
             }
         };
@@ -232,6 +232,63 @@ class DashboardService {
             pending_bookings: pendingBooking,
             pending_vehicle_requests: pendingVehicles,
             pending_orders: pendingOrders,
+        }
+    }
+
+    async getDashboardAlerts(request) {
+        try {
+            const cabId = getCabId(request);
+            const currentWibTime = formatDateTime();
+            const currentDateOnly = currentWibTime.substring(0, 10);
+            const today = moment(currentDateOnly).startOf('day');
+
+            const activeReminders = await reminderRepository.getActiveUpcomingReminders(cabId);
+            const alerts = [];
+
+            for (const reminder of activeReminders) {
+                if (!reminder.reminder_type || !reminder.reminder_type.notification_intervals) continue;
+
+                let intervals = [];
+                try { intervals = JSON.parse(reminder.reminder_type.notification_intervals); }
+                catch (e) { continue; }
+
+                if (intervals.length === 0) continue;
+
+                const dueDate = moment(reminder.due_date).startOf('day');
+                const daysLeft = dueDate.diff(today, 'days');
+                const maxInterval = Math.max(...intervals);
+
+                if (reminder.status === 'OVERDUE' || daysLeft <= maxInterval) {
+
+                    let severity = 'warning';
+                    let messageText = `Jatuh tempo dalam ${daysLeft} hari.`;
+
+                    if (daysLeft === 0) {
+                        severity = 'danger';
+                        messageText = 'Jatuh tempo HARI INI!';
+                    } else if (daysLeft < 0) {
+                        severity = 'danger';
+                        messageText = `TERLEWAT ${Math.abs(daysLeft)} HARI! Segera tindak lanjuti!`;
+                    }
+
+                    alerts.push({
+                        id: reminder.id,
+                        title: reminder.title,
+                        module_name: reminder.reminder_type.name,
+                        cabang: reminder.cabang ? reminder.cabang.nama_cab : '-',
+                        due_date: reminder.due_date,
+                        status: reminder.status,
+                        days_left: daysLeft,
+                        severity: severity,
+                        message: messageText
+                    });
+                }
+            }
+
+            return alerts;
+
+        } catch (error) {
+            throw error;
         }
     }
 }

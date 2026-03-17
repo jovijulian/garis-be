@@ -1,7 +1,7 @@
 const reminderRepository = require('../repositories/reminder.repository');
 const reminderLogRepository = require('../repositories/reminder-log.repository');
 const userRepository = require('../repositories/user.repository');
-const { formatDateTime, getCabId } = require("../helpers/dataHelpers");
+const { formatDateTime, getCabId, getUserId } = require("../helpers/dataHelpers");
 const moment = require('moment-timezone');
 const { knexBooking } = require('../../config/database');
 const { sendReminderNotificationEmail } = require('./email.service');
@@ -27,6 +27,7 @@ class ReminderService {
         try {
             return knexBooking.transaction(async (trx) => {
                 payload.cab_id = cabId;
+                payload.created_by = getUserId(request);
                 payload.created_at = formatDateTime();
                 payload.updated_at = formatDateTime();
                 const reminder = await reminderRepository.create(payload, trx);
@@ -89,6 +90,13 @@ class ReminderService {
 
             const currentWibTime = formatDateTime();
             const currentDate = currentWibTime.substring(0, 10);
+            const today = moment(currentDate).startOf('day');
+
+            const updatedOverdue = await reminderRepository.updateOverdueReminders(currentDate, currentWibTime);
+
+            if (updatedOverdue > 0) {
+                console.log(`[CRON] Berhasil mengubah ${updatedOverdue} reminder menjadi OVERDUE.`);
+            }
 
             const activeReminders = await reminderRepository.checkExistingReminder(currentDate);
 
@@ -97,7 +105,6 @@ class ReminderService {
                 return;
             }
 
-            const today = moment().startOf('day');
 
             for (const reminder of activeReminders) {
                 if (!reminder.reminder_type || !reminder.reminder_type.notification_intervals) continue;
@@ -137,6 +144,31 @@ class ReminderService {
             console.log(`[CRON] Proses Pengecekan Reminder Selesai.`);
         } catch (error) {
             console.error('[CRON] Error pada saat memproses reminder harian:', error);
+        }
+    }
+
+    async markAsCompleted(id, request) {
+        await this.detail(id);
+        try {
+            return knexBooking.transaction(async (trx) => {
+                const payload = {
+                    status: 'COMPLETED',
+                    updated_at: formatDateTime(),
+                    updated_by: getUserId(request)
+                };
+
+                const data = await reminderRepository.update(id, payload, trx);
+
+                if (!data) {
+                    const error = new Error('Gagal memperbarui status reminder.');
+                    error.statusCode = 500;
+                    throw error;
+                }
+
+                return { message: 'Reminder berhasil diselesaikan!', data };
+            });
+        } catch (error) {
+            throw error;
         }
     }
 }

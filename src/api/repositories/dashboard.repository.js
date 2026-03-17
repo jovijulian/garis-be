@@ -15,6 +15,7 @@ const Vehicle = require('../models/Vehicle')
 const Driver = require('../models/Driver')
 const AccommodationOrder = require('../models/AccommodationOrder');
 const TransportOrder = require('../models/TransportOrder');
+const Reminder = require('../models/Reminder');
 const _ = require('lodash');
 const moment = require('moment');
 
@@ -443,6 +444,21 @@ class DashboardRepository {
 
     async getAllBranches() {
         return Site.query().select('id_cab', 'nama_cab');
+    }
+
+    async getActiveUpcomingReminders(currentDate, cabId = null) {
+        const query = Reminder.query()
+            .withGraphFetched('[cabang, reminder_type]')
+            .where('is_active', 1)
+            .whereIn('status', ['PENDING', 'OVERDUE'])
+            .where('due_date', '>=', currentDate)
+            .orderBy('due_date', 'ASC');
+
+        if (cabId) {
+            query.where('cab_id', cabId);
+        }
+
+        return await query;
     }
 
 

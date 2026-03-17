@@ -71,9 +71,20 @@ class ReminderRepository extends BaseRepository {
     async checkExistingReminder(date) {
         return Reminder.query()
             .withGraphFetched('[cabang, reminder_type]')
+            .where('status', 'PENDING')
             .where('is_active', 1)
             .where('due_date', '>=', date);
     }
+
+    async updateOverdueReminders(date, time) {
+        return Reminder.query()
+            .patch({ status: 'OVERDUE', updated_at: time })
+            .where('status', 'PENDING')
+            .where('is_active', 1)
+            .where('due_date', '<', date);
+    }
+
+
 
 }
 

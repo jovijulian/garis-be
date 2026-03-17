@@ -36,6 +36,15 @@ class DashboardController {
             return error(res, 500, err);
         }
     }
+
+    async getDashboardAlerts(req, res) {
+        try {
+            const data = await dashboardService.getDashboardAlerts(req);
+            return success(res, 200, data, 'Dashboard Alerts retrieved successfully');
+        } catch (err) {
+            return error(res, 500, err);
+        }
+    }
 }
 
 module.exports = new DashboardController();

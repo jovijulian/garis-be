@@ -15,7 +15,10 @@ class Reminder extends BaseModelBooking {
                 title: { type: 'string' },
                 cab_id: { type: 'integer' },
                 due_date: { type: 'string' },
-                is_active: { type: 'integer' }
+                is_active: { type: 'integer' },
+                status: { type: 'string', enum: ['PENDING', 'COMPLETED', 'OVERDUE'] },
+                created_by: { type: 'string' },
+                updated_by: { type: 'string' },
             }
         };
     }
@@ -23,6 +26,7 @@ class Reminder extends BaseModelBooking {
     static get relationMappings() {
         const Site = require('./Site');
         const ReminderType = require('./ReminderType');
+        const User = require('./User');
         return {
             cabang: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -38,6 +42,22 @@ class Reminder extends BaseModelBooking {
                 join: {
                     from: 'reminders.reminder_type_id',
                     to: 'reminder_types.id'
+                }
+            },
+            created_by_user: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: User,
+                join: {
+                    from: 'reminders.created_by',
+                    to: 'tb_user.id_user',
+                }
+            },
+            updated_by_user: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: User,
+                join: {
+                    from: 'reminders.updated_by',
+                    to: 'tb_user.id_user',
                 }
             }
         };

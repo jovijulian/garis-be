@@ -63,6 +63,16 @@ class ReminderController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async markAsCompleted(req, res) {
+        try {
+            const id = req.params.id;
+            const data = await reminderService.markAsCompleted(id, req);
+            return success(res, 200, data, 'Reminder completed successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new ReminderController();
