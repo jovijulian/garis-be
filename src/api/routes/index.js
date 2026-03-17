@@ -20,6 +20,7 @@ const accommodationRoutes = require('./accommodation.route');
 const transportTypeRoutes = require('./transport-type.route');
 const transportOrderRoutes = require('./transport-order.route');    
 const departmentRoutes = require('./department.route');
+const reminderTypeRoutes = require('./reminder-type.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -40,6 +41,7 @@ router.use('/accommodations', accommodationRoutes);
 router.use('/transport-types', transportTypeRoutes);
 router.use('/transport-orders', transportOrderRoutes);
 router.use('/departments', departmentRoutes);
+router.use('/reminder-types', reminderTypeRoutes);
 
 
 module.exports = router;

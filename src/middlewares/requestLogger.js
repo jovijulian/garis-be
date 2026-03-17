@@ -1,4 +1,5 @@
 const mysql = require('mysql2');
+const { formatDateTime } = require('../api/helpers/dataHelpers');
 const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,   
@@ -61,7 +62,8 @@ const requestLogger = (req, res, next) => {
             ip_address: ip,
             payload: requestPayload,    
             id_user: userId,    
-            response_body: responseMessage  
+            response_body: responseMessage,
+            created_at: formatDateTime(),  
         };
 
         const query = 'INSERT INTO request_logs SET ?';
