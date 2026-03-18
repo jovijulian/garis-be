@@ -242,8 +242,8 @@ class DashboardService {
             const currentWibTime = formatDateTime();
             const currentDateOnly = currentWibTime.substring(0, 10);
             const today = moment(currentDateOnly).startOf('day');
-
-            const activeReminders = await dashboardRepository.getActiveUpcomingReminders(cabId);
+            console.log(cabId)
+            const activeReminders = await dashboardRepository.getActiveUpcomingReminders(currentDateOnly, cabId);
             const alerts = [];
 
             for (const reminder of activeReminders) {

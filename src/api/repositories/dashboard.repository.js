@@ -446,14 +446,13 @@ class DashboardRepository {
         return Site.query().select('id_cab', 'nama_cab');
     }
 
-    async getActiveUpcomingReminders(currentDate, cabId = null) {
+    async getActiveUpcomingReminders(currentDate, cabId) {
         const query = Reminder.query()
             .withGraphFetched('[cabang, reminder_type]')
             .where('is_active', 1)
             .whereIn('status', ['PENDING', 'OVERDUE'])
             .where('due_date', '>=', currentDate)
             .orderBy('due_date', 'ASC');
-
         if (cabId) {
             query.where('cab_id', cabId);
         }
