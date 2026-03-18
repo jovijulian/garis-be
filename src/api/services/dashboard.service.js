@@ -2,6 +2,7 @@ const dashboardRepository = require('../repositories/dashboard.repository');
 const userRepository = require('../repositories/user.repository');
 const moment = require('moment');
 const _ = require('lodash');
+const { getCabId, formatDateTime } = require("../helpers/dataHelpers");
 class DashboardService {
     async getDashboardData(queryParams = {}, request) {
         const siteId = request.user.sites
@@ -242,7 +243,7 @@ class DashboardService {
             const currentDateOnly = currentWibTime.substring(0, 10);
             const today = moment(currentDateOnly).startOf('day');
 
-            const activeReminders = await reminderRepository.getActiveUpcomingReminders(cabId);
+            const activeReminders = await dashboardRepository.getActiveUpcomingReminders(cabId);
             const alerts = [];
 
             for (const reminder of activeReminders) {
