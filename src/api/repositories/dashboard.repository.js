@@ -460,6 +460,21 @@ class DashboardRepository {
         return await query;
     }
 
+    async getActiveUpcomingRemindersCount(currentDate, cabId) {
+        const query = Reminder.query()
+            .withGraphFetched('[cabang, reminder_type]')
+            .where('is_active', 1)
+            .whereIn('status', ['PENDING', 'OVERDUE'])
+            .where('due_date', '>=', currentDate)
+            .orderBy('due_date', 'ASC');
+        if (cabId) {
+            query.where('cab_id', cabId);
+        }
+
+        const reminders = await query;
+        return reminders.length;
+    }
+
 
 
 }

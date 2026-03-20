@@ -220,19 +220,24 @@ class DashboardService {
     async getPendingRequestsCount(request) {
         const siteId = request.user.sites
         const status = 'Submit'
+        const currentWibTime = formatDateTime();
+        const currentDateOnly = currentWibTime.substring(0, 10);
         const [
             pendingBooking,
             pendingVehicles,
             pendingOrders,
+            alertReminders,
         ] = await Promise.all([
             dashboardRepository.getPendingBookingCount(status, siteId),
             dashboardRepository.getPendingVehiclesCount(status, siteId),
             dashboardRepository.getPendingOrderCount(status, siteId),
+            dashboardRepository.getActiveUpcomingRemindersCount(currentDateOnly, siteId),
         ]);
         return {
             pending_bookings: pendingBooking,
             pending_vehicle_requests: pendingVehicles,
             pending_orders: pendingOrders,
+            alert_reminders: alertReminders,
         }
     }
 
@@ -242,7 +247,6 @@ class DashboardService {
             const currentWibTime = formatDateTime();
             const currentDateOnly = currentWibTime.substring(0, 10);
             const today = moment(currentDateOnly).startOf('day');
-            console.log(cabId)
             const activeReminders = await dashboardRepository.getActiveUpcomingReminders(currentDateOnly, cabId);
             const alerts = [];
 
