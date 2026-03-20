@@ -18,10 +18,11 @@ const vehicleRequestRoutes = require('./vehicle-request.route');
 const portalRoutes = require('./portal.route');
 const accommodationRoutes = require('./accommodation.route');
 const transportTypeRoutes = require('./transport-type.route');
-const transportOrderRoutes = require('./transport-order.route');    
+const transportOrderRoutes = require('./transport-order.route');
 const departmentRoutes = require('./department.route');
 const reminderTypeRoutes = require('./reminder-type.route');
 const reminderRoutes = require('./reminder.route');
+const inventoryCategoryRoutes = require('./inventory-category.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -44,6 +45,7 @@ router.use('/transport-orders', transportOrderRoutes);
 router.use('/departments', departmentRoutes);
 router.use('/reminder-types', reminderTypeRoutes);
 router.use('/reminders', reminderRoutes);
+router.use('/inventory-categories', inventoryCategoryRoutes);
 
 
 module.exports = router;
