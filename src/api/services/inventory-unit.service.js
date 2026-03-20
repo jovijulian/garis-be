@@ -1,16 +1,16 @@
-const inventoryCategoryRepository = require('../repositories/inventory-category.repository');
+const inventoryUnitRepository = require('../repositories/inventory-unit.repository');
 const { formatDateTime } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
-class InventoryCategoryService {
+class InventoryUnitService {
 
     async getAll(queryParams) {
-        return inventoryCategoryRepository.findAllWithFilters(queryParams);
+        return inventoryUnitRepository.findAllWithFilters(queryParams);
     }
 
     async detail(id) {
-        const data = await inventoryCategoryRepository.findById(id);
+        const data = await inventoryUnitRepository.findById(id);
         if (!data) {
-            const error = new Error('Inventory Category not found.');
+            const error = new Error('Inventory Unit not found.');
             error.statusCode = 404;
             throw error;
         }
@@ -23,7 +23,7 @@ class InventoryCategoryService {
                 payload.created_at = formatDateTime();
                 payload.updated_at = formatDateTime();
 
-                const data = await inventoryCategoryRepository.create(payload, trx);
+                const data = await inventoryUnitRepository.create(payload, trx);
                 return data;
             });
         } catch (error) {
@@ -37,7 +37,7 @@ class InventoryCategoryService {
             return knexBooking.transaction(async (trx) => {
                 payload.updated_at = formatDateTime();
 
-                const data = await inventoryCategoryRepository.update(id, payload, trx);
+                const data = await inventoryUnitRepository.update(id, payload, trx);
                 return data;
             });
         } catch (error) {
@@ -49,15 +49,15 @@ class InventoryCategoryService {
         await this.detail(id);
         try {
             return knexBooking.transaction(async (trx) => {
-                const data = await inventoryCategoryRepository.update(id, { is_active: 0 }, trx);
+                const data = await inventoryUnitRepository.update(id, { is_active: 0 }, trx);
 
                 if (!data) {
-                    const error = new Error('Failed to deleted category.');
+                    const error = new Error('Failed to deleted unit.');
                     error.statusCode = 500;
                     throw error;
                 }
 
-                return { message: 'Category has been deleted successfully.' };
+                return { message: 'Unit has been deleted successfully.' };
             });
         } catch (error) {
             throw error;
@@ -66,7 +66,7 @@ class InventoryCategoryService {
     }
 
     async options(params) {
-        const data = await inventoryCategoryRepository.options(params);
+        const data = await inventoryUnitRepository.options(params);
 
         if (!data || data.length === 0) {
             return [];
@@ -76,4 +76,4 @@ class InventoryCategoryService {
     }
 }
 
-module.exports = new InventoryCategoryService();
+module.exports = new InventoryUnitService();

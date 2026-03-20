@@ -23,6 +23,7 @@ const departmentRoutes = require('./department.route');
 const reminderTypeRoutes = require('./reminder-type.route');
 const reminderRoutes = require('./reminder.route');
 const inventoryCategoryRoutes = require('./inventory-category.route');
+const inventoryUnitRoutes = require('./inventory-unit.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -46,6 +47,7 @@ router.use('/departments', departmentRoutes);
 router.use('/reminder-types', reminderTypeRoutes);
 router.use('/reminders', reminderRoutes);
 router.use('/inventory-categories', inventoryCategoryRoutes);
+router.use('/inventory-units', inventoryUnitRoutes);
 
 
 module.exports = router;
