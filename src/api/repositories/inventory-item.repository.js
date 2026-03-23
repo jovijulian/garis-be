@@ -1,0 +1,74 @@
+const BaseRepository = require('./base.repository');
+const InventoryItem = require('../models/InventoryItem');
+
+class InventoryItemRepository extends BaseRepository {
+    constructor() {
+        super(InventoryItem);
+    }
+
+    async findAllWithFilters(queryParams = {}) {
+        const page = queryParams.page || 1;
+        const per_page = queryParams.per_page || 20;
+        const search = queryParams.search || '';
+        const cab_id = queryParams.cab_id;
+
+        const query = InventoryItem.query()
+            .select('*')
+            .where('is_active', 1)
+            .withGraphFetched('[category(selectName), base_unit(selectName), pack_unit(selectName)]')
+            .modifiers({
+                selectName: (builder) => {
+                    builder.select('id', 'name');
+                }
+            })
+            .page(page - 1, per_page)
+            .orderBy('id', 'DESC');
+
+        if (cab_id) {
+            query.where('cab_id', cab_id);
+        }
+
+        if (search) {
+            query.where(builder => {
+                builder.where('name', 'like', `%${search}%`)
+                    .orWhere('barcode', 'like', `%${search}%`);
+            });
+        }
+
+        const paginatedResult = await query;
+
+        return {
+            results: paginatedResult.results,
+            total: paginatedResult.total,
+            page: page,
+            per_page: per_page,
+        };
+    }
+
+    async findByBarcodeAndCabang(barcode, cab_id) {
+        return InventoryItem.query()
+            .where('barcode', barcode)
+            .where('cab_id', cab_id)
+            .first();
+    }
+
+    async findByBarcodeAndCabangWithRelations(barcode, cab_id) {
+        return InventoryItem.query()
+            .where('barcode', barcode)
+            .where('cab_id', cab_id)
+            .withGraphFetched('[category(selectName), base_unit(selectName), pack_unit(selectName)]')
+            .modifiers({
+                selectName: (builder) => builder.select('id', 'name')
+            })
+            .first();
+    }
+
+    async findByIdWithRelations(id, relations) {
+        if (!relations) {
+            return this.findById(id);
+        }
+        return InventoryItem.query().findById(id).withGraphFetched(relations);
+    }
+}
+
+module.exports = new InventoryItemRepository();

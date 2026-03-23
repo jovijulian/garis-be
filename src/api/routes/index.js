@@ -24,6 +24,8 @@ const reminderTypeRoutes = require('./reminder-type.route');
 const reminderRoutes = require('./reminder.route');
 const inventoryCategoryRoutes = require('./inventory-category.route');
 const inventoryUnitRoutes = require('./inventory-unit.route');
+const inventoryItemRoutes = require('./inventory-item.route');
+const InventoryTransactionRoutes = require('./inventory-transaction.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -48,6 +50,8 @@ router.use('/reminder-types', reminderTypeRoutes);
 router.use('/reminders', reminderRoutes);
 router.use('/inventory-categories', inventoryCategoryRoutes);
 router.use('/inventory-units', inventoryUnitRoutes);
+router.use('/inventory-items', inventoryItemRoutes);
+router.use('/inventory-transactions', InventoryTransactionRoutes);
 
 
 module.exports = router;

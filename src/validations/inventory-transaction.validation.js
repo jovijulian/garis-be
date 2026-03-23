@@ -1,0 +1,26 @@
+const { z } = require('zod');
+
+const stockInSchema = z.object({
+    body: z.object({
+        item_id: z.number({
+            required_error: 'Item ID is required',
+            invalid_type_error: 'Item ID must be a number'
+        }).int().positive('Item ID must be valid'),
+
+        input_qty: z.number({
+            required_error: 'Input Qty is required',
+            invalid_type_error: 'Input Qty must be a number'
+        }).int().positive('Input Qty harus lebih besar dari 0'),
+
+        input_unit_id: z.number({
+            required_error: 'Input Unit ID is required',
+            invalid_type_error: 'Input Unit ID must be a number'
+        }).int().positive('Input Unit ID must be valid'),
+
+        note: z.string().optional().nullable()
+    })
+});
+
+module.exports = {
+    stockInSchema
+};
