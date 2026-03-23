@@ -5,13 +5,13 @@ const { formatDateTime, getUserId } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
 
 class InventoryTransactionService {
-    
+
     async stockIn(payload, request) {
         const getUser = getUserId(request);
-        
+
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
-            
+
             const item = await inventoryItemRepository.findByIdWithRelations(payload.item_id, null);
             if (!item) {
                 const error = new Error('Inventory Item tidak ditemukan.');
@@ -31,9 +31,10 @@ class InventoryTransactionService {
             }
 
             const transactionPayload = {
-                cab_id: item.cab_id, 
+                cab_id: item.cab_id,
                 item_id: item.id,
-                user_id: getUser,
+                created_by: getUser,
+                nik: null,
                 transaction_type: 'STOCK_IN',
                 input_qty: inputQty,
                 input_unit_id: payload.input_unit_id,
@@ -47,7 +48,7 @@ class InventoryTransactionService {
 
             const currentStock = item.stock_available || 0;
             const newStock = currentStock + baseQtyToAdd;
-            
+
             await inventoryItemRepository.update(item.id, { stock_available: newStock }, trx);
 
             return newTransaction;
@@ -56,7 +57,7 @@ class InventoryTransactionService {
 
     async stockOut(payload, request) {
         const userId = getUserId(request);
-        
+
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
             const results = [];
@@ -93,9 +94,10 @@ class InventoryTransactionService {
                 const trxType = isAsset ? 'OUT_ASSET' : 'OUT_BHP';
 
                 const transactionPayload = {
-                    cab_id: item.cab_id, 
+                    cab_id: item.cab_id,
                     item_id: item.id,
-                    user_id: payload.user_id_borrower || userId,
+                    created_by: userId,
+                    nik: payload.nik,
                     transaction_type: trxType,
                     input_qty: inputQty,
                     input_unit_id: reqItem.input_unit_id,
@@ -112,9 +114,10 @@ class InventoryTransactionService {
                         cab_id: item.cab_id,
                         transaction_id: newTransaction.id,
                         item_id: item.id,
-                        user_id: payload.user_id_borrower || userId, 
+                        created_by: userId,
+                        nik: payload.nik,
                         qty_borrowed: baseQtyToDeduct,
-                        qty_returned: 0, 
+                        qty_returned: 0,
                         status: 'BORROWED',
                         borrowed_at: now,
                     };

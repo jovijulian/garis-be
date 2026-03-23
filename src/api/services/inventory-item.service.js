@@ -101,7 +101,7 @@ class InventoryItemService {
                 const transactionPayload = {
                     cab_id: newItem.cab_id,
                     item_id: newItem.id,
-                    user_id: getUser,
+                    created_by: getUser,
                     transaction_type: 'STOCK_IN',
                     input_qty: initialQty,
                     input_unit_id: initialUnitId,
@@ -113,7 +113,6 @@ class InventoryItemService {
 
                 await inventoryTransactionRepository.create(transactionPayload, trx);
 
-                // Update stock di item
                 newItem.stock_available = baseQtyToAdd;
                 await inventoryItemRepository.update(newItem.id, { stock_available: baseQtyToAdd }, trx);
             }
@@ -176,12 +175,9 @@ class InventoryItemService {
                 payload.stock_available = 0; 
                 payload.created_by = getUser;
 
-                // LOGIKA BARCODE: Cek apakah user mengisi barcode atau mengosongkannya
                 if (!payload.barcode || payload.barcode.trim() === '') {
-                    // User mengosongkan input barcode -> Generate otomatis
                     payload.barcode = await this.generateUniqueBarcode(payload.cab_id);
                 } else {
-                    // User nge-scan barcode fisik -> Cek duplikasi
                     const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, payload.cab_id);
                     if (existing) {
                         const error = new Error(`Gagal pada baris ${index + 1}: Barcode ${payload.barcode} sudah terdaftar.`);
@@ -190,10 +186,8 @@ class InventoryItemService {
                     }
                 }
 
-                // 1. Insert Master Barang
                 const newItem = await inventoryItemRepository.create(payload, trx);
 
-                // 2. Insert Log Stok Awal (Jika diinput)
                 if (initialQty > 0) {
                     let baseQtyToAdd = 0;
                     if (initialUnitId === newItem.pack_unit_id) {
@@ -207,7 +201,7 @@ class InventoryItemService {
                     const transactionPayload = {
                         cab_id: newItem.cab_id,
                         item_id: newItem.id,
-                        user_id: getUser,
+                        created_by: getUser,
                         transaction_type: 'STOCK_IN',
                         input_qty: initialQty,
                         input_unit_id: initialUnitId,

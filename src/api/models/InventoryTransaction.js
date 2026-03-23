@@ -8,12 +8,13 @@ class InventoryTransaction extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['cab_id', 'item_id', 'user_id', 'transaction_type', 'input_qty', 'input_unit_id', 'qty'],
+            required: ['cab_id', 'item_id', 'nik', 'created_by', 'transaction_type', 'input_qty', 'input_unit_id', 'qty'],
             properties: {
                 id: { type: 'integer' },
                 cab_id: { type: 'integer' },
                 item_id: { type: 'integer' },
-                user_id: { type: 'string' },
+                created_by: { type: 'string' },
+                nik: { type: 'string', nullable: true },
                 transaction_type: { type: 'string', enum: ['STOCK_IN', 'OUT_BHP', 'OUT_ASSET', 'RETURN'] },
                 input_qty: { type: 'integer' },
                 input_unit_id: { type: 'integer' },
@@ -53,11 +54,11 @@ class InventoryTransaction extends BaseModelBooking {
                     to: 'inventory_units.id'
                 }
             },
-            user: {
+            created_by_user: {
                 relation: BaseModelBooking.BelongsToOneRelation,
                 modelClass: User,
                 join: {
-                    from: 'inventory_transactions.user_id',
+                    from: 'inventory_transactions.created_by',
                     to: 'tb_user.id_user',
                 }
             },

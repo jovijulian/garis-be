@@ -22,7 +22,7 @@ const stockInSchema = z.object({
 });
 const stockOutSchema = z.object({
     body: z.object({
-        user_id_borrower: z.string({ required_error: 'User / NIK peminta wajib diisi' }).nullable().optional(),
+        nik: z.string({ required_error: 'NIK peminta wajib diisi' }).min(1),
         note: z.string().optional().nullable(),
         items: z.array(
             z.object({
