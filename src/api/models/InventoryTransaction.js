@@ -8,7 +8,7 @@ class InventoryTransaction extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['cab_id', 'item_id', 'nik', 'created_by', 'transaction_type', 'input_qty', 'input_unit_id', 'qty'],
+            required: ['cab_id', 'item_id', 'created_by', 'transaction_type', 'input_qty', 'input_unit_id', 'qty'],
             properties: {
                 id: { type: 'integer' },
                 cab_id: { type: 'integer' },
