@@ -12,6 +12,17 @@ class InventoryTransactionController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async stockOut(req, res) {
+        try {
+            const payload = req.body;
+            const data = await inventoryTransactionService.stockOut(payload, req); 
+            
+            return success(res, 201, data, 'Transaksi pengeluaran barang berhasil diproses.');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new InventoryTransactionController();

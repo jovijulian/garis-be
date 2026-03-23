@@ -49,6 +49,7 @@ class InventoryItemRepository extends BaseRepository {
         return InventoryItem.query()
             .where('barcode', barcode)
             .where('cab_id', cab_id)
+            .where('is_active', 1)
             .first();
     }
 
@@ -56,6 +57,7 @@ class InventoryItemRepository extends BaseRepository {
         return InventoryItem.query()
             .where('barcode', barcode)
             .where('cab_id', cab_id)
+            .where('is_active', 1)
             .withGraphFetched('[category(selectName), base_unit(selectName), pack_unit(selectName)]')
             .modifiers({
                 selectName: (builder) => builder.select('id', 'name')
