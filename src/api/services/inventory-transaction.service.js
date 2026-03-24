@@ -1,7 +1,7 @@
 const inventoryTransactionRepository = require('../repositories/inventory-transaction.repository');
 const inventoryItemRepository = require('../repositories/inventory-item.repository');
 const inventoryLoanRepository = require('../repositories/inventory-loan.repository');
-const { formatDateTime, getUserId } = require("../helpers/dataHelpers");
+const { formatDateTime, getUserId, getCabId } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
 
 class InventoryTransactionService {
@@ -136,7 +136,7 @@ class InventoryTransactionService {
 
     async returnAsset(payload, request) {
         const userId = getUserId(request);
-        
+
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
 
@@ -156,7 +156,7 @@ class InventoryTransactionService {
 
             const newReturnedQty = loan.qty_returned + payload.return_qty;
             const newStatus = newReturnedQty >= loan.qty_borrowed ? 'RETURNED' : 'PARTIAL_RETURNED';
-            
+
             await inventoryLoanRepository.update(loan.id, {
                 qty_returned: newReturnedQty,
                 status: newStatus,
@@ -165,19 +165,19 @@ class InventoryTransactionService {
 
             const item = await inventoryItemRepository.findById(loan.item_id, trx);
             const newStock = item.stock_available + payload.return_qty;
-            await inventoryItemRepository.update(item.id, { 
-                stock_available: newStock, 
-                updated_at: now 
+            await inventoryItemRepository.update(item.id, {
+                stock_available: newStock,
+                updated_at: now
             }, trx);
 
             const transactionPayload = {
                 cab_id: item.cab_id,
                 item_id: item.id,
                 nik: loan.nik,
-                created_by: userId, 
-                transaction_type: 'RETURN', 
+                created_by: userId,
+                transaction_type: 'RETURN',
                 input_qty: payload.return_qty,
-                input_unit_id: item.base_unit_id, 
+                input_unit_id: item.base_unit_id,
                 qty: payload.return_qty,
                 note: payload.note || 'Pengembalian Aset Inventaris',
                 created_at: now,
@@ -187,6 +187,13 @@ class InventoryTransactionService {
 
             return { item_name: item.name, returned_qty: payload.return_qty, status: newStatus };
         });
+    }
+
+    async getLogTransactions(query, request) {
+        const cabId = getCabId(request);
+
+        const logs = await inventoryTransactionRepository.findAllWithFilters(query, cabId);
+        return logs;
     }
 }
 

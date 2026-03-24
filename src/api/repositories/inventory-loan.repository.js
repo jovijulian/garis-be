@@ -26,12 +26,17 @@ class InventoryLoanRepository extends BaseRepository {
             .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
-
+            
         if (search) {
-            query.where('nik', 'like', `%${search}%`)
-                .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
+            query.where(builder => {
+                builder
+                    .where('nik', 'like', `%${search}%`)
+                    .orWhereExists(
+                        InventoryLoan.relatedQuery('item')
+                            .where('name', 'like', `%${search}%`)
+                    );
+            });
         }
-
         if (cabId) {
             query.where('cab_id', cabId);
         }

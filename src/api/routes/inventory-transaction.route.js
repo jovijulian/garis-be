@@ -15,6 +15,7 @@ router.use(verifyToken);
 router.post('/stock-in', validate(stockInSchema), InventoryTransactionController.stockIn);
 router.post('/stock-out', validate(stockOutSchema), InventoryTransactionController.stockOut);
 router.post('/return', validate(returnAssetSchema), InventoryTransactionController.returnAsset);
+router.get('/', InventoryTransactionController.getLogTransactions);
 
 
 module.exports = router;
