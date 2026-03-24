@@ -26,7 +26,7 @@ class InventoryLoanRepository extends BaseRepository {
             .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
-            
+
         if (search) {
             query.where(builder => {
                 builder
@@ -39,6 +39,10 @@ class InventoryLoanRepository extends BaseRepository {
         }
         if (cabId) {
             query.where('cab_id', cabId);
+        }
+
+        if (queryParams.nik) {
+            query.where('nik', queryParams.nik);
         }
 
         const paginatedResult = await query;
