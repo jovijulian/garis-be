@@ -5,6 +5,48 @@ class InventoryLoanRepository extends BaseRepository {
     constructor() {
         super(InventoryLoan);
     }
+
+    async findAllWithFilters(queryParams = {}, cabId) {
+        const page = queryParams.page || 1;
+        const per_page = queryParams.per_page || 20;
+        const search = queryParams.search || '';
+
+        const query = InventoryLoan.query()
+            .select('*')
+            .withGraphFetched('[cabang, item.base_unit, created_by_user]')
+            .modifyGraph('cabang', builder => {
+                builder.select('id_cab', 'nama_cab');
+            })
+            .modifyGraph('item.base_unit', builder => {
+                builder.select('id', 'name');
+            })
+            .modifyGraph('created_by_user', builder => {
+                builder.select('id_user', 'nama_user');
+            })
+            .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
+            .page(page - 1, per_page)
+            .orderBy('id', 'DESC');
+
+        if (search) {
+            query.where('nik', 'like', `%${search}%`)
+                .where('is_active', 1)
+
+        }
+
+        if (cabId) {
+            query.where('cab_id', cabId);
+        }
+
+        const paginatedResult = await query;
+
+        return {
+            results: paginatedResult.results,
+            total: paginatedResult.total,
+            page: page,
+            per_page: per_page,
+        };
+    }
+
 }
 
 module.exports = new InventoryLoanRepository();

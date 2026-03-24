@@ -133,6 +133,61 @@ class InventoryTransactionService {
             return results;
         });
     }
+
+    async returnAsset(payload, request) {
+        const userId = getUserId(request);
+        
+        return await knexBooking.transaction(async (trx) => {
+            const now = formatDateTime();
+
+            const loan = await inventoryLoanRepository.findById(payload.loan_id, trx);
+            if (!loan) {
+                const error = new Error("Data peminjaman tidak ditemukan.");
+                error.statusCode = 404;
+                throw error;
+            }
+
+            const remainingToReturn = loan.qty_borrowed - loan.qty_returned;
+            if (payload.return_qty > remainingToReturn) {
+                const error = new Error(`Gagal: Jumlah kembali (${payload.return_qty}) melebihi sisa pinjaman (${remainingToReturn}).`);
+                error.statusCode = 400;
+                throw error;
+            }
+
+            const newReturnedQty = loan.qty_returned + payload.return_qty;
+            const newStatus = newReturnedQty >= loan.qty_borrowed ? 'RETURNED' : 'PARTIAL_RETURNED';
+            
+            await inventoryLoanRepository.update(loan.id, {
+                qty_returned: newReturnedQty,
+                status: newStatus,
+                returned_at: now
+            }, trx);
+
+            const item = await inventoryItemRepository.findById(loan.item_id, trx);
+            const newStock = item.stock_available + payload.return_qty;
+            await inventoryItemRepository.update(item.id, { 
+                stock_available: newStock, 
+                updated_at: now 
+            }, trx);
+
+            const transactionPayload = {
+                cab_id: item.cab_id,
+                item_id: item.id,
+                nik: loan.nik,
+                created_by: userId, 
+                transaction_type: 'RETURN', 
+                input_qty: payload.return_qty,
+                input_unit_id: item.base_unit_id, 
+                qty: payload.return_qty,
+                note: payload.note || 'Pengembalian Aset Inventaris',
+                created_at: now,
+                updated_at: now
+            };
+            await inventoryTransactionRepository.create(transactionPayload, trx);
+
+            return { item_name: item.name, returned_qty: payload.return_qty, status: newStatus };
+        });
+    }
 }
 
 module.exports = new InventoryTransactionService();

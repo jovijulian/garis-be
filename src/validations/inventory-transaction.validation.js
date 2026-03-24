@@ -34,7 +34,16 @@ const stockOutSchema = z.object({
     })
 });
 
+const returnAssetSchema = z.object({
+    body: z.object({
+        loan_id: z.number({ required_error: 'ID Pinjaman wajib diisi' }).int().positive(),
+        return_qty: z.number({ required_error: 'Qty kembali wajib diisi' }).int().positive(),
+        note: z.string().optional().nullable()
+    })
+});
+
 module.exports = {
     stockInSchema,
     stockOutSchema,
+    returnAssetSchema,
 };

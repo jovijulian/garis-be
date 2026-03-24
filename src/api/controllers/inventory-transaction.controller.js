@@ -23,6 +23,17 @@ class InventoryTransactionController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async returnAsset(req, res) {
+        try {
+            const payload = req.body;
+            const data = await inventoryTransactionService.returnAsset(payload, req); 
+            
+            return success(res, 201, data, 'Transaksi pengembalian barang berhasil diproses.');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new InventoryTransactionController();
