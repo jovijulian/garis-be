@@ -9,6 +9,7 @@ class ReminderService {
 
     async getAll(request, queryParams) {
         const cabId = getCabId(request)
+        
         return reminderRepository.findAllWithFilters(cabId, queryParams);
     }
 

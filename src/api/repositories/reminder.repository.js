@@ -7,7 +7,7 @@ class ReminderRepository extends BaseRepository {
         super(Reminder);
     }
 
-    async findAllWithFilters(queryParams = {}) {
+    async findAllWithFilters(cabId, queryParams = {}) {
         const page = queryParams.page || 1;
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
@@ -34,6 +34,10 @@ class ReminderRepository extends BaseRepository {
         if (search) {
             query.where('title', 'like', `%${search}%`)
                 .where('is_active', 1)
+        }
+
+        if (cabId) {
+            query.where('cab_id', cabId);
         }
 
         const paginatedResult = await query;
