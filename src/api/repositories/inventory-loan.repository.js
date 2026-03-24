@@ -29,8 +29,7 @@ class InventoryLoanRepository extends BaseRepository {
 
         if (search) {
             query.where('nik', 'like', `%${search}%`)
-                .where('is_active', 1)
-
+                .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
         }
 
         if (cabId) {
