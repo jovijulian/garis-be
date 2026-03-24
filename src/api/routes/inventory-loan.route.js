@@ -9,5 +9,6 @@ router.use(verifyToken);
 
 
 router.get('/', InventoryLoanController.getAll);
+router.get('/by-nik', InventoryLoanController.getAllByNIK);
 
 module.exports = router;

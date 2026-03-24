@@ -8,6 +8,11 @@ class InventoryLoanService {
         const cabId = getCabId(request)
         return inventoryLoanRepository.findAllWithFilters(queryParams, cabId);
     }
+
+    async getAllByNIK(queryParams) {
+        const nik = queryParams.nik
+        return inventoryLoanRepository.getAllByNIK(nik);
+    }
 }
 
 module.exports = new InventoryLoanService();
