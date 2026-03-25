@@ -126,10 +126,10 @@ class ReminderService {
                     const existingLog = await reminderLogRepository.checkExistingLog(reminder.id, daysLeft);
 
                     if (!existingLog) {
-                        // let adminEmails = [];
-                        // const adminsOfSite = await userRepository.findAdminsBySiteId(reminder.cab_id);
-                        // adminEmails = adminsOfSite.map(admin => admin.email);
-                        const adminEmails = ['azzaspotify123@gmail.com']
+                        let adminEmails = [];
+                        const adminsOfSite = await userRepository.findAdminsBySiteId(reminder.cab_id);
+                        adminEmails = adminsOfSite.map(admin => admin.email);
+                        // const adminEmails = ['azzaspotify123@gmail.com']
                         await sendReminderNotificationEmail(adminEmails, reminder, daysLeft);
                         const logPayload = {
                             reminder_id: reminder.id,
