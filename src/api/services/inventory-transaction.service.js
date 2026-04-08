@@ -8,7 +8,7 @@ class InventoryTransactionService {
 
     async stockIn(payload, request) {
         const getUser = getUserId(request);
-        const getCabId = getCabId(request);
+        const cabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
@@ -32,7 +32,7 @@ class InventoryTransactionService {
             }
 
             const transactionPayload = {
-                cab_id: getCabId,
+                cab_id: cabId,
                 item_id: item.id,
                 created_by: getUser,
                 nik: null,
