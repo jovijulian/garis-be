@@ -8,6 +8,7 @@ class InventoryTransactionService {
 
     async stockIn(payload, request) {
         const getUser = getUserId(request);
+        const getCabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
@@ -31,7 +32,7 @@ class InventoryTransactionService {
             }
 
             const transactionPayload = {
-                cab_id: item.cab_id,
+                cab_id: getCabId,
                 item_id: item.id,
                 created_by: getUser,
                 nik: null,
@@ -57,6 +58,7 @@ class InventoryTransactionService {
 
     async stockOut(payload, request) {
         const userId = getUserId(request);
+        const cabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
@@ -94,7 +96,7 @@ class InventoryTransactionService {
                 const trxType = isAsset ? 'OUT_ASSET' : 'OUT_BHP';
 
                 const transactionPayload = {
-                    cab_id: item.cab_id,
+                    cab_id: cabId,
                     item_id: item.id,
                     created_by: userId,
                     nik: payload.nik,
@@ -111,7 +113,7 @@ class InventoryTransactionService {
 
                 if (isAsset) {
                     const loanPayload = {
-                        cab_id: item.cab_id,
+                        cab_id: cabId,
                         transaction_id: newTransaction.id,
                         item_id: item.id,
                         created_by: userId,
@@ -136,6 +138,7 @@ class InventoryTransactionService {
 
     async returnAsset(payload, request) {
         const userId = getUserId(request);
+        const cabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
@@ -171,7 +174,7 @@ class InventoryTransactionService {
             }, trx);
 
             const transactionPayload = {
-                cab_id: item.cab_id,
+                cab_id: cabId,
                 item_id: item.id,
                 nik: loan.nik,
                 created_by: userId,
@@ -194,6 +197,56 @@ class InventoryTransactionService {
 
         const logs = await inventoryTransactionRepository.findAllWithFilters(query, cabId);
         return logs;
+    }
+
+    async adjustStock(payload, request) {
+        const userId = getUserId(request);
+        const cabId = getCabId(request);
+        return await knexBooking.transaction(async (trx) => {
+            const now = formatDateTime();
+
+            const item = await inventoryItemRepository.findById(payload.item_id, trx);
+            if (!item) {
+                const error = new Error("Data barang tidak ditemukan.");
+                error.statusCode = 404;
+                throw error;
+            }
+
+            const difference = payload.actual_qty - item.stock_available;
+            if (difference === 0) {
+                const error = new Error("Penyesuaian ditolak. Stok fisik sudah sama dengan stok sistem saat ini.");
+                error.statusCode = 400;
+                throw error;
+            }
+
+            await inventoryItemRepository.update(item.id, { 
+                stock_available: payload.actual_qty, 
+                updated_at: now,
+                updated_by: userId
+            }, trx);
+
+            const transactionPayload = {
+                cab_id: cabId,
+                item_id: item.id,
+                created_by: userId, 
+                transaction_type: 'ADJUSTMENT', 
+                input_qty: Math.abs(difference), 
+                input_unit_id: item.base_unit_id, 
+                qty: difference, 
+                note: `[STOCK OPNAME] ${payload.note}`, 
+                created_at: now,
+                updated_at: now
+            };
+            
+            await inventoryTransactionRepository.create(transactionPayload, trx);
+
+            return { 
+                item_name: item.name, 
+                old_stock: item.stock_available,
+                new_stock: payload.actual_qty,
+                difference: difference 
+            };
+        });
     }
 }
 

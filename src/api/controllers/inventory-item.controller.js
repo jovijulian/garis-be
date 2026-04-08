@@ -83,6 +83,15 @@ class InventoryItemController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async options(req, res) {
+        try {
+            const data = await inventoryItemService.options(req.query, req);
+            return success(res, 200, data, 'Berhasil mengambil daftar opsi barang');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new InventoryItemController();

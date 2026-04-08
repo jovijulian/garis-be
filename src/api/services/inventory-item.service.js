@@ -1,6 +1,6 @@
 const inventoryItemRepository = require('../repositories/inventory-item.repository');
 const inventoryTransactionRepository = require('../repositories/inventory-transaction.repository');
-const { formatDateTime, getUserId } = require("../helpers/dataHelpers");
+const { formatDateTime, getUserId, getCabId } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
 
 class InventoryItemService {
@@ -59,7 +59,7 @@ class InventoryItemService {
 
     async create(payload, request) {
         const getUser = getUserId(request);
-        
+
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
 
@@ -71,7 +71,7 @@ class InventoryItemService {
 
             payload.created_at = now;
             payload.updated_at = now;
-            payload.stock_available = 0; 
+            payload.stock_available = 0;
             payload.created_by = getUser;
 
             if (!payload.barcode || payload.barcode.trim() === '') {
@@ -122,9 +122,9 @@ class InventoryItemService {
     }
 
     async update(id, payload, request) {
-        await this.detail(id); 
+        await this.detail(id);
         const getUser = getUserId(request);
-        
+
         return await knexBooking.transaction(async (trx) => {
             payload.updated_at = formatDateTime();
             payload.updated_by = getUser;
@@ -144,7 +144,7 @@ class InventoryItemService {
 
     async delete(id) {
         await this.detail(id);
-        
+
         return await knexBooking.transaction(async (trx) => {
             const data = await inventoryItemRepository.update(id, { is_active: 0 }, trx);
             if (!data) {
@@ -158,7 +158,7 @@ class InventoryItemService {
 
     async bulkCreate(payloads, request) {
         const getUser = getUserId(request);
-        
+
         return await knexBooking.transaction(async (trx) => {
             const results = [];
             const now = formatDateTime();
@@ -172,7 +172,7 @@ class InventoryItemService {
 
                 payload.created_at = now;
                 payload.updated_at = now;
-                payload.stock_available = 0; 
+                payload.stock_available = 0;
                 payload.created_by = getUser;
 
                 if (!payload.barcode || payload.barcode.trim() === '') {
@@ -222,6 +222,17 @@ class InventoryItemService {
 
             return results;
         });
+    }
+
+    async options(query, request) {
+        const cabId = getCabId(request);
+        const search = query.search || '';
+
+        const items = await inventoryItemRepository.options(cabId, search);
+        if (!items || items.length === 0) {
+            return [];
+        }
+        return items;
     }
 }
 

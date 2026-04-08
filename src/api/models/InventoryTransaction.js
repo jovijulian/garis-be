@@ -15,7 +15,7 @@ class InventoryTransaction extends BaseModelBooking {
                 item_id: { type: 'integer' },
                 created_by: { type: 'string' },
                 nik: { type: 'string', nullable: true },
-                transaction_type: { type: 'string', enum: ['STOCK_IN', 'OUT_BHP', 'OUT_ASSET', 'RETURN'] },
+                transaction_type: { type: 'string', enum: ['STOCK_IN', 'OUT_BHP', 'OUT_ASSET', 'RETURN', 'ADJUSTMENT'] },
                 input_qty: { type: 'integer' },
                 input_unit_id: { type: 'integer' },
                 qty: { type: 'integer' },

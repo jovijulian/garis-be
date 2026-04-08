@@ -17,6 +17,7 @@ router.post('/', validate(createSchema), InventoryItemController.create);
 router.post('/bulk', validate(bulkCreateSchema), InventoryItemController.bulkCreate);
 router.get('/', InventoryItemController.getAll);
 router.get('/check-barcode/:barcode', InventoryItemController.checkBarcode);
+router.get('/options/', InventoryItemController.options);
 router.get('/:id', validate(inventoryItemIdSchema), InventoryItemController.detail);
 router.put('/:id', validate(updateSchema), InventoryItemController.update);
 router.delete('/:id', validate(inventoryItemIdSchema), InventoryItemController.delete);

@@ -71,6 +71,30 @@ class InventoryItemRepository extends BaseRepository {
         }
         return InventoryItem.query().findById(id).withGraphFetched(relations);
     }
+
+    async options(cabId, search = '') {
+        const query = this.model.query()
+            .select('id', 'name', 'barcode', 'stock_available', 'base_unit_id')
+            .withGraphFetched('[base_unit]')
+            .modifyGraph('base_unit', builder => {
+                builder.select('id', 'name');
+            })
+            .where('is_active', 1)
+            .orderBy('name', 'ASC');
+
+        if (cabId) {
+            query.where('cab_id', cabId);
+        }
+
+        if (search) {
+            query.where(builder => {
+                builder.where('name', 'like', `%${search}%`)
+                    .orWhere('barcode', 'like', `%${search}%`);
+            });
+        }
+
+        return await query;
+    }
 }
 
 module.exports = new InventoryItemRepository();

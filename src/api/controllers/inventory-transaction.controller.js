@@ -43,6 +43,19 @@ class InventoryTransactionController {
             return error(res, 500, err);
         }
     }
+
+    async adjustStock(req, res) {
+        try {
+            const payload = req.body;
+            const data = await inventoryTransactionService.adjustStock(payload, req); 
+            
+            let msgAction = data.difference > 0 ? 'ditambah' : 'dikurangi';
+            
+            return success(res, 201, data, `Stok berhasil disesuaikan. Sistem telah otomatis ${msgAction} ${Math.abs(data.difference)} barang.`);
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new InventoryTransactionController();
