@@ -44,7 +44,6 @@ class InventoryTransactionService {
                 created_at: now,
                 updated_at: now
             };
-
             const newTransaction = await inventoryTransactionRepository.create(transactionPayload, trx);
 
             const currentStock = item.stock_available || 0;

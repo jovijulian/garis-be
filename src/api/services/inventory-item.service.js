@@ -59,6 +59,7 @@ class InventoryItemService {
 
     async create(payload, request) {
         const getUser = getUserId(request);
+        const cabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
@@ -73,11 +74,12 @@ class InventoryItemService {
             payload.updated_at = now;
             payload.stock_available = 0;
             payload.created_by = getUser;
+            payload.cab_id = cabId;
 
             if (!payload.barcode || payload.barcode.trim() === '') {
-                payload.barcode = await this.generateUniqueBarcode(payload.cab_id);
+                payload.barcode = await this.generateUniqueBarcode(cabId);
             } else {
-                const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, payload.cab_id);
+                const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, cabId);
                 if (existing) {
                     const error = new Error(`Barcode ${payload.barcode} sudah terdaftar di cabang ini.`);
                     error.statusCode = 400;
@@ -99,7 +101,7 @@ class InventoryItemService {
                 }
 
                 const transactionPayload = {
-                    cab_id: newItem.cab_id,
+                    cab_id: cabId,
                     item_id: newItem.id,
                     created_by: getUser,
                     transaction_type: 'STOCK_IN',
@@ -124,13 +126,14 @@ class InventoryItemService {
     async update(id, payload, request) {
         await this.detail(id);
         const getUser = getUserId(request);
+        const cabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             payload.updated_at = formatDateTime();
             payload.updated_by = getUser;
 
             if (payload.barcode) {
-                const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, payload.cab_id);
+                const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, cabId);
                 if (existing && existing.id !== Number(id)) {
                     const error = new Error(`Barcode ${payload.barcode} sudah digunakan oleh barang lain.`);
                     error.statusCode = 400;
@@ -158,6 +161,7 @@ class InventoryItemService {
 
     async bulkCreate(payloads, request) {
         const getUser = getUserId(request);
+        const cabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             const results = [];
@@ -174,11 +178,12 @@ class InventoryItemService {
                 payload.updated_at = now;
                 payload.stock_available = 0;
                 payload.created_by = getUser;
+                payload.cab_id = cabId;
 
                 if (!payload.barcode || payload.barcode.trim() === '') {
-                    payload.barcode = await this.generateUniqueBarcode(payload.cab_id);
+                    payload.barcode = await this.generateUniqueBarcode(cabId);
                 } else {
-                    const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, payload.cab_id);
+                    const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, cabId);
                     if (existing) {
                         const error = new Error(`Gagal pada baris ${index + 1}: Barcode ${payload.barcode} sudah terdaftar.`);
                         error.statusCode = 400;
@@ -199,7 +204,7 @@ class InventoryItemService {
                     }
 
                     const transactionPayload = {
-                        cab_id: newItem.cab_id,
+                        cab_id: cabId,
                         item_id: newItem.id,
                         created_by: getUser,
                         transaction_type: 'STOCK_IN',
