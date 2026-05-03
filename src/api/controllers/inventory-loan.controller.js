@@ -22,6 +22,15 @@ class InventoryLoanController {
         }
     }
 
+    async getMyLoans(req, res) {
+        try {
+            const paginatedData = await inventoryLoanService.getMyLoans(req);
+            return paginated(res, 200, paginatedData, 'My loans retrieved successfully');
+        } catch (err) {
+            return error(res, 500, err);
+        }
+    }
+
 
 }
 

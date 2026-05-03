@@ -13,6 +13,13 @@ class InventoryLoanService {
         const nik = queryParams.nik
         return inventoryLoanRepository.getAllByNIK(nik);
     }
+
+    async getMyLoans(request) {
+        const userId = getUserId(request);
+        const queryParams = request.query;
+        return inventoryLoanRepository.findAllWithFiltersByUserId(queryParams, userId);
+    }
+   
 }
 
 module.exports = new InventoryLoanService();

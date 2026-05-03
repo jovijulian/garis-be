@@ -18,6 +18,7 @@ router.post('/stock-out', validate(stockOutSchema), InventoryTransactionControll
 router.post('/return', validate(returnAssetSchema), InventoryTransactionController.returnAsset);
 router.post('/adjustment', validate(adjustStockSchema), InventoryTransactionController.adjustStock);
 router.get('/', InventoryTransactionController.getLogTransactions);
+router.get('/user', InventoryTransactionController.getLogTransactionsUser);
 
 
 module.exports = router;

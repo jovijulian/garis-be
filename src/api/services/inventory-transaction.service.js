@@ -247,6 +247,14 @@ class InventoryTransactionService {
             };
         });
     }
+
+    async getLogTransactionsUser(query, request) {
+        const cabId = getCabId(request);
+        const userId = getUserId(request);
+
+        const logs = await inventoryTransactionRepository.findAllWithFiltersUser(query, userId);
+        return logs;
+    }
 }
 
 module.exports = new InventoryTransactionService();

@@ -56,6 +56,15 @@ class InventoryTransactionController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async getLogTransactionsUser(req, res) {
+        try {
+            const paginatedData = await inventoryTransactionService.getLogTransactionsUser(req.query, req);
+            return paginated(res, 200, paginatedData, 'My log transaction retrieved successfully');
+        } catch (err) {
+            return error(res, 500, err);
+        }
+    }
 }
 
 module.exports = new InventoryTransactionController();

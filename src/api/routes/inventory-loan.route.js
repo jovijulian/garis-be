@@ -10,5 +10,6 @@ router.use(verifyToken);
 
 router.get('/', InventoryLoanController.getAll);
 router.get('/by-nik', InventoryLoanController.getAllByNIK);
+router.get('/user', InventoryLoanController.getMyLoans);
 
 module.exports = router;
