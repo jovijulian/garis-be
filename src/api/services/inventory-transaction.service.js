@@ -218,8 +218,8 @@ class InventoryTransactionService {
                 throw error;
             }
 
-            await inventoryItemRepository.update(item.id, { 
-                stock_available: payload.actual_qty, 
+            await inventoryItemRepository.update(item.id, {
+                stock_available: payload.actual_qty,
                 updated_at: now,
                 updated_by: userId
             }, trx);
@@ -227,23 +227,23 @@ class InventoryTransactionService {
             const transactionPayload = {
                 cab_id: cabId,
                 item_id: item.id,
-                created_by: userId, 
-                transaction_type: 'ADJUSTMENT', 
-                input_qty: Math.abs(difference), 
-                input_unit_id: item.base_unit_id, 
-                qty: difference, 
-                note: `[STOCK OPNAME] ${payload.note}`, 
+                created_by: userId,
+                transaction_type: 'ADJUSTMENT',
+                input_qty: Math.abs(difference),
+                input_unit_id: item.base_unit_id,
+                qty: difference,
+                note: `[STOCK OPNAME] ${payload.note}`,
                 created_at: now,
                 updated_at: now
             };
-            
+
             await inventoryTransactionRepository.create(transactionPayload, trx);
 
-            return { 
-                item_name: item.name, 
+            return {
+                item_name: item.name,
                 old_stock: item.stock_available,
                 new_stock: payload.actual_qty,
-                difference: difference 
+                difference: difference
             };
         });
     }
@@ -254,6 +254,86 @@ class InventoryTransactionService {
 
         const logs = await inventoryTransactionRepository.findAllWithFiltersUser(query, userId);
         return logs;
+    }
+
+    async stockOutUser(payload, request) {
+        const userId = getUserId(request);
+        // const cabId = getCabId(request);
+
+        return await knexBooking.transaction(async (trx) => {
+            const now = formatDateTime();
+            const results = [];
+
+            for (let i = 0; i < payload.items.length; i++) {
+                const reqItem = payload.items[i];
+                const item = await inventoryItemRepository.findByIdWithRelations(reqItem.item_id, null);
+                if (!item) {
+                    const error = new Error(`Barang dengan ID ${reqItem.item_id} tidak ditemukan.`);
+                    error.statusCode = 404;
+                    throw error;
+                }
+
+                const inputQty = parseInt(reqItem.input_qty);
+                let baseQtyToDeduct = 0;
+                if (reqItem.input_unit_id === item.pack_unit_id) {
+                    baseQtyToDeduct = inputQty * (item.qty_per_pack || 1);
+                } else if (reqItem.input_unit_id === item.base_unit_id) {
+                    baseQtyToDeduct = inputQty;
+                } else {
+                    const error = new Error(`Satuan input tidak sesuai dengan konfigurasi barang: ${item.name}`);
+                    error.statusCode = 400;
+                    throw error;
+                }
+
+                const currentStock = item.stock_available || 0;
+                if (currentStock < baseQtyToDeduct) {
+                    const error = new Error(`Gagal: Stok '${item.name}' tidak mencukupi. (Diminta: ${baseQtyToDeduct}, Sisa: ${currentStock})`);
+                    error.statusCode = 400;
+                    throw error;
+                }
+
+                const isAsset = item.item_type === 2;
+                const trxType = isAsset ? 'OUT_ASSET' : 'OUT_BHP';
+
+                const transactionPayload = {
+                    cab_id: payload.cab_id,
+                    item_id: item.id,
+                    created_by: userId,
+                    nik: payload.nik,
+                    transaction_type: trxType,
+                    input_qty: inputQty,
+                    input_unit_id: reqItem.input_unit_id,
+                    qty: baseQtyToDeduct,
+                    note: payload.note || 'Pengeluaran Barang (Stock Out)',
+                    created_at: now,
+                    updated_at: now
+                };
+
+                const newTransaction = await inventoryTransactionRepository.create(transactionPayload, trx);
+
+                if (isAsset) {
+                    const loanPayload = {
+                        cab_id: payload.cab_id,
+                        transaction_id: newTransaction.id,
+                        item_id: item.id,
+                        created_by: userId,
+                        nik: payload.nik,
+                        qty_borrowed: baseQtyToDeduct,
+                        qty_returned: 0,
+                        status: 'BORROWED',
+                        borrowed_at: now,
+                    };
+                    await inventoryLoanRepository.create(loanPayload, trx);
+                }
+
+                const newStock = currentStock - baseQtyToDeduct;
+                await inventoryItemRepository.update(item.id, { stock_available: newStock, updated_at: now }, trx);
+
+                results.push({ item_name: item.name, deducted_qty: baseQtyToDeduct, is_loan: isAsset });
+            }
+
+            return results;
+        });
     }
 }
 

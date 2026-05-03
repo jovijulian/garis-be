@@ -34,6 +34,21 @@ const stockOutSchema = z.object({
     })
 });
 
+const stockOutUserSchema = z.object({
+    body: z.object({
+        nik: z.string({ required_error: 'NIK peminta wajib diisi' }).min(1),
+        note: z.string().optional().nullable(),
+        cab_id: z.number({ required_error: 'Cabang ID is required' }).int().positive(),
+        items: z.array(
+            z.object({
+                item_id: z.number({ required_error: 'Item ID is required' }).int().positive(),
+                input_qty: z.number({ required_error: 'Qty is required' }).int().positive('Qty harus lebih besar dari 0'),
+                input_unit_id: z.number({ required_error: 'Unit ID is required' }).int().positive()
+            })
+        ).min(1, 'Keranjang kosong. Minimal satu barang harus dipilih untuk dikeluarkan.')
+    })
+});
+
 const returnAssetSchema = z.object({
     body: z.object({
         loan_id: z.number({ required_error: 'ID Pinjaman wajib diisi' }).int().positive(),
@@ -55,4 +70,5 @@ module.exports = {
     stockOutSchema,
     returnAssetSchema,
     adjustStockSchema,
+    stockOutUserSchema
 };
