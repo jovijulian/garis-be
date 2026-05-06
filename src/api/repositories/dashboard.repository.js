@@ -472,7 +472,33 @@ class DashboardRepository {
         }
 
         const reminders = await query;
-        return reminders.length;
+
+        const today = moment(currentDate).startOf('day');
+    
+        let count = 0;
+    
+        for (const reminder of reminders) {
+            if (!reminder.reminder_type?.notification_intervals) continue;
+    
+            let intervals = [];
+            try {
+                intervals = JSON.parse(reminder.reminder_type.notification_intervals);
+            } catch (e) {
+                continue;
+            }
+    
+            const dueDate = moment(reminder.due_date).startOf('day');
+            const daysLeft = dueDate.diff(today, 'days');
+    
+            if (
+                reminder.status === 'OVERDUE' ||
+                intervals.includes(daysLeft)
+            ) {
+                count++;
+            }
+        }
+    
+        return count;
     }
 
 
