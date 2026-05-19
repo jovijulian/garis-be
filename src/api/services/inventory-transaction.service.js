@@ -13,7 +13,7 @@ class InventoryTransactionService {
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
 
-            const item = await inventoryItemRepository.findByIdWithRelations(payload.item_id, null);
+            const item = await inventoryItemRepository.findByIdWithRelations(payload.item_id, '[uoms]');
             if (!item) {
                 const error = new Error('Inventory Item tidak ditemukan.');
                 error.statusCode = 404;
@@ -23,12 +23,15 @@ class InventoryTransactionService {
             const inputQty = parseInt(payload.input_qty);
             let baseQtyToAdd = 0;
 
-            if (payload.input_unit_id === item.pack_unit_id) {
-                baseQtyToAdd = inputQty * (item.qty_per_pack || 1);
-            } else if (payload.input_unit_id === item.base_unit_id) {
+            if (payload.input_unit_id === item.base_unit_id) {
                 baseQtyToAdd = inputQty;
             } else {
-                throw new Error('Satuan input tidak sesuai dengan konfigurasi barang.');
+                const matchedUom = item.uoms?.find(u => u.unit_id === payload.input_unit_id);
+                if (matchedUom) {
+                    baseQtyToAdd = inputQty * matchedUom.multiplier;
+                } else {
+                    throw new Error('Satuan input tidak terdaftar pada konfigurasi konversi barang ini.');
+                }
             }
 
             const transactionPayload = {
@@ -65,7 +68,7 @@ class InventoryTransactionService {
 
             for (let i = 0; i < payload.items.length; i++) {
                 const reqItem = payload.items[i];
-                const item = await inventoryItemRepository.findByIdWithRelations(reqItem.item_id, null);
+                const item = await inventoryItemRepository.findByIdWithRelations(reqItem.item_id, '[uoms]');
                 if (!item) {
                     const error = new Error(`Barang dengan ID ${reqItem.item_id} tidak ditemukan.`);
                     error.statusCode = 404;
@@ -74,14 +77,18 @@ class InventoryTransactionService {
 
                 const inputQty = parseInt(reqItem.input_qty);
                 let baseQtyToDeduct = 0;
-                if (reqItem.input_unit_id === item.pack_unit_id) {
-                    baseQtyToDeduct = inputQty * (item.qty_per_pack || 1);
-                } else if (reqItem.input_unit_id === item.base_unit_id) {
+
+                if (reqItem.input_unit_id === item.base_unit_id) {
                     baseQtyToDeduct = inputQty;
                 } else {
-                    const error = new Error(`Satuan input tidak sesuai dengan konfigurasi barang: ${item.name}`);
-                    error.statusCode = 400;
-                    throw error;
+                    const matchedUom = item.uoms?.find(u => u.unit_id === reqItem.input_unit_id);
+                    if (matchedUom) {
+                        baseQtyToDeduct = inputQty * matchedUom.multiplier;
+                    } else {
+                        const error = new Error(`Satuan input tidak sesuai dengan konfigurasi barang: ${item.name}`);
+                        error.statusCode = 400;
+                        throw error;
+                    }
                 }
 
                 const currentStock = item.stock_available || 0;
@@ -258,7 +265,6 @@ class InventoryTransactionService {
 
     async stockOutUser(payload, request) {
         const userId = getUserId(request);
-        // const cabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
@@ -266,7 +272,7 @@ class InventoryTransactionService {
 
             for (let i = 0; i < payload.items.length; i++) {
                 const reqItem = payload.items[i];
-                const item = await inventoryItemRepository.findByIdWithRelations(reqItem.item_id, null);
+                const item = await inventoryItemRepository.findByIdWithRelations(reqItem.item_id, '[uoms]');
                 if (!item) {
                     const error = new Error(`Barang dengan ID ${reqItem.item_id} tidak ditemukan.`);
                     error.statusCode = 404;
@@ -275,14 +281,18 @@ class InventoryTransactionService {
 
                 const inputQty = parseInt(reqItem.input_qty);
                 let baseQtyToDeduct = 0;
-                if (reqItem.input_unit_id === item.pack_unit_id) {
-                    baseQtyToDeduct = inputQty * (item.qty_per_pack || 1);
-                } else if (reqItem.input_unit_id === item.base_unit_id) {
+
+                if (reqItem.input_unit_id === item.base_unit_id) {
                     baseQtyToDeduct = inputQty;
                 } else {
-                    const error = new Error(`Satuan input tidak sesuai dengan konfigurasi barang: ${item.name}`);
-                    error.statusCode = 400;
-                    throw error;
+                    const matchedUom = item.uoms?.find(u => u.unit_id === reqItem.input_unit_id);
+                    if (matchedUom) {
+                        baseQtyToDeduct = inputQty * matchedUom.multiplier;
+                    } else {
+                        const error = new Error(`Satuan input tidak sesuai dengan konfigurasi barang: ${item.name}`);
+                        error.statusCode = 400;
+                        throw error;
+                    }
                 }
 
                 const currentStock = item.stock_available || 0;

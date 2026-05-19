@@ -15,7 +15,7 @@ class InventoryItemRepository extends BaseRepository {
         const query = InventoryItem.query()
             .select('*')
             .where('is_active', 1)
-            .withGraphFetched('[category(selectName), base_unit(selectName), pack_unit(selectName)]')
+            .withGraphFetched('[category(selectName), base_unit(selectName), uoms.[unit(selectName)]]')
             .modifiers({
                 selectName: (builder) => {
                     builder.select('id', 'name');
@@ -58,7 +58,7 @@ class InventoryItemRepository extends BaseRepository {
             .where('barcode', barcode)
             .where('cab_id', cab_id)
             .where('is_active', 1)
-            .withGraphFetched('[category(selectName), base_unit(selectName), pack_unit(selectName)]')
+            .withGraphFetched('[category(selectName), base_unit(selectName), uoms.[unit(selectName)]]')
             .modifiers({
                 selectName: (builder) => builder.select('id', 'name')
             })
@@ -75,10 +75,9 @@ class InventoryItemRepository extends BaseRepository {
     async options(cabId, search = '') {
         const query = this.model.query()
             .select('id', 'name', 'barcode', 'stock_available', 'base_unit_id')
-            .withGraphFetched('[base_unit]')
-            .modifyGraph('base_unit', builder => {
-                builder.select('id', 'name');
-            })
+            .withGraphFetched('[base_unit, uom_conversions.[unit]]')
+            .modifyGraph('base_unit', builder => builder.select('id', 'name'))
+            .modifyGraph('uoms.unit', builder => builder.select('id', 'name'))
             .where('is_active', 1)
             .orderBy('name', 'ASC');
 

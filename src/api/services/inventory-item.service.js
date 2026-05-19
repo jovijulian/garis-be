@@ -2,6 +2,7 @@ const inventoryItemRepository = require('../repositories/inventory-item.reposito
 const inventoryTransactionRepository = require('../repositories/inventory-transaction.repository');
 const { formatDateTime, getUserId, getCabId } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
+const itemUomRepository = require('../repositories/item-uom.repository');
 
 class InventoryItemService {
 
@@ -48,7 +49,7 @@ class InventoryItemService {
     }
 
     async detail(id) {
-        const data = await inventoryItemRepository.findByIdWithRelations(id, '[cabang, category, base_unit, pack_unit, created_by_user, updated_by_user]');
+        const data = await inventoryItemRepository.findByIdWithRelations(id, '[cabang, category, base_unit, uoms.[unit], created_by_user, updated_by_user]');
         if (!data) {
             const error = new Error('Inventory Item not found.');
             error.statusCode = 404;
@@ -64,11 +65,9 @@ class InventoryItemService {
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
 
-            const initialQty = payload.initial_qty ? parseInt(payload.initial_qty) : 0;
-            const initialUnitId = payload.initial_unit_id || payload.base_unit_id;
+            const uomConversions = payload.uoms || [];
 
-            delete payload.initial_qty;
-            delete payload.initial_unit_id;
+            delete payload.uoms;
 
             payload.created_at = now;
             payload.updated_at = now;
@@ -81,7 +80,7 @@ class InventoryItemService {
             } else {
                 const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, cabId);
                 if (existing) {
-                    const error = new Error(`Barcode ${payload.barcode} sudah terdaftar di cabang ini.`);
+                    const error = new Error(`Barcode ${payload.barcode} sudah terdaftar.`);
                     error.statusCode = 400;
                     throw error;
                 }
@@ -89,34 +88,13 @@ class InventoryItemService {
 
             const newItem = await inventoryItemRepository.create(payload, trx);
 
-            if (initialQty > 0) {
-                let baseQtyToAdd = 0;
-
-                if (initialUnitId === newItem.pack_unit_id) {
-                    baseQtyToAdd = initialQty * (newItem.qty_per_pack || 1);
-                } else if (initialUnitId === newItem.base_unit_id) {
-                    baseQtyToAdd = initialQty;
-                } else {
-                    throw new Error('Satuan stok awal tidak sesuai dengan konfigurasi barang ini.');
-                }
-
-                const transactionPayload = {
-                    cab_id: cabId,
+            if (uomConversions.length > 0) {
+                const uomDataToInsert = uomConversions.map(uom => ({
                     item_id: newItem.id,
-                    created_by: getUser,
-                    transaction_type: 'STOCK_IN',
-                    input_qty: initialQty,
-                    input_unit_id: initialUnitId,
-                    qty: baseQtyToAdd,
-                    note: payload.note,
-                    created_at: now,
-                    updated_at: now
-                };
-
-                await inventoryTransactionRepository.create(transactionPayload, trx);
-
-                newItem.stock_available = baseQtyToAdd;
-                await inventoryItemRepository.update(newItem.id, { stock_available: baseQtyToAdd }, trx);
+                    unit_id: uom.unit_id,
+                    multiplier: uom.multiplier
+                }));
+                await itemUomRepository.createItemUom(uomDataToInsert, trx);
             }
 
             return newItem;
@@ -132,6 +110,9 @@ class InventoryItemService {
             payload.updated_at = formatDateTime();
             payload.updated_by = getUser;
 
+            const uomConversions = payload.uoms;
+            delete payload.uoms;
+
             if (payload.barcode) {
                 const existing = await inventoryItemRepository.findByBarcodeAndCabang(payload.barcode, cabId);
                 if (existing && existing.id !== Number(id)) {
@@ -141,9 +122,25 @@ class InventoryItemService {
                 }
             }
 
-            return await inventoryItemRepository.update(id, payload, trx);
+            const updatedItem = await inventoryItemRepository.update(id, payload, trx);
+
+            if (uomConversions !== undefined) {
+                await itemUomRepository.deleteByItemId(id, trx);
+
+                if (uomConversions.length > 0) {
+                    const uomDataToInsert = uomConversions.map(uom => ({
+                        item_id: id,
+                        unit_id: uom.unit_id,
+                        multiplier: uom.multiplier
+                    }));
+                    await itemUomRepository.createItemUom(uomDataToInsert, trx);
+                }
+            }
+
+            return updatedItem;
         });
     }
+
 
     async delete(id) {
         await this.detail(id);
@@ -168,11 +165,8 @@ class InventoryItemService {
             const now = formatDateTime();
 
             for (let [index, payload] of payloads.entries()) {
-                const initialQty = payload.initial_qty ? parseInt(payload.initial_qty) : 0;
-                const initialUnitId = payload.initial_unit_id || payload.base_unit_id;
-
-                delete payload.initial_qty;
-                delete payload.initial_unit_id;
+                const uomConversions = payload.uoms || [];
+                delete payload.uoms;
 
                 payload.created_at = now;
                 payload.updated_at = now;
@@ -192,34 +186,13 @@ class InventoryItemService {
                 }
 
                 const newItem = await inventoryItemRepository.create(payload, trx);
-
-                if (initialQty > 0) {
-                    let baseQtyToAdd = 0;
-                    if (initialUnitId === newItem.pack_unit_id) {
-                        baseQtyToAdd = initialQty * (newItem.qty_per_pack || 1);
-                    } else if (initialUnitId === newItem.base_unit_id) {
-                        baseQtyToAdd = initialQty;
-                    } else {
-                        throw new Error(`Gagal pada baris ${index + 1}: Satuan stok tidak sesuai.`);
-                    }
-
-                    const transactionPayload = {
-                        cab_id: cabId,
+                if (uomConversions.length > 0) {
+                    const uomDataToInsert = uomConversions.map(uom => ({
                         item_id: newItem.id,
-                        created_by: getUser,
-                        transaction_type: 'STOCK_IN',
-                        input_qty: initialQty,
-                        input_unit_id: initialUnitId,
-                        qty: baseQtyToAdd,
-                        note: payload.note,
-                        created_at: now,
-                        updated_at: now
-                    };
-
-                    await inventoryTransactionRepository.create(transactionPayload, trx);
-
-                    newItem.stock_available = baseQtyToAdd;
-                    await inventoryItemRepository.update(newItem.id, { stock_available: baseQtyToAdd }, trx);
+                        unit_id: uom.unit_id,
+                        multiplier: uom.multiplier
+                    }));
+                    await itemUomRepository.createItemUom(uomDataToInsert, trx);
                 }
 
                 results.push(newItem);

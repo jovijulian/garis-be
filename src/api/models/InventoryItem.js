@@ -19,8 +19,10 @@ class InventoryItem extends BaseModelBooking {
                 stock_available: { type: 'integer' },
                 stock_minimum: { type: 'integer' },
                 base_unit_id: { type: 'integer' },
-                pack_unit_id: { type: 'integer' },
-                qty_per_pack: { type: 'integer' },
+                size: { type: 'string', nullable: true },
+                color: { type: 'string', nullable: true },
+                style: { type: 'string', nullable: true },
+                version: { type: 'string', nullable: true },
                 is_active: { type: 'integer' },
                 created_by: { type: 'string' },
                 updated_by: { type: 'string' },
@@ -32,7 +34,9 @@ class InventoryItem extends BaseModelBooking {
         const Site = require('./Site');
         const InventoryCategory = require('./InventoryCategory');
         const InventoryUnit = require('./InventoryUnit');
+        const ItemUom = require('./ItemUom');
         const User = require('./User');
+
         return {
             cabang: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -53,18 +57,12 @@ class InventoryItem extends BaseModelBooking {
             base_unit: {
                 relation: BaseModelBooking.BelongsToOneRelation,
                 modelClass: InventoryUnit,
-                join: {
-                    from: 'inventory_items.base_unit_id',
-                    to: 'inventory_units.id'
-                }
+                join: { from: 'inventory_items.base_unit_id', to: 'inventory_units.id' }
             },
-            pack_unit: {
-                relation: BaseModelBooking.BelongsToOneRelation,
-                modelClass: InventoryUnit,
-                join: {
-                    from: 'inventory_items.pack_unit_id',
-                    to: 'inventory_units.id'
-                }
+            uoms: {
+                relation: BaseModelBooking.HasManyRelation,
+                modelClass: ItemUom,
+                join: { from: 'inventory_items.id', to: 'item_uoms.item_id' }
             },
             created_by_user: {
                 relation: BaseModelBooking.BelongsToOneRelation,
