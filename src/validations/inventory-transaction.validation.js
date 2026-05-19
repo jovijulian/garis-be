@@ -61,7 +61,7 @@ const adjustStockSchema = z.object({
     body: z.object({
         item_id: z.number({ required_error: 'ID Barang wajib diisi' }).int().positive(),
         actual_qty: z.number({ required_error: 'Stok aktual wajib diisi' }).int().min(0, "Stok tidak boleh minus"),
-        note: z.string({ required_error: 'Alasan penyesuaian wajib diisi' }).min(5, "Berikan alasan yang jelas (min 5 karakter)")
+        note: z.string({ required_error: 'Alasan penyesuaian wajib diisi' }).min(1)
     })
 });
 

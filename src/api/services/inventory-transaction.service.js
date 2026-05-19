@@ -261,7 +261,7 @@ class InventoryTransactionService {
             }
 
             await inventoryItemRepository.update(item.id, {
-                stock_available: actualQtyInBase, 
+                stock_available: Number(actualQtyInBase), 
                 updated_at: now,
                 updated_by: userId
             }, trx);
