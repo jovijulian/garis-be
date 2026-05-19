@@ -9,6 +9,7 @@ router.use(verifyToken);
 
 
 router.get('/', InventoryLoanController.getAll);
+router.get('/:id', InventoryLoanController.detail);
 router.get('/by-nik', InventoryLoanController.getAllByNIK);
 router.get('/user', InventoryLoanController.getMyLoans);
 

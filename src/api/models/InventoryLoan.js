@@ -30,7 +30,7 @@ class InventoryLoan extends BaseModelBooking {
         const Site = require('./Site');
         const InventoryTransaction = require('./InventoryTransaction');
         const InventoryItem = require('./InventoryItem');
-        const InventoryUnit = require('./InventoryUnit');
+        const ItemUom = require('./ItemUom');
         const User = require('./User');
         return {
             cabang: {
@@ -56,6 +56,11 @@ class InventoryLoan extends BaseModelBooking {
                     from: 'inventory_loans.item_id',
                     to: 'inventory_items.id'
                 }
+            },
+            uoms: {
+                relation: BaseModelBooking.HasManyRelation,
+                modelClass: ItemUom,
+                join: { from: 'inventory_loans.item_id', to: 'item_uoms.item_id' }
             },
             created_by_user: {
                 relation: BaseModelBooking.BelongsToOneRelation,

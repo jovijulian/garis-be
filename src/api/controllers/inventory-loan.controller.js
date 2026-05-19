@@ -12,6 +12,16 @@ class InventoryLoanController {
         }
     }
 
+    async detail(req, res) {
+        try {
+            const id = req.params.id;
+            const data = await inventoryLoanService.detail(id);
+            return success(res, 200, data, 'Inventory Loan retrieved successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
     async getAllByNIK(req, res) {
         try {
             const params = req.query;

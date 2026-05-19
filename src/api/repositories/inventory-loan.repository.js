@@ -13,7 +13,7 @@ class InventoryLoanRepository extends BaseRepository {
 
         const query = InventoryLoan.query()
             .select('*')
-            .withGraphFetched('[cabang, item.base_unit, created_by_user]')
+            .withGraphFetched('[cabang, item.base_unit, created_by_user, uoms.[unit]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
@@ -23,6 +23,7 @@ class InventoryLoanRepository extends BaseRepository {
             .modifyGraph('created_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
+            .modifyGraph('uoms.unit', builder => builder.select('id', 'name'))
             .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
@@ -53,6 +54,14 @@ class InventoryLoanRepository extends BaseRepository {
             page: page,
             per_page: per_page,
         };
+    }
+
+
+    async findByIdWithRelations(id, relations) {
+        if (!relations) {
+            return this.findById(id);
+        }
+        return InventoryLoan.query().findById(id).withGraphFetched(relations);
     }
 
     async getAllByNIK(nik) {

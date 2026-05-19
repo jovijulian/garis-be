@@ -9,6 +9,15 @@ class InventoryLoanService {
         return inventoryLoanRepository.findAllWithFilters(queryParams, cabId);
     }
 
+    async detail(id) {
+        const data = await inventoryLoanRepository.findByIdWithRelations(id, '[cabang, item.base_unit, created_by_user, uoms.[unit]]');
+        if (!data) {
+            const error = new Error('Inventory Item not found.');
+            error.statusCode = 404;
+            throw error;
+        }
+        return data;
+    }
     async getAllByNIK(queryParams) {
         const nik = queryParams.nik
         return inventoryLoanRepository.getAllByNIK(nik);

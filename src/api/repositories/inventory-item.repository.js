@@ -75,7 +75,7 @@ class InventoryItemRepository extends BaseRepository {
     async options(cabId, search = '') {
         const query = this.model.query()
             .select('id', 'name', 'barcode', 'stock_available', 'base_unit_id')
-            .withGraphFetched('[base_unit, uom_conversions.[unit]]')
+            .withGraphFetched('[base_unit, uoms.[unit]]')
             .modifyGraph('base_unit', builder => builder.select('id', 'name'))
             .modifyGraph('uoms.unit', builder => builder.select('id', 'name'))
             .where('is_active', 1)
