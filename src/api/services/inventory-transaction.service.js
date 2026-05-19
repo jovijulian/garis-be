@@ -145,56 +145,76 @@ class InventoryTransactionService {
     async returnAsset(payload, request) {
         const userId = getUserId(request);
         const cabId = getCabId(request);
-
+    
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
-
+    
             const loan = await inventoryLoanRepository.findById(payload.loan_id, trx);
             if (!loan) {
                 const error = new Error("Data peminjaman tidak ditemukan.");
                 error.statusCode = 404;
                 throw error;
             }
-
+    
+            const item = await inventoryItemRepository.findByIdWithRelations(loan.item_id, '[uoms]');
+            if (!item) throw new Error("Data barang tidak ditemukan.");
+    
+            const inputQty = parseInt(payload.return_qty);
+            let baseQtyReturned = 0;
+    
+            if (payload.input_unit_id === item.base_unit_id) {
+                baseQtyReturned = inputQty;
+            } else {
+                const matchedUom = item.uoms?.find(u => u.unit_id === payload.input_unit_id);
+                if (matchedUom) {
+                    baseQtyReturned = inputQty * matchedUom.multiplier;
+                } else {
+                    throw new Error('Satuan pengembalian tidak terdaftar untuk barang ini.');
+                }
+            }
+    
             const remainingToReturn = loan.qty_borrowed - loan.qty_returned;
-            if (payload.return_qty > remainingToReturn) {
-                const error = new Error(`Gagal: Jumlah kembali (${payload.return_qty}) melebihi sisa pinjaman (${remainingToReturn}).`);
+            if (baseQtyReturned > remainingToReturn) {
+                const error = new Error(`Gagal: Jumlah dikembalikan (${baseQtyReturned}) melebihi sisa pinjaman (${remainingToReturn}).`);
                 error.statusCode = 400;
                 throw error;
             }
-
-            const newReturnedQty = loan.qty_returned + payload.return_qty;
+    
+            const newReturnedQty = loan.qty_returned + baseQtyReturned;
             const newStatus = newReturnedQty >= loan.qty_borrowed ? 'RETURNED' : 'PARTIAL_RETURNED';
-
+    
             await inventoryLoanRepository.update(loan.id, {
                 qty_returned: newReturnedQty,
                 status: newStatus,
                 returned_at: now
             }, trx);
-
-            const item = await inventoryItemRepository.findById(loan.item_id, trx);
-            const newStock = item.stock_available + payload.return_qty;
+    
+            const newStock = item.stock_available + baseQtyReturned;
             await inventoryItemRepository.update(item.id, {
                 stock_available: newStock,
                 updated_at: now
             }, trx);
-
+    
             const transactionPayload = {
                 cab_id: cabId,
                 item_id: item.id,
                 nik: loan.nik,
                 created_by: userId,
                 transaction_type: 'RETURN',
-                input_qty: payload.return_qty,
-                input_unit_id: item.base_unit_id,
-                qty: payload.return_qty,
+                input_qty: inputQty,
+                input_unit_id: payload.input_unit_id, 
+                qty: baseQtyReturned, 
                 note: payload.note || 'Pengembalian Aset Inventaris',
                 created_at: now,
                 updated_at: now
             };
             await inventoryTransactionRepository.create(transactionPayload, trx);
-
-            return { item_name: item.name, returned_qty: payload.return_qty, status: newStatus };
+    
+            return { 
+                item_name: item.name, 
+                returned_base_qty: baseQtyReturned, 
+                status: newStatus 
+            };
         });
     }
 
