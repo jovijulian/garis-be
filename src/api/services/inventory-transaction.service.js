@@ -145,23 +145,23 @@ class InventoryTransactionService {
     async returnAsset(payload, request) {
         const userId = getUserId(request);
         const cabId = getCabId(request);
-    
+
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
-    
+
             const loan = await inventoryLoanRepository.findById(payload.loan_id, trx);
             if (!loan) {
                 const error = new Error("Data peminjaman tidak ditemukan.");
                 error.statusCode = 404;
                 throw error;
             }
-    
+
             const item = await inventoryItemRepository.findByIdWithRelations(loan.item_id, '[uoms]');
             if (!item) throw new Error("Data barang tidak ditemukan.");
-    
+
             const inputQty = parseInt(payload.return_qty);
             let baseQtyReturned = 0;
-    
+
             if (payload.input_unit_id === item.base_unit_id) {
                 baseQtyReturned = inputQty;
             } else {
@@ -172,29 +172,29 @@ class InventoryTransactionService {
                     throw new Error('Satuan pengembalian tidak terdaftar untuk barang ini.');
                 }
             }
-    
+
             const remainingToReturn = loan.qty_borrowed - loan.qty_returned;
             if (baseQtyReturned > remainingToReturn) {
                 const error = new Error(`Gagal: Jumlah dikembalikan (${baseQtyReturned}) melebihi sisa pinjaman (${remainingToReturn}).`);
                 error.statusCode = 400;
                 throw error;
             }
-    
+
             const newReturnedQty = loan.qty_returned + baseQtyReturned;
             const newStatus = newReturnedQty >= loan.qty_borrowed ? 'RETURNED' : 'PARTIAL_RETURNED';
-    
+
             await inventoryLoanRepository.update(loan.id, {
                 qty_returned: newReturnedQty,
                 status: newStatus,
                 returned_at: now
             }, trx);
-    
+
             const newStock = item.stock_available + baseQtyReturned;
             await inventoryItemRepository.update(item.id, {
                 stock_available: newStock,
                 updated_at: now
             }, trx);
-    
+
             const transactionPayload = {
                 cab_id: cabId,
                 item_id: item.id,
@@ -202,18 +202,18 @@ class InventoryTransactionService {
                 created_by: userId,
                 transaction_type: 'RETURN',
                 input_qty: inputQty,
-                input_unit_id: payload.input_unit_id, 
-                qty: baseQtyReturned, 
+                input_unit_id: payload.input_unit_id,
+                qty: baseQtyReturned,
                 note: payload.note || 'Pengembalian Aset Inventaris',
                 created_at: now,
                 updated_at: now
             };
             await inventoryTransactionRepository.create(transactionPayload, trx);
-    
-            return { 
-                item_name: item.name, 
-                returned_base_qty: baseQtyReturned, 
-                status: newStatus 
+
+            return {
+                item_name: item.name,
+                returned_base_qty: baseQtyReturned,
+                status: newStatus
             };
         });
     }
@@ -228,25 +228,40 @@ class InventoryTransactionService {
     async adjustStock(payload, request) {
         const userId = getUserId(request);
         const cabId = getCabId(request);
+
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
 
-            const item = await inventoryItemRepository.findById(payload.item_id, trx);
+            const item = await inventoryItemRepository.findByIdWithRelations(payload.item_id, '[uoms]');
             if (!item) {
                 const error = new Error("Data barang tidak ditemukan.");
                 error.statusCode = 404;
                 throw error;
             }
 
-            const difference = payload.actual_qty - item.stock_available;
+            const inputQty = parseInt(payload.input_qty);
+            let actualQtyInBase = 0;
+
+            if (payload.input_unit_id === item.base_unit_id) {
+                actualQtyInBase = inputQty;
+            } else {
+                const matchedUom = item.uoms?.find(u => u.unit_id === payload.input_unit_id);
+                if (!matchedUom) {
+                    throw new Error('Satuan penyesuaian tidak terdaftar pada konfigurasi barang ini.');
+                }
+                actualQtyInBase = inputQty * matchedUom.multiplier;
+            }
+
+            const difference = actualQtyInBase - item.stock_available;
+
             if (difference === 0) {
-                const error = new Error("Penyesuaian ditolak. Stok fisik sudah sama dengan stok sistem saat ini.");
+                const error = new Error("Penyesuaian ditolak. Stok fisik sudah sama dengan stok sistem.");
                 error.statusCode = 400;
                 throw error;
             }
 
             await inventoryItemRepository.update(item.id, {
-                stock_available: payload.actual_qty,
+                stock_available: actualQtyInBase, 
                 updated_at: now,
                 updated_by: userId
             }, trx);
@@ -256,9 +271,9 @@ class InventoryTransactionService {
                 item_id: item.id,
                 created_by: userId,
                 transaction_type: 'ADJUSTMENT',
-                input_qty: Math.abs(difference),
-                input_unit_id: item.base_unit_id,
-                qty: difference,
+                input_qty: inputQty,       
+                input_unit_id: payload.input_unit_id, 
+                qty: difference,           
                 note: `[STOCK OPNAME] ${payload.note}`,
                 created_at: now,
                 updated_at: now
@@ -269,7 +284,7 @@ class InventoryTransactionService {
             return {
                 item_name: item.name,
                 old_stock: item.stock_available,
-                new_stock: payload.actual_qty,
+                new_stock: actualQtyInBase,
                 difference: difference
             };
         });
