@@ -129,7 +129,7 @@ class InventoryItemService {
 
                 if (uomConversions.length > 0) {
                     const uomDataToInsert = uomConversions.map(uom => ({
-                        item_id: id,
+                        item_id: Number(id),
                         unit_id: uom.unit_id,
                         multiplier: uom.multiplier
                     }));
