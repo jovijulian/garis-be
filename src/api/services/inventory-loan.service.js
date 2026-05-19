@@ -18,6 +18,7 @@ class InventoryLoanService {
         }
         return data;
     }
+    
     async getAllByNIK(queryParams) {
         const nik = queryParams.nik
         return inventoryLoanRepository.getAllByNIK(nik);
