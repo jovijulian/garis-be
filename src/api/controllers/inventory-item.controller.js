@@ -8,9 +8,9 @@ class InventoryItemController {
             const { barcode } = req.params;
             const { cab_id } = req.query;
 
-            if (!cab_id) {
-                return error(res, 400, 'cab_id (Cabang) wajib disertakan dalam query.');
-            }
+            // if (!cab_id) {
+            //     return error(res, 400, 'cab_id (Cabang) wajib disertakan dalam query.');
+            // }
 
             const data = await inventoryItemService.checkBarcode(barcode, cab_id);
             return success(res, 200, data, data.message);
