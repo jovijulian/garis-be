@@ -56,7 +56,7 @@ class InventoryItemRepository extends BaseRepository {
     async findByBarcodeAndCabangWithRelations(barcode, cab_id) {
         return InventoryItem.query()
             .where('barcode', barcode)
-            .where('cab_id', cab_id)
+            // .where('cab_id', cab_id)
             .where('is_active', 1)
             .withGraphFetched('[category(selectName), base_unit(selectName), uoms.[unit(selectName)]]')
             .modifiers({
