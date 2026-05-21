@@ -24,6 +24,7 @@ const stockOutSchema = z.object({
     body: z.object({
         nik: z.string().optional().nullable(),
         note: z.string().optional().nullable(),
+        user_id: z.string().optional().nullable(),  
         items: z.array(
             z.object({
                 item_id: z.number({ required_error: 'Item ID is required' }).int().positive(),

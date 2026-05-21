@@ -114,7 +114,7 @@ class InventoryTransactionService {
                     note: payload.note || 'Pengeluaran Barang (Stock Out)',
                     created_at: now,
                     updated_at: now,
-                    user_id: userId,
+                    user_id: payload.user_id || userId,
                 };
 
                 const newTransaction = await inventoryTransactionRepository.create(transactionPayload, trx);
@@ -130,7 +130,7 @@ class InventoryTransactionService {
                         qty_returned: 0,
                         status: 'BORROWED',
                         borrowed_at: now,
-                        user_id: userId,
+                        user_id: payload.user_id || userId,
                     };
                     await inventoryLoanRepository.create(loanPayload, trx);
                 }
