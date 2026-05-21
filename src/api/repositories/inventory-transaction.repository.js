@@ -139,7 +139,8 @@ class InventoryTransactionRepository extends BaseRepository {
             .orderBy('id', 'DESC');
 
         if (userId) {
-            query.where('inventory_transactions.created_by', userId);
+            query.where('inventory_transactions.created_by', userId)
+                .orWhere('inventory_transactions.user_id', userId);
         }
 
         if (queryParams.item_id) {
