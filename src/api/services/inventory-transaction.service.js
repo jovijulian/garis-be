@@ -45,7 +45,8 @@ class InventoryTransactionService {
                 qty: baseQtyToAdd,
                 note: payload.note || 'Penambahan Stok Masuk',
                 created_at: now,
-                updated_at: now
+                updated_at: now,
+                user_id: getUser,
             };
             const newTransaction = await inventoryTransactionRepository.create(transactionPayload, trx);
 
@@ -105,14 +106,15 @@ class InventoryTransactionService {
                     cab_id: cabId,
                     item_id: item.id,
                     created_by: userId,
-                    nik: payload.nik,
+                    nik: null,
                     transaction_type: trxType,
                     input_qty: inputQty,
                     input_unit_id: reqItem.input_unit_id,
                     qty: baseQtyToDeduct,
                     note: payload.note || 'Pengeluaran Barang (Stock Out)',
                     created_at: now,
-                    updated_at: now
+                    updated_at: now,
+                    user_id: userId,
                 };
 
                 const newTransaction = await inventoryTransactionRepository.create(transactionPayload, trx);
@@ -123,11 +125,12 @@ class InventoryTransactionService {
                         transaction_id: newTransaction.id,
                         item_id: item.id,
                         created_by: userId,
-                        nik: payload.nik,
+                        nik: null,
                         qty_borrowed: baseQtyToDeduct,
                         qty_returned: 0,
                         status: 'BORROWED',
                         borrowed_at: now,
+                        user_id: userId,
                     };
                     await inventoryLoanRepository.create(loanPayload, trx);
                 }
@@ -206,7 +209,8 @@ class InventoryTransactionService {
                 qty: baseQtyReturned,
                 note: payload.note || 'Pengembalian Aset Inventaris',
                 created_at: now,
-                updated_at: now
+                updated_at: now,
+                user_id: userId,
             };
             await inventoryTransactionRepository.create(transactionPayload, trx);
 
@@ -263,7 +267,7 @@ class InventoryTransactionService {
             await inventoryItemRepository.update(item.id, {
                 stock_available: Number(actualQtyInBase), 
                 updated_at: now,
-                updated_by: userId
+                updated_by: userId,
             }, trx);
 
             const transactionPayload = {
@@ -276,7 +280,8 @@ class InventoryTransactionService {
                 qty: difference,           
                 note: `[STOCK OPNAME] ${payload.note}`,
                 created_at: now,
-                updated_at: now
+                updated_at: now,
+                user_id: userId,
             };
 
             await inventoryTransactionRepository.create(transactionPayload, trx);
@@ -344,14 +349,15 @@ class InventoryTransactionService {
                     cab_id: payload.cab_id,
                     item_id: item.id,
                     created_by: userId,
-                    nik: payload.nik,
+                    nik: null,
                     transaction_type: trxType,
                     input_qty: inputQty,
                     input_unit_id: reqItem.input_unit_id,
                     qty: baseQtyToDeduct,
                     note: payload.note || 'Pengeluaran Barang (Stock Out)',
                     created_at: now,
-                    updated_at: now
+                    updated_at: now,
+                    user_id: userId,
                 };
 
                 const newTransaction = await inventoryTransactionRepository.create(transactionPayload, trx);
@@ -362,11 +368,12 @@ class InventoryTransactionService {
                         transaction_id: newTransaction.id,
                         item_id: item.id,
                         created_by: userId,
-                        nik: payload.nik,
+                        nik: null,
                         qty_borrowed: baseQtyToDeduct,
                         qty_returned: 0,
                         status: 'BORROWED',
                         borrowed_at: now,
+                        user_id: userId,
                     };
                     await inventoryLoanRepository.create(loanPayload, trx);
                 }

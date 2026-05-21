@@ -22,10 +22,10 @@ class InventoryLoanController {
         }
     }
 
-    async getAllByNIK(req, res) {
+    async getAllByUserId(req, res) {
         try {
             const params = req.query;
-            const data = await inventoryLoanService.getAllByNIK(params);
+            const data = await inventoryLoanService.getAllByUserId(params);
             return success(res, 200, data, 'Inventory Loans retrieved successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);

@@ -9,7 +9,7 @@ class InventoryLoan extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['cab_id', 'transaction_id', 'item_id', 'created_by', 'nik', 'qty_borrowed', 'qty_returned', 'status'],
+            required: ['cab_id', 'transaction_id', 'item_id', 'created_by', 'qty_borrowed', 'qty_returned', 'status', 'user_id'],
             properties: {
                 id: { type: 'integer' },
                 transaction_id: { type: 'integer' },
@@ -22,6 +22,7 @@ class InventoryLoan extends BaseModelBooking {
                 status: { type: 'string', enum: ['BORROWED', 'RETURNED', 'PARTIAL_RETURNED'] },
                 borrowed_at: { type: 'string'},
                 returned_at: { type: 'string'},
+                user_id: { type: 'string', nullable: true },
             }
         };
     }
@@ -70,6 +71,14 @@ class InventoryLoan extends BaseModelBooking {
                     to: 'tb_user.id_user',
                 }
             },
+            user: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: User,
+                join: {
+                    from: 'inventory_loans.user_id',
+                    to: 'tb_user.id_user',
+                }
+            }
         };
     }
 

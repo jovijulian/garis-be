@@ -1,5 +1,6 @@
 const BaseRepository = require('./base.repository');
 const User = require('../models/User');
+const Employee = require('../models/Employee');
 
 class UserRepository extends BaseRepository {
     constructor() {
@@ -106,6 +107,26 @@ class UserRepository extends BaseRepository {
             .select('id_user', 'nama_user');
     }
 
+    async optionsUser(params) {
+
+        const query = User.query()
+            .withGraphFetched('employee')
+            .modifyGraph('employee', builder => {
+                builder.select('id_karyawan', 'nama', 'nik', 'no_ktp');
+            })
+            .select('id_user', 'nama_user');
+        if (params) {
+            query.where('nama_user', 'like', `%${params}%`)
+                .orWhereExists(
+                    Employee.relatedQuery('employee')
+                        .where('nik', 'like', `%${search}%`)
+                        .where('no_ktp', 'like', `%${search}%`)
+                )
+        }
+
+        const data = await query;
+        return data;
+    }
 
 
 }

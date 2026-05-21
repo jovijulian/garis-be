@@ -13,7 +13,7 @@ class InventoryLoanRepository extends BaseRepository {
 
         const query = InventoryLoan.query()
             .select('*')
-            .withGraphFetched('[cabang, item.base_unit, created_by_user, uoms.[unit]]')
+            .withGraphFetched('[cabang, item.base_unit, created_by_user, uoms.[unit], user.[employee]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
@@ -23,6 +23,13 @@ class InventoryLoanRepository extends BaseRepository {
             .modifyGraph('created_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
+            .modifyGraph('user', builder => {
+                builder.select('id_user', 'nama_user')
+                    .withGraphFetched('employee')
+                    .modifyGraph('employee', empBuilder => {
+                        empBuilder.select('id_karyawan', 'nama', 'nik', 'no_ktp');
+                    });
+            })
             .modifyGraph('uoms.unit', builder => builder.select('id', 'name'))
             .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
             .page(page - 1, per_page)
@@ -30,8 +37,20 @@ class InventoryLoanRepository extends BaseRepository {
 
         if (search) {
             query.where(builder => {
-                builder
-                    .where('nik', 'like', `%${search}%`)
+                builder.whereIn('inventory_transactions.user_id', function () {
+                    this.select('nik')
+                        .from(`${secondDB}.tb_karyawan`)
+                        .where('no_ktp', 'like', `%${search}%`)
+                        .orWhere('nama', 'like', `%${search}%`)
+                        .orWhere('nik', 'like', `%${search}%`);
+                })
+                    .orWhereIn('inventory_transactions.user_id', function () {
+                        this.select('nik')
+                            .from(`${secondDB}.tb_karyawan`)
+                            .where('no_ktp', 'like', `%${search}%`)
+                            .orWhere('nama', 'like', `%${search}%`)
+                            .orWhere('nik', 'like', `%${search}%`);
+                    })
                     .orWhereExists(
                         InventoryLoan.relatedQuery('item')
                             .where('name', 'like', `%${search}%`)
@@ -64,10 +83,10 @@ class InventoryLoanRepository extends BaseRepository {
         return InventoryLoan.query().findById(id).withGraphFetched(relations);
     }
 
-    async getAllByNIK(nik) {
+    async getAllByUserId(user_id) {
         return InventoryLoan.query()
             .select('*')
-            .withGraphFetched('[cabang, item.base_unit, created_by_user]')
+            .withGraphFetched('[cabang, item.base_unit, created_by_user, user.[employee]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
@@ -77,7 +96,14 @@ class InventoryLoanRepository extends BaseRepository {
             .modifyGraph('created_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
-            .where('nik', nik)
+            .modifyGraph('user', builder => {
+                builder.select('id_user', 'nama_user')
+                    .withGraphFetched('employee')
+                    .modifyGraph('employee', empBuilder => {
+                        empBuilder.select('id_karyawan', 'nama', 'nik', 'no_ktp');
+                    });
+            })
+            .where('user_id', user_id)
             .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
             .orderBy('id', 'DESC');
     }
@@ -89,7 +115,7 @@ class InventoryLoanRepository extends BaseRepository {
 
         const query = InventoryLoan.query()
             .select('*')
-            .withGraphFetched('[cabang, item.base_unit, created_by_user]')
+            .withGraphFetched('[cabang, item.base_unit, created_by_user, user.[employee]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
@@ -99,6 +125,13 @@ class InventoryLoanRepository extends BaseRepository {
             .modifyGraph('created_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
+            .modifyGraph('user', builder => {
+                builder.select('id_user', 'nama_user')
+                    .withGraphFetched('employee')
+                    .modifyGraph('employee', empBuilder => {
+                        empBuilder.select('id_karyawan', 'nama', 'nik', 'no_ktp');
+                    });
+            })
             .where('user_id', userId)
             .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
             .page(page - 1, per_page)
@@ -106,8 +139,20 @@ class InventoryLoanRepository extends BaseRepository {
 
         if (search) {
             query.where(builder => {
-                builder
-                    .where('nik', 'like', `%${search}%`)
+                builder.whereIn('inventory_transactions.user_id', function () {
+                    this.select('nik')
+                        .from(`${secondDB}.tb_karyawan`)
+                        .where('no_ktp', 'like', `%${search}%`)
+                        .orWhere('nama', 'like', `%${search}%`)
+                        .orWhere('nik', 'like', `%${search}%`);
+                })
+                    .orWhereIn('inventory_transactions.user_id', function () {
+                        this.select('nik')
+                            .from(`${secondDB}.tb_karyawan`)
+                            .where('no_ktp', 'like', `%${search}%`)
+                            .orWhere('nama', 'like', `%${search}%`)
+                            .orWhere('nik', 'like', `%${search}%`);
+                    })
                     .orWhereExists(
                         InventoryLoan.relatedQuery('item')
                             .where('name', 'like', `%${search}%`)

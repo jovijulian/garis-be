@@ -22,7 +22,7 @@ const stockInSchema = z.object({
 });
 const stockOutSchema = z.object({
     body: z.object({
-        nik: z.string({ required_error: 'NIK peminta wajib diisi' }).min(1),
+        nik: z.string().optional().nullable(),
         note: z.string().optional().nullable(),
         items: z.array(
             z.object({
@@ -36,7 +36,7 @@ const stockOutSchema = z.object({
 
 const stockOutUserSchema = z.object({
     body: z.object({
-        nik: z.string({ required_error: 'NIK peminta wajib diisi' }).min(1),
+        nik: z.string().optional().nullable(),
         note: z.string().optional().nullable(),
         cab_id: z.number({ required_error: 'Cabang ID is required' }).int().positive(),
         items: z.array(

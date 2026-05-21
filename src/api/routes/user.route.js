@@ -14,6 +14,7 @@ router.use(verifyToken);
 router.post('/', verifyToken, validate(createUserSchema), userController.create);
 router.get('/', verifyToken, userController.getAll);
 router.get('/options', verifyToken, userController.options);
+router.get('/employee/options', verifyToken, userController.optionsUser);
 router.get('/:id', verifyToken, validate(userIdSchema), userController.detail);
 router.put('/:id', verifyToken, validate(updateUserSchema), userController.update);
 router.delete('/:id', verifyToken, validate(userIdSchema), userController.delete);

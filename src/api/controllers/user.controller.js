@@ -61,6 +61,17 @@ class UserController {
             return error(res, 500, err);
         }
     }
+
+    async optionsUser(req, res) {
+        try {
+            const params = req.query.search;
+            const data = await userService.optionsUser(params);
+            return success(res, 200, data, 'Employee options retrieved successfully');
+        } catch (err) {
+            return error(res, 500, err);
+        }
+    }
+
 }
 
 module.exports = new UserController();

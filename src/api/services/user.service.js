@@ -69,6 +69,16 @@ class UserService {
 
         return data;
     }
+
+    async optionsUser(params) {
+        const data = await userRepository.optionsUser(params);
+
+        if (!data || data.length === 0) {
+            return [];
+        }
+
+        return data;
+    }
 }
 
 module.exports = new UserService();

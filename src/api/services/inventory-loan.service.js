@@ -10,7 +10,7 @@ class InventoryLoanService {
     }
 
     async detail(id) {
-        const data = await inventoryLoanRepository.findByIdWithRelations(id, '[cabang, item.base_unit, created_by_user, uoms.[unit]]');
+        const data = await inventoryLoanRepository.findByIdWithRelations(id, '[cabang, item.base_unit, created_by_user, uoms.[unit], user.[employee]]');
         if (!data) {
             const error = new Error('Inventory Item not found.');
             error.statusCode = 404;
@@ -19,9 +19,9 @@ class InventoryLoanService {
         return data;
     }
     
-    async getAllByNIK(queryParams) {
-        const nik = queryParams.nik
-        return inventoryLoanRepository.getAllByNIK(nik);
+    async getAllByUserId(queryParams) {
+        const user_id = queryParams.user_id
+        return inventoryLoanRepository.getAllByUserId(user_id);
     }
 
     async getMyLoans(request) {

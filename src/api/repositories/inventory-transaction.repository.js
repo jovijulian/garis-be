@@ -6,14 +6,15 @@ class InventoryTransactionRepository extends BaseRepository {
         super(InventoryTransaction);
     }
 
+
     async findAllWithFilters(queryParams = {}, cabId) {
         const page = queryParams.page || 1;
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
-
+        const secondDB = process.env.DB_SECOND_NAME
         const query = InventoryTransaction.query()
             .select('*')
-            .withGraphFetched('[cabang, item.base_unit, unit, created_by_user]')
+            .withGraphFetched('[cabang, item.base_unit, unit, created_by_user, user.[employee]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
@@ -29,6 +30,13 @@ class InventoryTransactionRepository extends BaseRepository {
             .modifyGraph('created_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
+            .modifyGraph('user', builder => {
+                builder.select('id_user', 'nama_user')
+                    .withGraphFetched('employee')
+                    .modifyGraph('employee', empBuilder => {
+                        empBuilder.select('id_karyawan', 'nama', 'nik', 'no_ktp');
+                    });
+            })
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
 
@@ -40,8 +48,9 @@ class InventoryTransactionRepository extends BaseRepository {
             query.where('inventory_transactions.item_id', queryParams.item_id);
         }
 
-        if (queryParams.nik) {
-            query.where('inventory_transactions.nik', queryParams.nik);
+        if (queryParams.user_id) {
+            query.where('inventory_transactions.user_id', queryParams.user_id);
+
         }
 
         if (queryParams.transaction_type) {
@@ -50,7 +59,20 @@ class InventoryTransactionRepository extends BaseRepository {
 
         if (search) {
             query.where(builder => {
-                builder.where('inventory_transactions.nik', 'like', `%${search}%`)
+                builder.whereIn('inventory_transactions.user_id', function () {
+                    this.select('nik')
+                        .from(`${secondDB}.tb_karyawan`)
+                        .where('no_ktp', 'like', `%${search}%`)
+                        .orWhere('nama', 'like', `%${search}%`)
+                        .orWhere('nik', 'like', `%${search}%`);
+                })
+                    .orWhereIn('inventory_transactions.user_id', function () {
+                        this.select('nik')
+                            .from(`${secondDB}.tb_karyawan`)
+                            .where('no_ktp', 'like', `%${search}%`)
+                            .orWhere('nama', 'like', `%${search}%`)
+                            .orWhere('nik', 'like', `%${search}%`);
+                    })
                     .orWhereIn('inventory_transactions.item_id', function () {
                         this.select('id').from('inventory_items').where('name', 'like', `%${search}%`);
                     });
@@ -94,10 +116,10 @@ class InventoryTransactionRepository extends BaseRepository {
         const page = queryParams.page || 1;
         const per_page = queryParams.per_page || 20;
         const search = queryParams.search || '';
-
+        const secondDB = process.env.DB_SECOND_NAME
         const query = InventoryTransaction.query()
             .select('*')
-            .withGraphFetched('[cabang, item.base_unit, unit, created_by_user]')
+            .withGraphFetched('[cabang, item.base_unit, unit, created_by_user, user.[employee]]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
             })
@@ -124,8 +146,8 @@ class InventoryTransactionRepository extends BaseRepository {
             query.where('inventory_transactions.item_id', queryParams.item_id);
         }
 
-        if (queryParams.nik) {
-            query.where('inventory_transactions.nik', queryParams.nik);
+        if (queryParams.user_id) {
+            query.where('inventory_transactions.user_id', queryParams.user_id);
         }
 
         if (queryParams.transaction_type) {
@@ -134,7 +156,20 @@ class InventoryTransactionRepository extends BaseRepository {
 
         if (search) {
             query.where(builder => {
-                builder.where('inventory_transactions.nik', 'like', `%${search}%`)
+                builder.whereIn('inventory_transactions.user_id', function () {
+                    this.select('nik')
+                        .from(`${secondDB}.tb_karyawan`)
+                        .where('no_ktp', 'like', `%${search}%`)
+                        .orWhere('nama', 'like', `%${search}%`)
+                        .orWhere('nik', 'like', `%${search}%`);
+                })
+                    .orWhereIn('inventory_transactions.user_id', function () {
+                        this.select('nik')
+                            .from(`${secondDB}.tb_karyawan`)
+                            .where('no_ktp', 'like', `%${search}%`)
+                            .orWhere('nama', 'like', `%${search}%`)
+                            .orWhere('nik', 'like', `%${search}%`);
+                    })
                     .orWhereIn('inventory_transactions.item_id', function () {
                         this.select('id').from('inventory_items').where('name', 'like', `%${search}%`);
                     });
