@@ -102,7 +102,7 @@ class UserRepository extends BaseRepository {
             .findById(id_user)
             .withGraphFetched('employee')
             .modifyGraph('employee', builder => {
-                builder.select('email', 'id_dept');
+                builder.select('email', 'id_dept', 'nik', 'no_ktp', 'nama');
             })
             .select('id_user', 'nama_user');
     }

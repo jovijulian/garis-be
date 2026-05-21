@@ -1,4 +1,5 @@
 const inventoryLoanRepository = require('../repositories/inventory-loan.repository');
+const userRepository = require('../repositories/user.repository');
 const { formatDateTime, getUserId, getCabId } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
 
@@ -18,7 +19,12 @@ class InventoryLoanService {
         }
         return data;
     }
-    
+
+    async getProfileLoan(user_id) {
+        const getEmployData = await userRepository.findEmployData(user_id);
+        return getEmployData
+    }
+
     async getAllByUserId(queryParams) {
         const user_id = queryParams.user_id
         return inventoryLoanRepository.getAllByUserId(user_id);
@@ -29,7 +35,7 @@ class InventoryLoanService {
         const queryParams = request.query;
         return inventoryLoanRepository.findAllWithFiltersByUserId(queryParams, userId);
     }
-   
+
 }
 
 module.exports = new InventoryLoanService();

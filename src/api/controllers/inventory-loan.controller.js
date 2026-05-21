@@ -22,6 +22,16 @@ class InventoryLoanController {
         }
     }
 
+    async getProfileLoan(req, res) {
+        try {
+            const id = req.params.id;
+            const data = await inventoryLoanService.getProfileLoan(id);
+            return success(res, 200, data, 'Profile retrieved successfully');
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
     async getAllByUserId(req, res) {
         try {
             const params = req.query;

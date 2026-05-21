@@ -11,6 +11,7 @@ router.use(verifyToken);
 router.get('/', InventoryLoanController.getAll);
 router.get('/by-user-id', InventoryLoanController.getAllByUserId);
 router.get('/user', InventoryLoanController.getMyLoans);
+router.get('/profile/:id', InventoryLoanController.getProfileLoan);
 router.get('/:id', InventoryLoanController.detail);
 
 module.exports = router;
