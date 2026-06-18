@@ -1,6 +1,6 @@
 const inventoryTransactionService = require('../services/inventory-transaction.service');
 const { success, error, paginated } = require('../../utils/response');
-
+const moment = require('moment');
 class InventoryTransactionController {
 
     async stockIn(req, res) {
@@ -73,6 +73,28 @@ class InventoryTransactionController {
 
             return success(res, 201, data, 'Transaksi pengeluaran barang berhasil diproses.');
         } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
+    async exportToExcel(req, res) {
+        try {
+            const workbook = await inventoryTransactionService.exportToExcel(req.query, req);
+            
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename="laporan_transaksi_inventaris_${moment().format('YYYY-MM-DD')}.xlsx"`
+            );
+    
+            await workbook.xlsx.write(res);
+            res.end();
+    
+        } catch (err) {
+            console.error("Export Excel Error:", err);
             return error(res, err.statusCode || 500, err);
         }
     }

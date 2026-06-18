@@ -1,6 +1,6 @@
 const inventoryItemService = require('../services/inventory-item.service');
 const { success, error, paginated } = require('../../utils/response');
-
+const moment = require('moment');
 class InventoryItemController {
 
     async checkBarcode(req, res) {
@@ -89,6 +89,51 @@ class InventoryItemController {
             const data = await inventoryItemService.options(req.query, req);
             return success(res, 200, data, 'Berhasil mengambil daftar opsi barang');
         } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
+    async exportToExcel(req, res) {
+        try {
+            const workbook = await inventoryItemService.exportToExcel(req.query, req);
+
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename="laporan_master_barang_${moment().format('YYYY-MM-DD')}.xlsx"`
+            );
+
+            await workbook.xlsx.write(res);
+            res.end();
+
+        } catch (err) {
+            console.error("Export Excel Error:", err);
+            // Sesuaikan pemanggilan fungsi error() dengan helper response Anda
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
+    async printBarcode(req, res) {
+        try {
+            const id = req.params.id;
+            
+            const item = await inventoryItemService.detail(id);
+
+            if (!item || !item.barcode) {
+                return error(res, 404, new Error('Data barang atau barcode tidak ditemukan.'));
+            }
+
+            const barcodeBuffer = await inventoryItemService.generateBarcodeImage(item.barcode);
+
+            res.set('Content-Type', 'image/png');
+            res.set('Content-Disposition', `inline; filename="barcode-${item.barcode}.png"`);
+            
+            res.send(barcodeBuffer);
+        } catch (err) {
+            console.error("Print Barcode Error:", err);
             return error(res, err.statusCode || 500, err);
         }
     }

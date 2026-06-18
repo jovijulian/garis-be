@@ -3,7 +3,8 @@ const inventoryItemRepository = require('../repositories/inventory-item.reposito
 const inventoryLoanRepository = require('../repositories/inventory-loan.repository');
 const { formatDateTime, getUserId, getCabId } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
-
+const ExcelJS = require('exceljs');
+const moment = require('moment');
 class InventoryTransactionService {
 
     async stockIn(payload, request) {
@@ -265,7 +266,7 @@ class InventoryTransactionService {
             }
 
             await inventoryItemRepository.update(item.id, {
-                stock_available: Number(actualQtyInBase), 
+                stock_available: Number(actualQtyInBase),
                 updated_at: now,
                 updated_by: userId,
             }, trx);
@@ -275,9 +276,9 @@ class InventoryTransactionService {
                 item_id: item.id,
                 created_by: userId,
                 transaction_type: 'ADJUSTMENT',
-                input_qty: inputQty,       
-                input_unit_id: payload.input_unit_id, 
-                qty: difference,           
+                input_qty: inputQty,
+                input_unit_id: payload.input_unit_id,
+                qty: difference,
                 note: `[STOCK OPNAME] ${payload.note}`,
                 created_at: now,
                 updated_at: now,
@@ -386,6 +387,61 @@ class InventoryTransactionService {
 
             return results;
         });
+    }
+
+    async exportToExcel(queryParams, request) {
+        const cabId = getCabId(request); 
+
+        const transactions = await inventoryTransactionRepository.findAllForExport(queryParams, cabId);
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Laporan Transaksi Inventaris');
+
+        worksheet.columns = [
+            { header: 'ID Transaksi', key: 'id', width: 12 },
+            { header: 'Tanggal', key: 'created_at', width: 22 },
+            { header: 'Cabang', key: 'cabang', width: 20 },
+            { header: 'Tipe Transaksi', key: 'transaction_type', width: 20 },
+            { header: 'Nama Barang', key: 'item_name', width: 40 },
+            { header: 'Barcode', key: 'barcode', width: 20 },
+            { header: 'Jenis Barang', key: 'item_type', width: 15 },
+            { header: 'Qty Input', key: 'input_qty', width: 12 },
+            { header: 'Satuan Input', key: 'input_unit', width: 15 },
+            { header: 'Qty (Base)', key: 'qty_base', width: 12 },
+            { header: 'Satuan (Base)', key: 'base_unit', width: 15 },
+            { header: 'Penerima / User', key: 'user_name', width: 30 },
+            { header: 'Dibuat Oleh', key: 'created_by_name', width: 30 },
+            { header: 'Catatan', key: 'note', width: 50 },
+        ];
+
+        worksheet.getRow(1).font = { bold: true };
+
+        transactions.forEach(trx => {
+            const itemTypeStr = trx.item ? (trx.item.item_type === 1 ? 'BHP' : 'Asset') : '-';
+
+            const userName = trx.user
+                ? (trx.user.employee ? trx.user.employee.nama : trx.user.nama_user)
+                : '-';
+
+            worksheet.addRow({
+                id: trx.id,
+                created_at: trx.created_at ? moment(trx.created_at).format('YYYY-MM-DD HH:mm:ss') : '-',
+                cabang: trx.cabang ? trx.cabang.nama_cab : '-',
+                transaction_type: trx.transaction_type,
+                item_name: trx.item ? trx.item.name : '-',
+                barcode: trx.item ? trx.item.barcode : '-',
+                item_type: itemTypeStr,
+                input_qty: trx.input_qty,
+                input_unit: trx.unit ? trx.unit.name : '-',
+                qty_base: trx.qty,
+                base_unit: (trx.item && trx.item.base_unit) ? trx.item.base_unit.name : '-',
+                user_name: userName,
+                created_by_name: trx.created_by_user ? trx.created_by_user.nama_user : '-',
+                note: trx.note || '-',
+            });
+        });
+
+        return workbook;
     }
 }
 

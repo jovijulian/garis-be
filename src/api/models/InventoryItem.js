@@ -36,7 +36,7 @@ class InventoryItem extends BaseModelBooking {
         const InventoryUnit = require('./InventoryUnit');
         const ItemUom = require('./ItemUom');
         const User = require('./User');
-
+        const InventoryTransaction = require('./InventoryTransaction');
         return {
             cabang: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -79,12 +79,25 @@ class InventoryItem extends BaseModelBooking {
                     from: 'inventory_items.updated_by',
                     to: 'tb_user.id_user',
                 }
-            }
+            },
+            transactions: {
+                relation: BaseModelBooking.HasManyRelation,
+                modelClass: InventoryTransaction,
+                join: {
+                    from: 'inventory_items.id',
+                    to: 'inventory_transactions.item_id'
+                }
+            },
         };
     }
 
     $formatJson(json) {
         json = super.$formatJson(json);
+        
+        if (json.total_transactions !== undefined) {
+            json.is_deletable = Number(json.total_transactions) === 0;
+        }
+        
         return json;
     }
 }

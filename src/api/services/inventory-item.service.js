@@ -3,6 +3,9 @@ const inventoryTransactionRepository = require('../repositories/inventory-transa
 const { formatDateTime, getUserId, getCabId } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
 const itemUomRepository = require('../repositories/item-uom.repository');
+const ExcelJS = require('exceljs');
+const moment = require('moment');
+const bwipjs = require('bwip-js');
 
 class InventoryItemService {
 
@@ -15,7 +18,8 @@ class InventoryItemService {
             const ym = `${date.getFullYear().toString().slice(-2)}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
             const random = Math.floor(1000 + Math.random() * 9000);
 
-            newBarcode = `INV-${cab_id}-${ym}-${random}`;
+            const cabStr = String(cab_id).padStart(2, '0');
+            newBarcode = `${cabStr}${ym}${random}`;
 
             const existing = await inventoryItemRepository.findByBarcodeAndCabang(newBarcode, cab_id);
             if (!existing) {
@@ -24,6 +28,29 @@ class InventoryItemService {
         }
 
         return newBarcode;
+    }
+
+    async generateBarcodeImage(barcodeStr) {
+        return new Promise((resolve, reject) => {
+            bwipjs.toBuffer({
+                bcid: 'code128',       // Code128 sangat stabil membaca angka/huruf tanpa butuh checksum rumit
+                text: barcodeStr,      // Teks angka barcode
+                scale: 3,              // Skala gambar (resolusi)
+                height: 12,            // Tinggi garis barcode dalam milimeter
+                includetext: true,     // INI YANG MEMUNCULKAN ANGKA DI BAWAH BARCODE
+                textxalign: 'center',  // Posisi teks di tengah
+                textyoffset: -5,        // Offset teks dari garis barcode
+                textsize: 12,           // Ukuran teks
+                paddingwidth: 20,
+                paddingheight: 20,
+            }, function (err, png) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(png); // Mengembalikan buffer file PNG
+                }
+            });
+        });
     }
 
     async checkBarcode(barcode, cab_id) {
@@ -146,6 +173,13 @@ class InventoryItemService {
         await this.detail(id);
 
         return await knexBooking.transaction(async (trx) => {
+            const isDeletable = await inventoryItemRepository.checkDeletable(id);
+
+            if (!isDeletable) {
+                const error = new Error('Item ini tidak bisa dihapus karena sudah memiliki riwayat transaksi.');
+                error.statusCode = 400;
+                throw error;
+            }
             const data = await inventoryItemRepository.update(id, { is_active: 0 }, trx);
             if (!data) {
                 const error = new Error('Failed to delete inventory item.');
@@ -211,6 +245,52 @@ class InventoryItemService {
             return [];
         }
         return items;
+    }
+
+    async exportToExcel(queryParams, request) {
+        const items = await inventoryItemRepository.findAllForExport(queryParams);
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Laporan Master Barang');
+
+        worksheet.columns = [
+            { header: 'ID Barang', key: 'id', width: 12 },
+            { header: 'Barcode', key: 'barcode', width: 20 },
+            { header: 'Nama Barang', key: 'name', width: 40 },
+            { header: 'Kategori', key: 'category', width: 25 },
+            { header: 'Jenis Barang', key: 'item_type', width: 20 },
+            { header: 'Stok Tersedia', key: 'stock_available', width: 15 },
+            { header: 'Stok Minimum', key: 'stock_minimum', width: 15 },
+            { header: 'Satuan (Base)', key: 'base_unit', width: 15 },
+            { header: 'Status Stok', key: 'status_stok', width: 15 },
+            { header: 'Ukuran', key: 'size', width: 15 },
+            { header: 'Warna', key: 'color', width: 15 },
+            { header: 'Dibuat Pada', key: 'created_at', width: 22 },
+        ];
+
+        worksheet.getRow(1).font = { bold: true };
+
+        items.forEach(item => {
+            const itemTypeStr = item.item_type === 1 ? 'BHP' : 'Asset / Pinjaman';
+            const statusStokStr = item.stock_available > 0 ? 'Ready' : 'Habis';
+
+            worksheet.addRow({
+                id: item.id,
+                barcode: item.barcode,
+                name: item.name,
+                category: item.category ? item.category.name : '-',
+                item_type: itemTypeStr,
+                stock_available: item.stock_available,
+                stock_minimum: item.stock_minimum,
+                base_unit: item.base_unit ? item.base_unit.name : '-',
+                status_stok: statusStokStr,
+                size: item.size || '-',
+                color: item.color || '-',
+                created_at: item.created_at ? moment(item.created_at).format('YYYY-MM-DD HH:mm:ss') : '-',
+            });
+        });
+
+        return workbook;
     }
 }
 

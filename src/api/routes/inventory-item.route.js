@@ -5,7 +5,7 @@ const InventoryItemController = require('../controllers/inventory-item.controlle
 const validate = require('../../middlewares/validate');
 const {
     createSchema,
-    bulkCreateSchema, 
+    bulkCreateSchema,
     updateSchema,
     inventoryItemIdSchema,
 } = require('../../validations/inventory-item.validation');
@@ -17,6 +17,8 @@ router.post('/', validate(createSchema), InventoryItemController.create);
 router.post('/bulk', validate(bulkCreateSchema), InventoryItemController.bulkCreate);
 router.get('/', InventoryItemController.getAll);
 router.get('/check-barcode/:barcode', InventoryItemController.checkBarcode);
+router.get('/print-barcode/:id', InventoryItemController.printBarcode);
+router.get('/export-excel', InventoryItemController.exportToExcel);
 router.get('/options/', InventoryItemController.options);
 router.get('/:id', validate(inventoryItemIdSchema), InventoryItemController.detail);
 router.put('/:id', validate(updateSchema), InventoryItemController.update);

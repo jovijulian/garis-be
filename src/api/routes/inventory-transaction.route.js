@@ -20,6 +20,7 @@ router.post('/stock-out/user', validate(stockOutUserSchema), InventoryTransactio
 router.post('/return', validate(returnAssetSchema), InventoryTransactionController.returnAsset);
 router.post('/adjustment', validate(adjustStockSchema), InventoryTransactionController.adjustStock);
 router.get('/', InventoryTransactionController.getLogTransactions);
+router.get('/export-excel', InventoryTransactionController.exportToExcel);
 router.get('/user', InventoryTransactionController.getLogTransactionsUser);
 
 
