@@ -246,7 +246,7 @@ class ReminderService {
             return knexBooking.transaction(async (trx) => {
                 const updatePayload = {
                     attachment_path: file ? `uploads/${file.filename}` : null,
-                    cost: cost,
+                    cost: Number(cost),
                     updated_at: formatDateTime(),
                     updated_by: userId
                 };
