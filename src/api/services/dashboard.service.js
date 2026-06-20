@@ -296,6 +296,88 @@ class DashboardService {
             throw error;
         }
     }
+
+    async getInventoryDashboardData(queryParams = {}, request) {
+        const siteId = request.user.sites; // Ambil cabang dari user yang login
+
+        // Filter rentang waktu default bulan ini jika tidak disediakan
+        const startDate = queryParams.startDate ?
+            moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
+            moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+        const endDate = queryParams.endDate ?
+            moment(queryParams.endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss') :
+            moment().endOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+        const today = moment().format('YYYY-MM-DD');
+
+        const [
+            totalItems,
+            lowStockCount,
+            activeLoansCount,
+            todaysTransactionsCount,
+            activeLoansList,
+            transactionTrend,
+            topRequestedItems,
+            topBorrowers
+        ] = await Promise.all([
+            dashboardRepository.getTotalInventoryItems(siteId),
+            dashboardRepository.getLowStockItemsCount(siteId),
+            dashboardRepository.getActiveLoansCount(siteId),
+            dashboardRepository.getTodaysTransactionsCount(siteId, today),
+            dashboardRepository.getActiveLoansList(siteId),
+            dashboardRepository.getInventoryTransactionTrend(startDate, endDate, siteId),
+            dashboardRepository.getTopRequestedItems(startDate, endDate, siteId),
+            dashboardRepository.getTopActiveBorrowers(startDate, endDate, siteId)
+        ]);
+
+        const formattedActiveLoans = activeLoansList.map(loan => {
+            const borrowedDate = moment(loan.borrowed_at);
+            const daysBorrowed = moment().diff(borrowedDate, 'days');
+
+            return {
+                id: loan.id,
+                item_name: loan.item ? loan.item.name : 'Unknown Item',
+                barcode: loan.item ? loan.item.barcode : '-',
+                borrower_name: loan.user ? loan.user.nama_user : 'Unknown User',
+                qty_borrowed: loan.qty_borrowed,
+                qty_returned: loan.qty_returned,
+                qty_remaining: loan.qty_borrowed - loan.qty_returned,
+                unit: (loan.item && loan.item.base_unit) ? loan.item.base_unit.name : 'Unit',
+                borrowed_at: loan.borrowed_at,
+                days_borrowed: daysBorrowed,
+                status: loan.status
+            };
+        });
+
+        const formattedTopItems = topRequestedItems.map(t => ({
+            item_name: t.item ? t.item.name : 'Unknown',
+            total_qty_requested: Number(t.total_qty),
+            request_count: Number(t.request_count)
+        }));
+
+        const formattedTopBorrowers = topBorrowers.map(t => ({
+            borrower_name: t.user ? t.user.nama_user : 'Unknown User',
+            transaction_count: Number(t.transaction_count)
+        }));
+
+        return {
+            kpi: {
+                total_inventory_items: totalItems,
+                low_stock_items: lowStockCount,
+                total_active_loans: activeLoansCount,
+                todays_transactions: todaysTransactionsCount
+            },
+            active_loans: formattedActiveLoans,
+            charts: {
+                transaction_trend: transactionTrend
+            },
+            rankings: {
+                top_requested_items: formattedTopItems,
+                top_borrowers: formattedTopBorrowers
+            }
+        };
+    }
 }
 
 module.exports = new DashboardService();

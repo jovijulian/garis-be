@@ -16,6 +16,9 @@ const Driver = require('../models/Driver')
 const AccommodationOrder = require('../models/AccommodationOrder');
 const TransportOrder = require('../models/TransportOrder');
 const Reminder = require('../models/Reminder');
+const InventoryItem = require('../models/InventoryItem');
+const InventoryLoan = require('../models/InventoryLoan');
+const InventoryTransaction = require('../models/InventoryTransaction');
 const _ = require('lodash');
 const moment = require('moment');
 
@@ -474,22 +477,22 @@ class DashboardRepository {
         const reminders = await query;
 
         const today = moment(currentDate).startOf('day');
-    
+
         let count = 0;
-    
+
         for (const reminder of reminders) {
             if (!reminder.reminder_type?.notification_intervals) continue;
-    
+
             let intervals = [];
             try {
                 intervals = JSON.parse(reminder.reminder_type.notification_intervals);
             } catch (e) {
                 continue;
             }
-    
+
             const dueDate = moment(reminder.due_date).startOf('day');
             const daysLeft = dueDate.diff(today, 'days');
-    
+
             if (
                 reminder.status === 'OVERDUE' ||
                 intervals.includes(daysLeft)
@@ -497,11 +500,92 @@ class DashboardRepository {
                 count++;
             }
         }
-    
+
         return count;
     }
 
+    //inventory
+    getTotalInventoryItems(siteId) {
+        const query = InventoryItem.query().where('is_active', 1);
+        if (siteId) query.where('cab_id', siteId);
+        return query.resultSize();
+    }
 
+    getLowStockItemsCount(siteId) {
+        const query = InventoryItem.query()
+            .where('is_active', 1)
+            .whereRaw('stock_available <= stock_minimum');
+        if (siteId) query.where('cab_id', siteId);
+        return query.resultSize();
+    }
+
+    getActiveLoansCount(siteId) {
+        const query = InventoryLoan.query()
+            .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED']);
+        if (siteId) query.where('cab_id', siteId);
+        return query.resultSize();
+    }
+
+    getTodaysTransactionsCount(siteId, currentDate) {
+        const query = InventoryTransaction.query()
+            .whereRaw(`DATE(created_at) = ?`, [currentDate]);
+        if (siteId) query.where('cab_id', siteId);
+        return query.resultSize();
+    }
+
+    getActiveLoansList(siteId) {
+        const query = InventoryLoan.query()
+            .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
+            .withGraphFetched('[item.[base_unit], user]')
+            .orderBy('borrowed_at', 'ASC'); 
+        if (siteId) query.where('cab_id', siteId);
+        return query;
+    }
+
+    getInventoryTransactionTrend(startDate, endDate, siteId) {
+        const query = InventoryTransaction.query()
+            .select(knexBooking.raw('DATE(created_at) as date'), knexBooking.raw('count(id) as count'))
+            .whereIn('transaction_type', ['OUT_BHP', 'OUT_ASSET'])
+            .whereBetween('created_at', [startDate, endDate])
+            .groupByRaw('DATE(created_at)')
+            .orderBy('date', 'asc');
+        if (siteId) query.where('cab_id', siteId);
+        return query;
+    }
+
+    getTopRequestedItems(startDate, endDate, siteId, limit = 5) {
+        const query = InventoryTransaction.query()
+            .joinRelated('item')
+            .select(
+                'inventory_transactions.item_id',
+                knexBooking.raw('count(inventory_transactions.id) as request_count'),
+                knexBooking.raw('sum(inventory_transactions.qty) as total_qty')
+            )
+            .whereIn('inventory_transactions.transaction_type', ['OUT_BHP', 'OUT_ASSET'])
+            .whereBetween('inventory_transactions.created_at', [startDate, endDate])
+            .where('item.is_active', 1)
+            .withGraphFetched('item')
+            .groupBy('inventory_transactions.item_id')
+            .orderBy('total_qty', 'desc')
+            .limit(limit);
+    
+        if (siteId) query.where('inventory_transactions.cab_id', siteId);
+    
+        return query;
+    }
+
+    getTopActiveBorrowers(startDate, endDate, siteId, limit = 5) {
+        const query = InventoryTransaction.query()
+            .select('user_id', knexBooking.raw('count(id) as transaction_count'))
+            .whereIn('transaction_type', ['OUT_BHP', 'OUT_ASSET'])
+            .whereBetween('created_at', [startDate, endDate])
+            .withGraphFetched('[user]')
+            .groupBy('user_id')
+            .orderBy('transaction_count', 'desc')
+            .limit(limit);
+        if (siteId) query.where('cab_id', siteId);
+        return query;
+    }
 
 }
 

@@ -48,7 +48,6 @@ jobs:
           port: 22
           timeout: 60s
           command_timeout: 30s
-          debug: true
           script: |
             echo "SSH OK"
 

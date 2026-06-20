@@ -45,6 +45,15 @@ class DashboardController {
             return error(res, 500, err);
         }
     }
+
+    async getInventoryDashboardData(req, res) {
+        try {
+            const data = await dashboardService.getInventoryDashboardData(req.query, req);
+            return success(res, 200, data, 'Dashboard Data retrieved successfully');
+        } catch (err) {
+            return error(res, 500, err);
+        }
+    }
 }
 
 module.exports = new DashboardController();
