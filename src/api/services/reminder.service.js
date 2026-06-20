@@ -235,10 +235,6 @@ class ReminderService {
         const userId = getUserId(request);
         const cost = request.body.cost;
 
-        if (!file) {
-            
-            throw { statusCode: 400, message: 'Tidak ada file bukti yang diunggah.' };
-        }
 
         try {
             if (!reminder) {
@@ -249,7 +245,7 @@ class ReminderService {
             }
             return knexBooking.transaction(async (trx) => {
                 const updatePayload = {
-                    attachment_path: `uploads/${file.filename}`, 
+                    attachment_path: file ? `uploads/${file.filename}` : null,
                     cost: cost,
                     updated_at: formatDateTime(),
                     updated_by: userId
