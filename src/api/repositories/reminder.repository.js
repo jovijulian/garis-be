@@ -27,6 +27,11 @@ class ReminderRepository extends BaseRepository {
             .modifyGraph('updated_by_user', builder => {
                 builder.select('id_user', 'nama_user');
             })
+            .whereRaw(`extension_count = (
+                SELECT MAX(extension_count) 
+                FROM reminders as r2 
+                WHERE COALESCE(r2.parent_id, r2.id) = COALESCE(reminders.parent_id, reminders.id)
+            )`)
             .where('is_active', 1)
             .page(page - 1, per_page)
             .orderBy('id', 'DESC');
@@ -99,6 +104,30 @@ class ReminderRepository extends BaseRepository {
             .where('is_active', 1)
             .where('due_date', '<', date);
     }
+
+    async getHistoryByReminderId(reminderId) {
+        const current = await this.findById(reminderId);
+        if (!current) return [];
+
+        const rootId = current.parent_id ? current.parent_id : current.id;
+
+        const history = await Reminder.query()
+            .where('is_active', 1)
+            .andWhere(builder => {
+                builder.where('id', rootId).orWhere('parent_id', rootId);
+            })
+            .withGraphFetched('[created_by_user, updated_by_user]')
+            .orderBy('extension_count', 'ASC');
+
+        return history;
+    }
+
+    async deleteChain(rootId, trx) {
+        return Reminder.query(trx)
+            .patch({ is_active: 0 })
+            .where('id', rootId)
+            .orWhere('parent_id', rootId);
+}
 
 
 

@@ -68,7 +68,17 @@ class ReminderController {
         try {
             const id = req.params.id;
             const data = await reminderService.markAsCompleted(id, req);
-            return success(res, 200, data, 'Reminder completed successfully');
+            return success(res, 200, data.data, data.message);
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
+
+    async getHistory(req, res) {
+        try {
+            const id = req.params.id;
+            const data = await reminderService.getHistoryByReminderId(id);
+            return success(res, 200, data, 'History retrieved successfully');
         } catch (err) {
             return error(res, err.statusCode || 500, err);
         }

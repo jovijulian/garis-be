@@ -7,9 +7,16 @@ const { knexBooking } = require('../../config/database');
 const { sendReminderNotificationEmail } = require('./email.service');
 class ReminderService {
 
+    async generateBaseCode() {
+        const date = new Date();
+        const ym = `${date.getFullYear().toString().slice(-2)}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+        const random = Math.floor(1000 + Math.random() * 9000);
+        return `RMDR-${ym}-${random}`;
+    }
+
     async getAll(request, queryParams) {
         const cabId = getCabId(request)
-        
+
         return reminderRepository.findAllWithFilters(cabId, queryParams);
     }
 
@@ -31,6 +38,12 @@ class ReminderService {
                 payload.created_by = getUserId(request);
                 payload.created_at = formatDateTime();
                 payload.updated_at = formatDateTime();
+                payload.reminder_code = await this.generateBaseCode();
+                payload.extension_count = 0;
+                payload.parent_id = null;
+                payload.status = 'PENDING';
+
+
                 const reminder = await reminderRepository.create(payload, trx);
 
                 return reminder;
@@ -56,23 +69,18 @@ class ReminderService {
     }
 
     async delete(id) {
-        await this.detail(id);
+        const reminder = await this.detail(id);
+
         try {
             return knexBooking.transaction(async (trx) => {
-                const data = await reminderRepository.update(id, { is_active: 0 }, trx);
+                const rootId = reminder.parent_id ? reminder.parent_id : reminder.id;
+                await reminderRepository.deleteChain(rootId, trx);
 
-                if (!data) {
-                    const error = new Error('Failed to deleted reminder.');
-                    error.statusCode = 500;
-                    throw error;
-                }
-
-                return { message: 'Reminder has been deleted successfully.' };
+                return { message: 'Pengingat beserta seluruh historinya berhasil dihapus dan dihentikan.' };
             });
         } catch (error) {
             throw error;
         }
-
     }
 
     async options(params) {
@@ -149,28 +157,76 @@ class ReminderService {
     }
 
     async markAsCompleted(id, request) {
-        await this.detail(id);
+        const oldReminder = await this.detail(id);
+        const userId = getUserId(request);
+        const payload = request.body;
+        const file = request.file;
+
+        if (oldReminder.status === 'COMPLETED') {
+            throw { statusCode: 400, message: 'Pengingat ini sudah diselesaikan sebelumnya.' };
+        }
+
         try {
             return knexBooking.transaction(async (trx) => {
-                const payload = {
+                const now = formatDateTime();
+
+                const updatePayload = {
                     status: 'COMPLETED',
-                    updated_at: formatDateTime(),
-                    updated_by: getUserId(request)
+                    cost: payload.cost ? Number(payload.cost) : 0,
+                    updated_at: now,
+                    updated_by: userId
                 };
 
-                const data = await reminderRepository.update(id, payload, trx);
-
-                if (!data) {
-                    const error = new Error('Gagal memperbarui status reminder.');
-                    error.statusCode = 500;
-                    throw error;
+                if (file) {
+                    updatePayload.attachment_path = `uploads/${file.filename}`;
                 }
 
-                return { message: 'Reminder berhasil diselesaikan!', data };
+                await reminderRepository.update(id, updatePayload, trx);
+
+                let newReminder = null;
+
+                if (oldReminder.is_recurring === 1 && payload.next_due_date) {
+
+                    const newExtensionCount = oldReminder.extension_count + 1;
+                    const rootId = oldReminder.parent_id ? oldReminder.parent_id : oldReminder.id;
+
+                    const baseCode = oldReminder.reminder_code.split('-').slice(0, 3).join('-');
+                    const newCode = `${baseCode}-${newExtensionCount}`;
+
+                    const newReminderPayload = {
+                        reminder_type_id: oldReminder.reminder_type_id,
+                        title: oldReminder.title,
+                        cab_id: oldReminder.cab_id,
+                        description: oldReminder.description,
+                        identity_number: oldReminder.identity_number,
+                        due_date: payload.next_due_date,
+                        is_recurring: oldReminder.is_recurring,
+                        reminder_code: newCode,
+                        parent_id: rootId,
+                        extension_count: newExtensionCount,
+                        status: 'PENDING',
+                        created_by: userId,
+                        created_at: now,
+                        updated_at: now
+                    };
+
+                    newReminder = await reminderRepository.create(newReminderPayload, trx);
+                }
+
+                return {
+                    message: newReminder
+                        ? 'Pengingat selesai dan periode berikutnya berhasil dibuat!'
+                        : 'Pengingat berhasil diselesaikan!',
+                    data: oldReminder
+                };
             });
-        } catch (error) {
-            throw error;
-        }
+        } catch (error) { throw error; }
+    }
+
+    async getHistoryByReminderId(id) {
+        await this.detail(id)
+        const data = await reminderRepository.getHistoryByReminderId(id)
+        return data;
     }
 }
 

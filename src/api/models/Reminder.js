@@ -15,6 +15,14 @@ class Reminder extends BaseModelBooking {
                 title: { type: 'string' },
                 cab_id: { type: 'integer' },
                 due_date: { type: 'string' },
+                reminder_code: { type: 'string' }, 
+                parent_id: { type: 'integer', nullable: true }, 
+                extension_count: { type: 'integer' }, // Berapa kali sudah diperpanjang (0 = original)
+                description: { type: 'string', nullable: true }, // Keterangan tambahan
+                identity_number: { type: 'string', nullable: true }, // No STNK / No Kontrak
+                cost: { type: 'number', nullable: true }, // Biaya perpanjangan/pembayaran
+                attachment_path: { type: 'string', nullable: true }, // File bukti bayar
+                is_recurring: { type: 'integer' },
                 is_active: { type: 'integer' },
                 status: { type: 'string', enum: ['PENDING', 'COMPLETED', 'OVERDUE'] },
                 created_by: { type: 'string' },
@@ -59,6 +67,16 @@ class Reminder extends BaseModelBooking {
                     from: 'reminders.updated_by',
                     to: 'tb_user.id_user',
                 }
+            },
+            parent: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: Reminder,
+                join: { from: 'reminders.parent_id', to: 'reminders.id' }
+            },
+            history: {
+                relation: BaseModelBooking.HasManyRelation,
+                modelClass: Reminder,
+                join: { from: 'reminders.id', to: 'reminders.parent_id' }
             }
         };
     }
