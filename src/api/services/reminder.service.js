@@ -233,6 +233,7 @@ class ReminderService {
         const reminder = await this.detail(id);
         const file = request.file;
         const userId = getUserId(request);
+        const cost = request.body.cost;
 
         if (!file) {
             
@@ -249,6 +250,7 @@ class ReminderService {
             return knexBooking.transaction(async (trx) => {
                 const updatePayload = {
                     attachment_path: `uploads/${file.filename}`, 
+                    cost: cost,
                     updated_at: formatDateTime(),
                     updated_by: userId
                 };
