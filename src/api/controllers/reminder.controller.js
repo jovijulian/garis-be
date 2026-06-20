@@ -83,6 +83,16 @@ class ReminderController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async uploadProof(req, res) {
+        try {
+            const id = req.params.id;
+            const data = await reminderService.uploadProof(id, req);
+            return success(res, 200, data.data, data.message);
+        } catch (err) {
+            return error(res, err.statusCode || 500, err);
+        }
+    }
 }
 
 module.exports = new ReminderController();

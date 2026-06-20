@@ -228,6 +228,48 @@ class ReminderService {
         const data = await reminderRepository.getHistoryByReminderId(id)
         return data;
     }
+
+    async uploadProof(id, request) {
+        const reminder = await this.detail(id);
+        const file = request.file;
+        const userId = getUserId(request);
+
+        if (!file) {
+            
+            throw { statusCode: 400, message: 'Tidak ada file bukti yang diunggah.' };
+        }
+
+        try {
+            if (!reminder) {
+                const fs = require('fs');
+                if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
+
+                throw { statusCode: 404, message: 'Reminder tidak ditemukan.' };
+            }
+            return knexBooking.transaction(async (trx) => {
+                const updatePayload = {
+                    attachment_path: `uploads/${file.filename}`, 
+                    updated_at: formatDateTime(),
+                    updated_by: userId
+                };
+
+                const updatedReminder = await reminderRepository.update(id, updatePayload, trx);
+
+
+                return {
+                    message: 'Bukti pengingat berhasil disusulkan/diunggah.',
+                    data: updatedReminder
+                };
+            });
+        } catch (error) {
+            if (file && file.path) {
+                const fs = require('fs');
+                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            }
+
+            throw error;
+        }
+    }
 }
 
 module.exports = new ReminderService();

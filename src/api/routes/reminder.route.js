@@ -15,6 +15,7 @@ router.use(verifyToken);
 
 router.post('/', validate(createSchema), ReminderController.create);
 router.post('/mark/:id', validate(reminderIdSchema), upload.single('attachment'), ReminderController.markAsCompleted);
+router.post('/upload-proof/:id', validate(reminderIdSchema), upload.single('attachment'), ReminderController.uploadProof);
 router.get('/', ReminderController.getAll);
 router.get('/history/:id', ReminderController.getHistory);
 router.get('/options', ReminderController.options);
