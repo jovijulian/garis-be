@@ -107,6 +107,17 @@ class UserRepository extends BaseRepository {
             .select('id_user', 'nama_user');
     }
 
+    async findEmployDataByIdUser(id_user) {
+        return User.query()
+            .where('id_user', id_user)
+            .withGraphFetched('employee')
+            .modifyGraph('employee', builder => {
+                builder.select('email', 'id_dept', 'nik', 'no_ktp', 'nama');
+            })
+            .select('id_user', 'nama_user')
+            .first();
+    }
+
     async optionsUser(params) {
 
         const query = User.query()

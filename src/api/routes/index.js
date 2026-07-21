@@ -27,6 +27,8 @@ const inventoryUnitRoutes = require('./inventory-unit.route');
 const inventoryItemRoutes = require('./inventory-item.route');
 const InventoryTransactionRoutes = require('./inventory-transaction.route');
 const InventoryLoanRoutes = require('./inventory-loan.route');
+const ProjectRequestRoutes = require('./project-request.route');
+const ApprovalRoutes = require('./approval.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -54,6 +56,8 @@ router.use('/inventory-units', inventoryUnitRoutes);
 router.use('/inventory-items', inventoryItemRoutes);
 router.use('/inventory-transactions', InventoryTransactionRoutes);
 router.use('/inventory-loans', InventoryLoanRoutes);
+router.use('/project-requests', ProjectRequestRoutes);
+router.use('/approvals', ApprovalRoutes);
 
 
 module.exports = router;

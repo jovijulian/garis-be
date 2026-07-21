@@ -17,9 +17,13 @@ class Employee extends BaseModelHr {
                 id_karyawan: { type: 'string' },
                 nik: { type: 'string', minLength: 1, maxLength: 255 },
                 no_ktp: { type: 'string', minLength: 1, maxLength: 255 },
-                nama: { type: 'string', },
+                nama: { type: 'string' },
                 email: { type: 'string', format: 'email' },
                 id_dept: { type: 'integer' },
+                id_jab: { type: 'integer' },
+                head: { type: 'string' },
+                head1: { type: 'string' },
+                id_cab: { type: 'integer' },
             }
         };
     }
