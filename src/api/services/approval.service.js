@@ -69,12 +69,15 @@ class ApprovalService {
             throw error;
         }
 
+        const canForward = (approval.approver_type === 'MANAGER' && approval.approval_order === 1);
+
         return {
             approval_info: {
                 id_approval: approval.id,
                 module_name: approval.module_name,
                 approver_type: approval.approver_type,
                 status: approval.status,
+                can_forward: canForward,
                 created_at: approval.created_at
             },
             request_detail: approval.project_request
