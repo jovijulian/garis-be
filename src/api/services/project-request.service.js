@@ -47,7 +47,9 @@ class ProjectRequestService {
                 corrective_action: payload.corrective_action || null,
                 status: 'WAITING_APPROVAL',
                 is_active: 1,
-                request_date: formatDateTime()
+                request_date: formatDateTime(),
+                created_at: formatDateTime(),
+
             };
 
             newRequest = await projectRequestRepository.create(insertPayload, trx);
@@ -388,7 +390,7 @@ class ProjectRequestService {
     async verifyRequest(requestId, request) {
         const userId = await getUserId(request);
         const payload = request.body;
-        const files = request.files; 
+        const files = request.files;
 
         const existingRequest = await this.getRequestById(requestId);
 

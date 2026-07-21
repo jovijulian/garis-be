@@ -55,8 +55,10 @@ class ProjectRequest extends BaseModelBooking {
             },
             approvals: {
                 relation: BaseModelBooking.HasManyRelation,
-                modelClass: Approval, 
-                filter: query => query.where('module_name', 'PROJECT_REQUEST'), 
+                modelClass: Approval,
+                filter: query => query
+                    .where('module_name', 'PROJECT_REQUEST')
+                    .orderBy('approval_order', 'asc'),
                 join: {
                     from: 'project_requests.id',
                     to: 'approvals.reference_id'
