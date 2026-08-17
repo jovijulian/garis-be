@@ -378,6 +378,65 @@ class DashboardService {
             }
         };
     }
+
+    async getProjectRequestDashboardData(queryParams = {}, request) {
+        const siteId = request.user.sites;
+        
+        const startDate = queryParams.startDate ?
+            moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
+            moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+        const endDate = queryParams.endDate ?
+            moment(queryParams.endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss') :
+            moment().endOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+        const [
+            totalRequests,
+            pendingRequestsCount,
+            requestTrend,
+            statusDistribution,
+            topRequesterResult,
+            topDepartments
+        ] = await Promise.all([
+            dashboardRepository.getTotalProjectRequestsInRange(startDate, endDate, siteId),
+            dashboardRepository.getPendingProjectRequestsCount(siteId),
+            dashboardRepository.getProjectRequestTrendInRange(startDate, endDate, siteId),
+            dashboardRepository.getProjectRequestStatusDistributionInRange(startDate, endDate, siteId),
+            dashboardRepository.getTopProjectRequesterIdInRange(startDate, endDate, siteId),
+            dashboardRepository.getTopDepartmentsWithMostRequestsInRange(startDate, endDate, siteId)
+        ]);
+
+        let topRequesterName = 'N/A';
+        if (topRequesterResult && topRequesterResult.user_id) {
+            const topUser = await userRepository.findById(topRequesterResult.user_id);
+            if (topUser) {
+                topRequesterName = topUser.nama_user;
+            }
+        }
+
+        const formattedTopDepartments = topDepartments.map(t => ({
+            department_name: t.department ? t.department.nama_dept : 'Unknown Department',
+            request_count: Number(t.request_count)
+        }));
+        
+        const mostProblematicDepartment = formattedTopDepartments.length > 0 ? formattedTopDepartments[0].department_name : 'N/A';
+
+        return {
+            kpi: {
+                total_requests_in_range: totalRequests,
+                pending_requests_count: pendingRequestsCount,
+                most_problematic_department: mostProblematicDepartment,
+                top_requester: topRequesterName,
+            },
+            charts: {
+                request_trend: requestTrend,
+                status_distribution: statusDistribution,
+            },
+            rankings: {
+                top_departments_requested: formattedTopDepartments,
+            }
+        };
+    }
 }
 
 module.exports = new DashboardService();

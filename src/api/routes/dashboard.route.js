@@ -12,6 +12,7 @@ router.get('/orders', DashboardController.getOrderDashboardData);
 router.get('/vehicle-requests', DashboardController.getVehicleRequestDashboardData);
 router.get('/inventories', DashboardController.getInventoryDashboardData);
 router.get('/alert-reminder', DashboardController.getDashboardAlerts);
+router.get('/project-requests', DashboardController.getProjectRequestDashboardData);
 
 
 module.exports = router;

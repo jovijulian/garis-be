@@ -19,6 +19,8 @@ const Reminder = require('../models/Reminder');
 const InventoryItem = require('../models/InventoryItem');
 const InventoryLoan = require('../models/InventoryLoan');
 const InventoryTransaction = require('../models/InventoryTransaction');
+const ProjectRequest = require('../models/ProjectRequest');
+const Department = require('../models/Department');
 const _ = require('lodash');
 const moment = require('moment');
 
@@ -537,7 +539,7 @@ class DashboardRepository {
         const query = InventoryLoan.query()
             .whereIn('status', ['BORROWED', 'PARTIAL_RETURNED'])
             .withGraphFetched('[item.[base_unit], user]')
-            .orderBy('borrowed_at', 'ASC'); 
+            .orderBy('borrowed_at', 'ASC');
         if (siteId) query.where('cab_id', siteId);
         return query;
     }
@@ -568,9 +570,9 @@ class DashboardRepository {
             .groupBy('inventory_transactions.item_id')
             .orderBy('total_qty', 'desc')
             .limit(limit);
-    
+
         if (siteId) query.where('inventory_transactions.cab_id', siteId);
-    
+
         return query;
     }
 
@@ -585,6 +587,79 @@ class DashboardRepository {
             .limit(limit);
         if (siteId) query.where('cab_id', siteId);
         return query;
+    }
+
+    // --- PROJECT REQUEST DASHBOARD ---
+
+    getTotalProjectRequestsInRange(startDate, endDate, siteId) {
+        return ProjectRequest.query()
+            .whereBetween('request_date', [startDate, endDate])
+            .where('is_active', 1)
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .resultSize();
+    }
+
+    getPendingProjectRequestsCount(siteId) {
+        return ProjectRequest.query()
+            .whereIn('status', ['WAITING_APPROVAL', 'WAITING_GA'])
+            .where('is_active', 1)
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .resultSize();
+    }
+
+    getProjectRequestTrendInRange(startDate, endDate, siteId) {
+        return ProjectRequest.query()
+            .select(knexBooking.raw('DATE(request_date) as date'), knexBooking.raw('count(id) as count'))
+            .where('is_active', 1)
+            .whereBetween('request_date', [startDate, endDate])
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .groupByRaw('DATE(request_date)')
+            .orderBy('date', 'asc');
+    }
+
+    getProjectRequestStatusDistributionInRange(startDate, endDate, siteId) {
+        return ProjectRequest.query()
+            .select('status', knexBooking.raw('count(id) as count'))
+            .where('is_active', 1)
+            .whereBetween('request_date', [startDate, endDate])
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .groupBy('status');
+    }
+
+    getTopProjectRequesterIdInRange(startDate, endDate, siteId) {
+        return ProjectRequest.query()
+            .select('user_id')
+            .count('id as request_count')
+            .where('is_active', 1)
+            .whereBetween('request_date', [startDate, endDate])
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .groupBy('user_id')
+            .orderBy('request_count', 'desc')
+            .first();
+    }
+
+    getTopDepartmentsWithMostRequestsInRange(startDate, endDate, siteId, limit = 5) {
+        return ProjectRequest.query()
+            .select('dept_id', knexBooking.raw('count(id) as request_count'))
+            .where('is_active', 1)
+            .whereBetween('request_date', [startDate, endDate])
+            .withGraphFetched('[department]')
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .groupBy('dept_id')
+            .orderBy('request_count', 'desc')
+            .limit(limit);
     }
 
 }
