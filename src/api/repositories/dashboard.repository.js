@@ -594,6 +594,7 @@ class DashboardRepository {
     getTotalProjectRequestsInRange(startDate, endDate, siteId) {
         return ProjectRequest.query()
             .whereBetween('request_date', [startDate, endDate])
+            .whereNotIn('status', ['WAITING_APPROVAL'])
             .where('is_active', 1)
             .modify(q => {
                 if (siteId) q.where('cab_id', siteId);
@@ -603,7 +604,7 @@ class DashboardRepository {
 
     getPendingProjectRequestsCount(siteId) {
         return ProjectRequest.query()
-            .whereIn('status', ['WAITING_APPROVAL', 'WAITING_GA'])
+            .whereIn('status', ['WAITING_GA'])
             .where('is_active', 1)
             .modify(q => {
                 if (siteId) q.where('cab_id', siteId);
@@ -615,6 +616,7 @@ class DashboardRepository {
         return ProjectRequest.query()
             .select(knexBooking.raw('DATE(request_date) as date'), knexBooking.raw('count(id) as count'))
             .where('is_active', 1)
+            .whereNotIn('status', ['WAITING_APPROVAL'])
             .whereBetween('request_date', [startDate, endDate])
             .modify(q => {
                 if (siteId) q.where('cab_id', siteId);
@@ -627,6 +629,7 @@ class DashboardRepository {
         return ProjectRequest.query()
             .select('status', knexBooking.raw('count(id) as count'))
             .where('is_active', 1)
+            .whereNotIn('status', ['WAITING_APPROVAL'])
             .whereBetween('request_date', [startDate, endDate])
             .modify(q => {
                 if (siteId) q.where('cab_id', siteId);
@@ -638,6 +641,8 @@ class DashboardRepository {
         return ProjectRequest.query()
             .select('user_id')
             .count('id as request_count')
+            .whereNotIn('status', ['WAITING_APPROVAL'])
+            .max('request_date as last_request_date')
             .where('is_active', 1)
             .whereBetween('request_date', [startDate, endDate])
             .modify(q => {
@@ -645,13 +650,19 @@ class DashboardRepository {
             })
             .groupBy('user_id')
             .orderBy('request_count', 'desc')
+            .orderBy('last_request_date', 'desc')
             .first();
     }
 
     getTopDepartmentsWithMostRequestsInRange(startDate, endDate, siteId, limit = 5) {
         return ProjectRequest.query()
-            .select('dept_id', knexBooking.raw('count(id) as request_count'))
+            .select(
+                'dept_id',
+                knexBooking.raw('count(id) as request_count'),
+                knexBooking.raw('MAX(request_date) as last_request_date')
+            )
             .where('is_active', 1)
+            .whereNotIn('status', ['WAITING_APPROVAL'])
             .whereBetween('request_date', [startDate, endDate])
             .withGraphFetched('[department]')
             .modify(q => {
@@ -659,6 +670,7 @@ class DashboardRepository {
             })
             .groupBy('dept_id')
             .orderBy('request_count', 'desc')
+            .orderBy('last_request_date', 'desc')
             .limit(limit);
     }
 
