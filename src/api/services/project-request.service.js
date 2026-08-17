@@ -6,6 +6,8 @@ const { knexBooking } = require('../../config/database');
 const { getUserId, formatDateTime, getRoleUser } = require('../helpers/dataHelpers');
 const moment = require('moment');
 const fs = require('fs');
+const ejs = require('ejs');
+const path = require('path');
 
 class ProjectRequestService {
 
@@ -453,6 +455,25 @@ class ProjectRequestService {
         }
 
         return updatedRequest;
+    }
+
+    async generateProjectRequestHtml(id) {
+        const data = await this.getRequestById(id);
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'pdf', 'project-request-pdf.ejs');
+
+        const templateData = {
+            request: data,
+            moment: moment 
+        };
+
+        try {
+            const html = await ejs.renderFile(templatePath, templateData);
+            return html;
+        } catch (error) {
+            console.error("Error rendering EJS:", error);
+            throw new Error("Failed to render Project Request HTML.");
+        }
     }
 }
 

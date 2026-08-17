@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Permohonan Perbaikan - Request #<%= request.id %></title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+            background-color: #ffffff;
+        }
+
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+
+        /* ===== Outer frame mimicking the printed form border ===== */
+        .form-frame {
+            border: 1.5px solid #000;
+            padding: 22px 26px 20px 26px;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 13pt;
+            margin-bottom: 22px;
+        }
+
+        /* ===== Header block: boxed sender info + plain date/number ===== */
+        .header-row {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+        }
+        .header-row td { vertical-align: top; padding: 0; }
+
+        .sender-box {
+            width: 50%;
+            border: 1px solid #000;
+            padding: 10px 10px;
+        }
+        .sender-box table { width: 100%; border-collapse: collapse; }
+        .sender-box td { padding: 5px; vertical-align: top; }
+        .sender-label { width: 145px; white-space: nowrap; padding-right: 4px; }
+        .sender-colon { width: 14px; }
+
+        .doc-meta {
+            width: 54%;
+            padding-left: 90px;
+            vertical-align: top;
+        }
+        .doc-meta table { border-collapse: collapse; }
+        .doc-meta td { padding: 5px; }
+        .doc-meta-label { width: 68px; white-space: nowrap; padding-right: 6px; }
+        .doc-meta-colon { width: 14px; }
+        .doc-meta-value { border-bottom: 1px solid #000; padding-left: 4px; min-width: 130px; }
+        .doc-meta-blank-line {
+            border-bottom: 1px solid #000;
+            width: 260px;
+            margin-top: 42px;
+            height: 1px;
+        }
+
+        /* ===== Content sections (Uraian / Penyebab / Perbaikan) ===== */
+        .section { margin-bottom: 16px; page-break-inside: avoid; }
+        .section-label {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 18px;
+        }
+        .section-body {
+            min-height: 18px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 3px;
+            margin-bottom: 14px;
+            white-space: pre-wrap;
+        }
+        .section-body:empty::after { content: "\00a0"; }
+        .section-extra-line {
+            border-bottom: 1px solid #000;
+            height: 16px;
+        }
+
+        /* ===== System-specific additions (attachments & progress) ===== */
+        .extra-box {
+            border: 1px solid #999;
+            padding: 8px 10px;
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+        }
+        .extra-box h4 {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0 0 6px 0;
+            font-size: 10.5pt;
+            font-weight: bold;
+        }
+        .attachment-grid { display: block; }
+        .attachment-item {
+            display: inline-block;
+            width: 48%;
+            margin-right: 1%;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        .attachment-item img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+        }
+        .comment-box {
+            border-bottom: 1px dashed #ccc;
+            padding: 5px 0;
+            margin-bottom: 5px;
+            font-size: 10pt;
+            page-break-inside: avoid;
+        }
+        .comment-box:last-child { border-bottom: none; }
+
+        /* ===== Completion + signature block ===== */
+        .completion-row {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            page-break-inside: avoid;
+        }
+        .completion-row > tbody > tr > td { vertical-align: top; }
+
+        .completion-left {
+            width: 44%;
+            padding-right: 10px;
+            padding-top: 8px;
+            font-size: 10.3pt;
+        }
+        .completion-left .line { margin-bottom: 22px; white-space: nowrap; }
+        .completion-left .verify-sign {
+            text-align: left;
+            margin-top: 26px;
+        }
+
+        .sign-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+        .sign-table td {
+            border: 1px solid #000;
+            width: 33.33%;
+            vertical-align: top;
+            padding: 6px 6px 8px 6px;
+        }
+        .sign-table .role-header { padding: 6px; font-weight: normal; }
+        .sign-space { height: 60px; }
+
+        /* ===== Footer (outside the border, like the paper form) ===== */
+        .footer {
+            font-size: 10pt;
+            margin-top: 6px;
+            display: table;
+            width: 100%;
+        }
+        .footer > div { display: table-cell; }
+        .footer-left { text-align: left; }
+        .footer-right { text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="form-frame">
+        <div class="title">PERMOHONAN PERBAIKAN DAN PEMELIHARAAN SARANA</div>
+
+        <table class="header-row">
+            <tr>
+                <td class="sender-box">
+                    <table>
+                        <tr>
+                            <td class="sender-label">Kepada Yth</td>
+                            <td class="sender-colon">:</td>
+                            <td>Dept. HR & GA</td>
+                        </tr>
+                        <tr>
+                            <td class="sender-label">Dari Departemen</td>
+                            <td class="sender-colon">:</td>
+                            <td><%= request.department?.nama_dept || '-' %></td>
+                        </tr>
+                        <tr>
+                            <td class="sender-label">Bagian</td>
+                            <td class="sender-colon">:</td>
+                            <td><%= request.department?.nama_bagian || '-' %></td>
+                        </tr>
+                    </table>
+                </td>
+                <td class="doc-meta">
+                    <table>
+                        <tr>
+                            <td class="doc-meta-label">Tanggal</td>
+                            <td class="doc-meta-colon">:</td>
+                            <td class="doc-meta-value"><%= moment(request.request_date).format('DD MMMM YYYY') %></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-meta-label">Nomor</td>
+                            <td class="doc-meta-colon">:</td>
+                            <td class="doc-meta-value"><%= request.document_number %></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <div class="section">
+            <div class="section-label">Uraian Permasalahan:</div>
+            <div class="section-body"><%= request.problem_description %></div>
+            <div class="section-extra-line"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Penyebab Masalah:</div>
+            <div class="section-body"><%= request.root_cause || '-' %></div>
+            <div class="section-extra-line"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Perbaikan / Perawatan:</div>
+            <div class="section-body"><%= request.corrective_action || '-' %></div>
+            <div class="section-extra-line"></div>
+        </div>
+
+        <% if (request.attachments && request.attachments.length > 0) { %>
+        <div class="extra-box">
+            <h4>Lampiran (Dokumentasi):</h4>
+            <div class="attachment-grid">
+                <% request.attachments.forEach(function(attachment) { %>
+                <div class="attachment-item">
+                    <!-- Pastikan URL gambar bisa diakses (absolute URL atau path lokal yang dibaca oleh pdf generator) -->
+                    <img
+                    src="https://api-garis.cisangkan.co.id/<%= attachment.file_url.replace(/^\/+/, '') %>"
+                    alt="<%= attachment.file_name %>"
+                />
+                    <div style="font-size: 8pt; margin-top: 5px; color: #555;"><%= attachment.file_name %></div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+        <% } %>
+
+        <% if (request.progress_timeline && request.progress_timeline.length > 0) { %>
+        <div class="extra-box">
+            <h4>Riwayat Komentar / Progress:</h4>
+            <% request.progress_timeline.forEach(function(progress) { %>
+            <div class="comment-box">
+                <strong><%= progress.actor?.nama_user || 'Sistem' %> (<%= progress.progress_type %>)</strong><br>
+                <i><%= progress.title %></i>
+                <% if (progress.description) { %>
+                    <p style="margin-top: 3px;"><%= progress.description %></p>
+                <% } %>
+            </div>
+            <% }); %>
+        </div>
+        <% } %>
+
+        <table class="completion-row">
+            <tr>
+                <td class="completion-left">
+                    <div class="line">Tanggal Selesai Dikerjakan : <%= request.completion_date ? moment(request.completion_date).format('DD MMMM YYYY') : '…………………….' %></div>
+                   
+                </td>
+                <td>
+                    <table class="sign-table">
+                        <tr>
+                            <td class="role-header">Yang Menerima,</td>
+                            <td class="role-header">Menyetujui,</td>
+                            <td class="role-header">Yang Mengajukan,</td>
+                        </tr>
+                        <tr>
+                            <td><div class="sign-space"></div></td>
+                            <td><div class="sign-space"></div></td>
+                            <td><div class="sign-space"></div></td>
+                        </tr>
+                        <tr>
+                            <td><br>HR & GA Manager</td>
+                            <td><br>Manager</td>
+                            <td>&nbsp;&nbsp;<%= request.requester?.nama_user || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' %>&nbsp;&nbsp;<br></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>

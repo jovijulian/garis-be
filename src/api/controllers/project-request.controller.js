@@ -100,6 +100,21 @@ class ProjectRequestController {
             return error(res, err.statusCode || 500, err);
         }
     }
+
+    async downloadPDF(req, res) {
+        try {
+            const id = req.params.id;
+
+            const htmlContent = await projectRequestService.generateProjectRequestHtml(id);
+            
+            res.setHeader('Content-Type', 'text/html');
+            res.send(htmlContent);
+
+        } catch (err) {
+            console.error("Error in downloadPDF:", err);
+            return error(res, err.statusCode || 500, "Failed to generate Project Request PDF.");
+        }
+    }
 }
 
 module.exports = new ProjectRequestController();

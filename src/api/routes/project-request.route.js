@@ -23,6 +23,7 @@ router.post('/',
 router.get('/', ProjectRequestController.getAll);
 router.get('/user', ProjectRequestController.getAllUser);
 router.get('/:id', validate(requestIdSchema), ProjectRequestController.detail);
+router.get('/:id/print', ProjectRequestController.downloadPDF);
 router.post('/:id', upload.array('photos', 5), validate(updateSchema), ProjectRequestController.update);
 router.post('/:id/progress',
     upload.array('photos', 5),
