@@ -83,18 +83,18 @@ class ProjectRequestRepository extends BaseRepository {
             .where('module_name', 'PROJECT_REQUEST')
             .where('status', 'PENDING')
             .andWhere(builder => {
-                builder.where('assigned_to', userId);
-
                 if (roleGaris === 2) {
                     builder.orWhere(gaBuilder => {
                         gaBuilder.where('approver_type', 'GA_ADMIN')
-                                 .whereNull('assigned_to')
-                                 .whereExists(
-                                     this.model.query() 
-                                         .whereRaw('project_requests.id = approvals.reference_id')
-                                         .andWhere('project_requests.cab_id', cabId)
-                                 );
+                            .whereNull('assigned_to')
+                            .whereExists(
+                                this.model.query()
+                                    .whereRaw('project_requests.id = approvals.reference_id')
+                                    .andWhere('project_requests.cab_id', cabId)
+                            );
                     });
+                } else {
+                    builder.where('assigned_to', userId);
                 }
             })
             .first();
@@ -130,15 +130,15 @@ class ProjectRequestRepository extends BaseRepository {
             })
             .where(builder => {
                 builder.whereIn('status', ['WAITING_GA', 'IN_PROGRESS', 'WAITING_VERIFICATION', 'REVISION', 'CLOSED'])
-                       .orWhere(subBuilder => {
-                           subBuilder.where('status', 'REJECTED')
-                                     .whereExists(
-                                         Approval.query()
-                                             .whereRaw('approvals.reference_id = project_requests.id')
-                                             .where('approvals.approver_type', 'GA_ADMIN')
-                                             .where('approvals.status', 'REJECTED')
-                                     );
-                       });
+                    .orWhere(subBuilder => {
+                        subBuilder.where('status', 'REJECTED')
+                            .whereExists(
+                                Approval.query()
+                                    .whereRaw('approvals.reference_id = project_requests.id')
+                                    .where('approvals.approver_type', 'GA_ADMIN')
+                                    .where('approvals.status', 'REJECTED')
+                            );
+                    });
             })
             .where('is_active', 1)
             .orderBy('id', 'DESC');
