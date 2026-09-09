@@ -50,6 +50,10 @@ class DashboardRepository {
         });
     }
 
+    getPendingRequestProjectsCount(siteId) {
+        return ProjectRequest.query().where('status', 'WAITING_GA').where('is_active', 1).where('cab_id', siteId).resultSize();
+    }
+
     // booking
     getTotalBookingsInRange(startDate, endDate, siteId) {
         return Booking.query().modify(q => {

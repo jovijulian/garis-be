@@ -227,17 +227,20 @@ class DashboardService {
             pendingVehicles,
             pendingOrders,
             alertReminders,
+            pendingRequestProjects
         ] = await Promise.all([
             dashboardRepository.getPendingBookingCount(status, siteId),
             dashboardRepository.getPendingVehiclesCount(status, siteId),
             dashboardRepository.getPendingOrderCount(status, siteId),
             dashboardRepository.getActiveUpcomingRemindersCount(currentDateOnly, siteId),
+            dashboardRepository.getPendingRequestProjectsCount(siteId)
         ]);
         return {
             pending_bookings: pendingBooking,
             pending_vehicle_requests: pendingVehicles,
             pending_orders: pendingOrders,
             alert_reminders: alertReminders,
+            pending_project_requests: pendingRequestProjects
         }
     }
 
