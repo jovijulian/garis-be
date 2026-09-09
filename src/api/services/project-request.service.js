@@ -3,7 +3,7 @@ const userRepository = require('../repositories/user.repository');
 const employeeRepository = require('../repositories/employee.repository');
 const jabatanRepository = require('../repositories/jabatan.repository');
 const { knexBooking } = require('../../config/database');
-const { getUserId, formatDateTime, getRoleUser } = require('../helpers/dataHelpers');
+const { getUserId, formatDateTime, getRoleUser, getCabId } = require('../helpers/dataHelpers');
 const moment = require('moment');
 const fs = require('fs');
 const ejs = require('ejs');
@@ -216,8 +216,7 @@ class ProjectRequestService {
             throw error;
         }
         const employee = await employeeRepository.findByUserId(userId);
-        const cabId = employee ? employee.id_cab : null;
-
+        const cabId = employee ? employee.id_cab : getCabId(request);
         const pendingApproval = await projectRequestRepository.findPendingApproval(requestId, userId, roleGaris, cabId);
         if (!pendingApproval) {
             const error = new Error('You do not have permission to approve this request or it has already been processed.');
