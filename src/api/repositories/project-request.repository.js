@@ -84,7 +84,7 @@ class ProjectRequestRepository extends BaseRepository {
             .where('status', 'PENDING')
             .andWhere(builder => {
                 if (roleGaris === 2) {
-                    builder.orWhere(gaBuilder => {
+                    builder.where(gaBuilder => {
                         gaBuilder.where('approver_type', 'GA_ADMIN')
                             .whereNull('assigned_to')
                             .whereExists(
