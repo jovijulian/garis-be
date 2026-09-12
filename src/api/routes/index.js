@@ -30,6 +30,7 @@ const InventoryLoanRoutes = require('./inventory-loan.route');
 const ProjectRequestRoutes = require('./project-request.route');
 const ApprovalRoutes = require('./approval.route');
 const ReimbursementItemRoutes = require('./reimbursement-item.route');
+const ReimbursementRoutes = require('./reimbursement.route');
 
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
@@ -60,6 +61,7 @@ router.use('/inventory-loans', InventoryLoanRoutes);
 router.use('/project-requests', ProjectRequestRoutes);
 router.use('/approvals', ApprovalRoutes);
 router.use('/reimbursement-items', ReimbursementItemRoutes);
+router.use('/reimbursements', ReimbursementRoutes);
 
 
 module.exports = router;

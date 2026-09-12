@@ -1,4 +1,4 @@
-const projectRequestRepository = require('../repositories/project-request.repository');
+const reimbursementRepository = require('../repositories/reimbursement.repository');
 const userRepository = require('../repositories/user.repository');
 const employeeRepository = require('../repositories/employee.repository');
 const jabatanRepository = require('../repositories/jabatan.repository');
@@ -20,53 +20,71 @@ class ReimbursementService {
 
         try {
             const employee = await employeeRepository.findByUserId(userId);
-
-            const cabId = Number(payload.cab_id);
+            const cabId = Number(payload.cab_id) || employee.id_cab;
             const currentMonth = moment().format('MM');
             const currentYear = moment().format('YYYY');
 
-            const lastRequest = await projectRequestRepository.getLastRequestByBranchAndMonth(cabId, currentMonth, currentYear);
+            const lastRequest = await reimbursementRepository.getLastRequestByBranchAndMonth(cabId, currentMonth, currentYear);
             let nextSequence = 1;
 
             if (lastRequest) {
                 const lastNumberStr = lastRequest.document_number.split('/').pop();
                 const lastSequence = parseInt(lastNumberStr, 10);
-                if (!isNaN(lastSequence)) {
-                    nextSequence = lastSequence + 1;
-                }
+                if (!isNaN(lastSequence)) nextSequence = lastSequence + 1;
             }
 
-            const paddedSequence = String(nextSequence).padStart(3, '0');
-            const docNumber = `REQ/GA/${currentYear}${currentMonth}/${paddedSequence}`;
+            const docNumber = `REQ/REIMB/${currentYear}${currentMonth}/${String(nextSequence).padStart(3, '0')}`;
+
+            // Parse details JSON string (dari multipart/form-data)
+            let parsedDetails = [];
+            let totalClaim = 0;
+            if (payload.details) {
+                parsedDetails = JSON.parse(payload.details);
+                totalClaim = parsedDetails.reduce((sum, item) => sum + Number(item.claim_amount || 0), 0);
+            }
 
             const insertPayload = {
                 document_number: docNumber,
                 user_id: userId,
                 cab_id: cabId,
                 dept_id: employee.id_dept,
-                problem_description: payload.problem_description,
-                root_cause: payload.root_cause || null,
-                corrective_action: payload.corrective_action || null,
-                status: 'WAITING_APPROVAL',
+                destination: payload.destination,
+                start_date: payload.start_date,
+                end_date: payload.end_date,
+                duration: Number(payload.duration),
+                duration_type: payload.duration_type,
+                purpose: payload.purpose,
+                total_claim: totalClaim,
+                status: 'WAITING_MANAGER', // Status awal reimbursement
                 is_active: 1,
-                request_date: formatDateTime(),
                 created_at: formatDateTime(),
-
             };
 
-            newRequest = await projectRequestRepository.create(insertPayload, trx);
+            newRequest = await reimbursementRepository.create(insertPayload, trx);
 
+            // Insert Details
+            if (parsedDetails.length > 0) {
+                const detailsPayload = parsedDetails.map(detail => ({
+                    reimbursement_id: newRequest.id,
+                    item_id: detail.item_id,
+                    claim_amount: detail.claim_amount,
+                    notes: detail.notes || null
+                }));
+                await reimbursementRepository.createDetails(detailsPayload, trx);
+            }
+
+            // Insert Attachments
             if (files && files.length > 0) {
                 const attachmentsPayload = files.map(file => ({
-                    request_id: newRequest.id,
-                    progress_id: null,
+                    reimbursement_id: newRequest.id,
                     file_url: `uploads/${file.filename}`,
                     file_name: file.originalname,
                     file_type: file.mimetype
                 }));
-                await projectRequestRepository.createAttachments(attachmentsPayload, trx);
+                await reimbursementRepository.createAttachments(attachmentsPayload, trx);
             }
 
+            // Generate Approvals
             const approvalsToInsert = [];
             let order = 1;
 
@@ -91,13 +109,13 @@ class ReimbursementService {
 
             approvalsToInsert.push({
                 reference_id: newRequest.id,
-                approver_type: 'GA_ADMIN',
+                approver_type: 'GA_ADMIN', // HRGA
                 approval_order: order++,
                 assigned_to: null,
                 status: 'PENDING'
             });
 
-            await projectRequestRepository.createApprovals(approvalsToInsert, trx);
+            await reimbursementRepository.createApprovals(approvalsToInsert, trx);
             await trx.commit();
         } catch (error) {
             await trx.rollback();
@@ -113,18 +131,124 @@ class ReimbursementService {
     }
 
     async getAllUser(queryParams, request) {
-        const userId = getUserId(request)
-        return projectRequestRepository.findAllWithFiltersUser(queryParams, userId)
+        const userId = getUserId(request);
+        return reimbursementRepository.findAllWithFiltersUser(queryParams, userId);
     }
 
     async getRequestById(id) {
-        const request = await projectRequestRepository.findByIdWithRelations(id, '[requester, department, approvals.[assigned_user], attachments, progress_timeline.[attachments]]');
+        const request = await reimbursementRepository.findByIdWithRelations(id, '[requester, department, details.[item], approvals.[assigned_user], attachments]');
         if (!request) {
-            const error = new Error('Project request not found.');
+            const error = new Error('Reimbursement request not found.');
             error.statusCode = 404;
             throw error;
         }
         return request;
+    }
+
+    async updateApprovalStatus(requestId, request) {
+        const userId = await getUserId(request);
+        const roleGaris = await getRoleUser(request);
+        const payload = request.body;
+        
+        const reimbursement = await reimbursementRepository.findByIdWithRelations(requestId, '[requester]');
+        if (!reimbursement) {
+            const error = new Error('Reimbursement request not found.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const employee = await employeeRepository.findByUserId(userId);
+        const cabId = employee ? employee.id_cab : getCabId(request);
+        const pendingApproval = await reimbursementRepository.findPendingApproval(requestId, userId, roleGaris, cabId);
+        
+        if (!pendingApproval) {
+            const error = new Error('You do not have permission to approve this request or it has already been processed.');
+            error.statusCode = 403;
+            throw error;
+        }
+
+        const trx = await knexBooking.transaction();
+        let updatedRequest;
+
+        try {
+            await reimbursementRepository.updateApprovalRecord(pendingApproval.id, {
+                status: payload.status,
+                notes: payload.notes || null,
+                action_by: userId,
+                action_date: formatDateTime()
+            }, trx);
+
+            if (payload.status === 'REJECTED') {
+                updatedRequest = await reimbursementRepository.update(requestId, {
+                    status: 'REJECTED',
+                    updated_at: formatDateTime()
+                }, trx);
+
+            } else if (payload.status === 'APPROVED') {
+                if (pendingApproval.approver_type === 'GA_ADMIN') {
+                    updatedRequest = await reimbursementRepository.update(requestId, {
+                        status: 'CLOSED',
+                        updated_at: formatDateTime()
+                    }, trx);
+                } else if (payload.forward_to_head1 === true) {
+                    const requesterEmployee = await employeeRepository.findByUserId(reimbursement.user_id);
+                    let forwarded = false;
+
+                    if (requesterEmployee && requesterEmployee.head1) {
+                        const jabHead1 = await jabatanRepository.findByKode(requesterEmployee.head1);
+                        if (jabHead1) {
+                            const atasanHead1 = await employeeRepository.findByJabatanId(jabHead1.id_jab);
+                            if (atasanHead1) {
+                                const userHead1 = await userRepository.findEmployDataByIdUser(atasanHead1.nik);
+                                if (userHead1) {
+                                    await reimbursementRepository.shiftGaAdminOrder(requestId, 3, trx);
+                                    await reimbursementRepository.createApprovals([{
+                                        reference_id: requestId,
+                                        approver_type: 'MANAGER',
+                                        approval_order: 2,
+                                        assigned_to: userHead1.id_user,
+                                        status: 'PENDING'
+                                    }], trx);
+                                    forwarded = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (forwarded) {
+                        updatedRequest = await reimbursementRepository.update(requestId, {
+                            status: 'WAITING_MANAGER',
+                            updated_at: formatDateTime()
+                        }, trx);
+                    } else {
+                        updatedRequest = await reimbursementRepository.update(requestId, {
+                            status: 'WAITING_GA',
+                            updated_at: formatDateTime()
+                        }, trx);
+                    }
+
+                } else {
+                    updatedRequest = await reimbursementRepository.update(requestId, {
+                        status: 'WAITING_GA',
+                        updated_at: formatDateTime()
+                    }, trx);
+                }
+            }
+
+            await trx.commit();
+        } catch (error) {
+            await trx.rollback();
+            throw error;
+        }
+
+        return updatedRequest;
+    }
+
+    async getAll(queryParams, request) {
+        const siteId = request.user.sites ?? null;
+        return siteId
+            ? reimbursementRepository.findAllWithFilters(queryParams, siteId)
+            : reimbursementRepository.findAllWithFilters(queryParams);
     }
 
     async updateRequest(id, request) {
@@ -133,7 +257,7 @@ class ReimbursementService {
 
         const existingRequest = await this.getRequestById(id);
 
-        if (existingRequest.status !== 'WAITING_APPROVAL') {
+        if (existingRequest.status !== 'WAITING_MANAGER') {
             const error = new Error('This request cannot be edited as it has already been processed.');
             error.statusCode = 400;
             throw error;
@@ -143,18 +267,42 @@ class ReimbursementService {
         let updatedRequest;
 
         try {
+            let parsedDetails = [];
+            let totalClaim = 0;
+            if (payload.details) {
+                parsedDetails = JSON.parse(payload.details);
+                totalClaim = parsedDetails.reduce((sum, item) => sum + Number(item.claim_amount || 0), 0);
+            }
+
             const updatePayload = {
-                cab_id: Number(payload.cab_id),
-                problem_description: payload.problem_description,
-                root_cause: payload.root_cause || null,
-                corrective_action: payload.corrective_action || null,
+                cab_id: payload.cab_id ? Number(payload.cab_id) : existingRequest.cab_id,
+                destination: payload.destination || existingRequest.destination,
+                start_date: payload.start_date || existingRequest.start_date,
+                end_date: payload.end_date || existingRequest.end_date,
+                duration: Number(payload.duration) || Number(existingRequest.duration),
+                duration_type: payload.duration_type || existingRequest.duration_type,
+                purpose: payload.purpose || existingRequest.purpose,
+                total_claim: payload.details ? totalClaim : existingRequest.total_claim,
                 updated_at: formatDateTime(),
             };
 
-            updatedRequest = await projectRequestRepository.update(id, updatePayload, trx);
+            updatedRequest = await reimbursementRepository.update(id, updatePayload, trx);
+
+            if (payload.details) {
+                await reimbursementRepository.deleteDetailsByRequestId(id, trx); 
+                if (parsedDetails.length > 0) {
+                    const detailsPayload = parsedDetails.map(detail => ({
+                        reimbursement_id: id,
+                        item_id: detail.item_id,
+                        claim_amount: detail.claim_amount,
+                        notes: detail.notes || null
+                    }));
+                    await reimbursementRepository.createDetails(detailsPayload, trx); 
+                }
+            }
 
             if (files && files.length > 0) {
-
+                
                 if (existingRequest.attachments && existingRequest.attachments.length > 0) {
                     existingRequest.attachments.forEach(attachment => {
                         if (attachment.file_url && fs.existsSync(attachment.file_url)) {
@@ -163,17 +311,15 @@ class ReimbursementService {
                     });
                 }
 
-                await projectRequestRepository.deleteAttachmentsByRequestId(id, trx);
+                await reimbursementRepository.deleteAttachmentsByRequestId(id, trx);
 
                 const attachmentsPayload = files.map(file => ({
-                    request_id: id,
-                    progress_id: null,
+                    reimbursement_id: id,
                     file_url: `uploads/${file.filename}`,
                     file_name: file.originalname,
                     file_type: file.mimetype
                 }));
-
-                await projectRequestRepository.createAttachments(attachmentsPayload, trx);
+                await reimbursementRepository.createAttachments(attachmentsPayload, trx);
             }
 
             await trx.commit();
@@ -193,286 +339,16 @@ class ReimbursementService {
     async deleteRequest(id) {
         const existingRequest = await this.getRequestById(id);
 
-        if (existingRequest.status !== 'WAITING_APPROVAL') {
+        if (existingRequest.status !== 'WAITING_MANAGER') {
             const error = new Error('This request cannot be deleted as it has already been processed.');
             error.statusCode = 400;
             throw error;
         }
 
         return knexBooking.transaction(async (trx) => {
-            await projectRequestRepository.update(id, { is_active: 0 }, trx);
-            return { message: 'Project request has been deleted successfully.' };
+            await reimbursementRepository.update(id, { is_active: 0, updated_at: formatDateTime() }, trx);
+            return { message: 'Reimbursement request has been deleted successfully.' };
         });
-    }
-
-    async updateApprovalStatus(requestId, request) {
-        const userId = await getUserId(request);
-        const roleGaris = await getRoleUser(request);
-        const payload = request.body;
-        const projectRequest = await projectRequestRepository.findByIdWithRelations(requestId, '[requester]');
-        if (!projectRequest) {
-            const error = new Error('Project request not found.');
-            error.statusCode = 404;
-            throw error;
-        }
-        const employee = await employeeRepository.findByUserId(userId);
-        const cabId = employee ? employee.id_cab : getCabId(request);
-        const pendingApproval = await projectRequestRepository.findPendingApproval(requestId, userId, roleGaris, cabId);
-        if (!pendingApproval) {
-            const error = new Error('You do not have permission to approve this request or it has already been processed.');
-            error.statusCode = 403;
-            throw error;
-        }
-
-        const trx = await knexBooking.transaction();
-        let updatedRequest;
-
-        try {
-            await projectRequestRepository.updateApprovalRecord(pendingApproval.id, {
-                status: payload.status,
-                notes: payload.notes || null,
-                action_by: userId,
-                action_date: formatDateTime()
-            }, trx);
-
-            if (payload.status === 'REJECTED') {
-                updatedRequest = await projectRequestRepository.update(requestId, {
-                    status: 'REJECTED',
-                    updated_at: formatDateTime()
-                }, trx);
-
-            } else if (payload.status === 'APPROVED') {
-                if (pendingApproval.approver_type === 'GA_ADMIN') {
-                    updatedRequest = await projectRequestRepository.update(requestId, {
-                        status: 'IN_PROGRESS',
-                        updated_at: formatDateTime()
-                    }, trx);
-                } else if (payload.forward_to_head1 === true) {
-                    const requesterEmployee = await employeeRepository.findByUserId(projectRequest.user_id);
-                    let forwarded = false;
-
-                    if (requesterEmployee && requesterEmployee.head1) {
-                        const jabHead1 = await jabatanRepository.findByKode(requesterEmployee.head1);
-                        if (jabHead1) {
-                            const atasanHead1 = await employeeRepository.findByJabatanId(jabHead1.id_jab);
-                            if (atasanHead1) {
-                                const userHead1 = await userRepository.findEmployDataByIdUser(atasanHead1.nik);
-                                if (userHead1) {
-                                    await projectRequestRepository.shiftGaAdminOrder(requestId, 3, trx);
-
-                                    await projectRequestRepository.createApprovals([{
-                                        reference_id: requestId,
-                                        approver_type: 'MANAGER',
-                                        approval_order: 2,
-                                        assigned_to: userHead1.id_user,
-                                        status: 'PENDING'
-                                    }], trx);
-
-                                    forwarded = true;
-                                }
-                            }
-                        }
-                    }
-
-                    if (forwarded) {
-                        updatedRequest = await projectRequestRepository.update(requestId, {
-                            status: 'WAITING_APPROVAL',
-                            updated_at: formatDateTime()
-                        }, trx);
-                    } else {
-                        updatedRequest = await projectRequestRepository.update(requestId, {
-                            status: 'WAITING_GA',
-                            updated_at: formatDateTime()
-                        }, trx);
-                    }
-
-                } else {
-                    updatedRequest = await projectRequestRepository.update(requestId, {
-                        status: 'WAITING_GA',
-                        updated_at: formatDateTime()
-                    }, trx);
-                }
-            }
-
-            await trx.commit();
-        } catch (error) {
-            await trx.rollback();
-            throw error;
-        }
-
-        return updatedRequest;
-    }
-
-    async getAll(queryParams, request) {
-        const siteId = request.user.sites ?? null;
-        return siteId
-            ? projectRequestRepository.findAllWithFilters(queryParams, siteId)
-            : projectRequestRepository.findAllWithFilters(queryParams);
-    }
-
-    async addProgress(requestId, request) {
-        const userId = await getUserId(request);
-        const payload = request.body;
-        const files = request.files;
-
-        const existingRequest = await this.getRequestById(requestId);
-
-        if (!['IN_PROGRESS', 'REVISION'].includes(existingRequest.status)) {
-            const error = new Error('Cannot add progress. Request is not in progress.');
-            error.statusCode = 400;
-            throw error;
-        }
-
-        const trx = await knexBooking.transaction();
-        let newProgress;
-
-        try {
-            const progressPayload = {
-                request_id: Number(requestId),
-                user_id: userId,
-                title: payload.title,
-                description: payload.description,
-                progress_type: 'UPDATE_GA'
-            };
-            newProgress = await projectRequestRepository.createProgress(progressPayload, trx);
-
-            if (files && files.length > 0) {
-                const attachmentsPayload = files.map(file => ({
-                    request_id: null,
-                    progress_id: newProgress.id,
-                    file_url: `uploads/${file.filename}`,
-                    file_name: file.originalname,
-                    file_type: file.mimetype
-                }));
-                await projectRequestRepository.createAttachments(attachmentsPayload, trx);
-            }
-
-            await trx.commit();
-        } catch (error) {
-            await trx.rollback();
-            if (files && files.length > 0) {
-                files.forEach(file => {
-                    if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
-                });
-            }
-            throw error;
-        }
-
-        return newProgress;
-    }
-
-    async requestVerification(requestId, request) {
-        const existingRequest = await this.getRequestById(requestId);
-
-        if (!['IN_PROGRESS', 'REVISION'].includes(existingRequest.status)) {
-            const error = new Error('Request must be IN_PROGRESS to ask for verification.');
-            error.statusCode = 400;
-            throw error;
-        }
-
-        const trx = await knexBooking.transaction();
-        let updatedRequest;
-
-        try {
-            updatedRequest = await projectRequestRepository.update(requestId, {
-                status: 'WAITING_VERIFICATION',
-                updated_at: formatDateTime()
-            }, trx);
-
-            await trx.commit();
-        } catch (error) {
-            await trx.rollback();
-            throw error;
-        }
-
-        return updatedRequest;
-    }
-
-    async verifyRequest(requestId, request) {
-        const userId = await getUserId(request);
-        const payload = request.body;
-        const files = request.files;
-
-        const existingRequest = await this.getRequestById(requestId);
-
-        if (existingRequest.user_id !== userId) {
-            const error = new Error('You do not have permission to verify this request.');
-            error.statusCode = 403;
-            throw error;
-        }
-
-        if (existingRequest.status !== 'WAITING_VERIFICATION') {
-            const error = new Error('Request is not waiting for verification.');
-            error.statusCode = 400;
-            throw error;
-        }
-
-        const trx = await knexBooking.transaction();
-        let updatedRequest;
-
-        try {
-            updatedRequest = await projectRequestRepository.update(requestId, {
-                status: payload.status,
-                completion_date: payload.status === 'CLOSED' ? formatDateTime() : null,
-                updated_at: formatDateTime()
-            }, trx);
-
-            const progressType = payload.status === 'CLOSED' ? 'CLOSE_COMMENT_USER' : 'REVISION_USER';
-
-            const progressTitle = payload.title || (payload.status === 'CLOSED' ? 'Karyawan Mengkonfirmasi Selesai' : 'Karyawan Meminta Revisi');
-            const progressDesc = payload.description || (payload.status === 'CLOSED' ? '-' : '-');
-
-            const progressPayload = {
-                request_id: Number(requestId),
-                user_id: userId,
-                title: progressTitle,
-                description: progressDesc,
-                progress_type: progressType
-            };
-            const newProgress = await projectRequestRepository.createProgress(progressPayload, trx);
-
-            if (files && files.length > 0) {
-                const attachmentsPayload = files.map(file => ({
-                    request_id: null,
-                    progress_id: newProgress.id,
-                    file_url: `uploads/${file.filename}`,
-                    file_name: file.originalname,
-                    file_type: file.mimetype
-                }));
-                await projectRequestRepository.createAttachments(attachmentsPayload, trx);
-            }
-
-            await trx.commit();
-        } catch (error) {
-            await trx.rollback();
-            if (files && files.length > 0) {
-                files.forEach(file => {
-                    if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
-                });
-            }
-            throw error;
-        }
-
-        return updatedRequest;
-    }
-
-    async generateProjectRequestHtml(id) {
-        const data = await this.getRequestById(id);
-
-        const templatePath = path.join(__dirname, '..', '..', 'templates', 'pdf', 'project-request-pdf.ejs');
-
-        const templateData = {
-            request: data,
-            moment: moment 
-        };
-
-        try {
-            const html = await ejs.renderFile(templatePath, templateData);
-            return html;
-        } catch (error) {
-            console.error("Error rendering EJS:", error);
-            throw new Error("Failed to render Project Request HTML.");
-        }
     }
 }
 
