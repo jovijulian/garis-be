@@ -1,6 +1,7 @@
 const BaseRepository = require('./base.repository');
 const Approval = require('../models/Approval');
 const ProjectRequest = require('../models/ProjectRequest');
+const Reimbursement = require('../models/Reimbursement');
 
 class ApprovalRepository extends BaseRepository {
     constructor() {
@@ -10,7 +11,7 @@ class ApprovalRepository extends BaseRepository {
     async getPendingNotifications(userId, cabId, roleGaris) {
         const query = Approval.query()
             .where('approvals.status', 'PENDING')
-            .withGraphFetched('[project_request.[requester(selectUsername)]]')
+            .withGraphFetched('[project_request.[requester(selectUsername)], reimbursement.[requester(selectUsername)]]')
             .modifiers({
                 selectUsername: builder => builder.select('id_user', 'nama_user')
             })
@@ -37,7 +38,10 @@ class ApprovalRepository extends BaseRepository {
     async findDetailById(id) {
         return Approval.query()
             .findById(id)
-            .withGraphFetched('project_request.[requester(selectUsername), department(selectDeptName), attachments]')
+            .withGraphFetched(`[
+                project_request.[requester(selectUsername), department(selectDeptName), attachments],
+                reimbursement.[requester(selectUsername), department(selectDeptName), details.[item], attachments]
+            ]`)
             .modifiers({
                 selectUsername: builder => builder.select('id_user', 'nama_user'),
                 selectDeptName: builder => builder.select('id_dept', 'nama_dept')

@@ -1,6 +1,7 @@
 const approvalRepository = require('../repositories/approval.repository');
 const employeeRepository = require('../repositories/employee.repository');
 const projectRequestService = require('./project-request.service');
+const reimbursementService = require('./reimbursement.service');
 const { getUserId, getRoleUser } = require('../helpers/dataHelpers');
 
 class ApprovalService {
@@ -24,6 +25,12 @@ class ApprovalService {
                 if (notif.project_request.requester) {
                     requesterName = notif.project_request.requester.nama_user;
                 }
+            }
+
+            else if (notif.module_name === 'REIMBURSEMENT' && notif.reimbursement) {
+                title = `Reimbursement: ${notif.reimbursement.document_number}`;
+                description = `Tujuan: ${notif.reimbursement.destination} - ${notif.reimbursement.purpose}`;
+                if (notif.reimbursement.requester) requesterName = notif.reimbursement.requester.nama_user;
             }
 
             return {
@@ -58,8 +65,12 @@ class ApprovalService {
         }
         else if (roleGaris === 2 && approval.approver_type === 'GA_ADMIN' && approval.assigned_to === null) {
             const employee = await employeeRepository.findByUserId(userId);
-            if (employee && approval.project_request && approval.project_request.cab_id === employee.id_cab) {
-                isAuthorized = true;
+            if (employee) {
+                if (approval.module_name === 'PROJECT_REQUEST' && approval.project_request && approval.project_request.cab_id === employee.id_cab) {
+                    isAuthorized = true;
+                } else if (approval.module_name === 'REIMBURSEMENT' && approval.reimbursement && approval.reimbursement.cab_id === employee.id_cab) {
+                    isAuthorized = true;
+                }
             }
         }
 
@@ -70,7 +81,9 @@ class ApprovalService {
         }
 
         const canForward = (approval.approver_type === 'MANAGER' && approval.approval_order === 1);
-
+        const requestDetail = approval.module_name === 'REIMBURSEMENT'
+            ? approval.reimbursement
+            : approval.project_request;
         return {
             approval_info: {
                 id_approval: approval.id,
@@ -80,7 +93,7 @@ class ApprovalService {
                 can_forward: canForward,
                 created_at: approval.created_at
             },
-            request_detail: approval.project_request
+            request_detail: requestDetail
         };
     }
 
@@ -101,7 +114,9 @@ class ApprovalService {
             case 'PROJECT_REQUEST':
                 await projectRequestService.updateApprovalStatus(approval.reference_id, request);
                 break;
-
+            case 'REIMBURSEMENT':
+                result = await reimbursementService.updateApprovalStatus(approval.reference_id, request);
+                break;
             case 'LEAVE_REQUEST':
                 break;
 

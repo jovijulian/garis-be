@@ -27,6 +27,8 @@ class ProjectApproval extends BaseModelBooking {
     static get relationMappings() {
         const User = require('./User');
         const ProjectRequest = require('./ProjectRequest');
+        const Reimbursement = require('./Reimbursement');
+
         return {
             assigned_user: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -50,6 +52,14 @@ class ProjectApproval extends BaseModelBooking {
                 join: {
                     from: 'approvals.reference_id',
                     to: 'project_requests.id'
+                }
+            },
+            reimbursement: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: Reimbursement,
+                join: {
+                    from: 'approvals.reference_id',
+                    to: 'reimbursements.id'
                 }
             }
         };
