@@ -69,6 +69,21 @@ class ReimbursementController {
             return error(res, 500, err);
         }
     }
+
+    async downloadPDF(req, res) {
+        try {
+            const id = req.params.id;
+
+            const htmlContent = await reimbursementService.generateReimbursementHtml(id);
+            
+            res.setHeader('Content-Type', 'text/html');
+            res.send(htmlContent);
+
+        } catch (err) {
+            console.error("Error in downloadPDF:", err);
+            return error(res, err.statusCode || 500, "Failed to generate Reimbursement PDF.");
+        }
+    }
 }
 
 module.exports = new ReimbursementController();

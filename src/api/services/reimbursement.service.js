@@ -350,6 +350,39 @@ class ReimbursementService {
             return { message: 'Reimbursement request has been deleted successfully.' };
         });
     }
+
+    async generateReimbursementHtml(id) {
+        const data = await this.getRequestById(id);
+
+        let jabatanName = '-';
+        if (data.user_id) {
+            try {
+                const employee = await employeeRepository.findByUserId(data.user_id);
+                if (employee && employee.id_jab) {
+                    const jabatan = await jabatanRepository.findById(employee.id_jab);
+                    if (jabatan) jabatanName = jabatan.nama_jab;
+                }
+            } catch (err) {
+                console.warn("Could not fetch employee/jabatan for reimbursement:", err.message);
+            }
+        }
+
+        const templatePath = path.join(__dirname, '..', '..', 'templates', 'pdf', 'reimbursement-pdf.ejs');
+
+        const templateData = {
+            request: data,
+            jabatan: jabatanName,
+            moment: moment 
+        };
+
+        try {
+            const html = await ejs.renderFile(templatePath, templateData);
+            return html;
+        } catch (error) {
+            console.error("Error rendering EJS:", error);
+            throw new Error("Failed to render Reimbursement HTML.");
+        }
+    }
 }
 
 module.exports = new ReimbursementService();

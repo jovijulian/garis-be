@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Form Dinas Luar Kota - <%= request.document_number %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0.5mm;
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 12mm 15mm;
+            background-color: #ffffff;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9pt;
+            line-height: 1.35;
+            color: #000;
+            background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page-container {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .form-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 13pt;
+            letter-spacing: 0.8px;
+            margin-bottom: 24px;
+        }
+
+        /* Identity Block */
+        .identity-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+            margin-bottom: 8px;
+        }
+
+        .identity-table td {
+            padding: 3px 2px;
+            vertical-align: middle;
+        }
+
+        .lbl {
+            width: 125px;
+            white-space: nowrap;
+        }
+
+        .colon {
+            width: 15px;
+            text-align: center;
+        }
+
+        .underline-line {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-height: 18px;
+            line-height: 17px;
+            padding: 0 4px;
+            vertical-align: bottom;
+        }
+
+        .rect-box {
+            display: inline-block;
+            width: 32px;
+            height: 17px;
+            border: 1.5px solid #000;
+            vertical-align: middle;
+            margin-right: 6px;
+            line-height: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        .dest-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .dest-table td {
+            padding: 2.5px 0;
+            vertical-align: middle;
+        }
+
+        .section-divider {
+            border-top: 1.5px solid #000;
+            margin: 12px 0 6px 0;
+        }
+
+        /* Main Form Table */
+        .main-form-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+        }
+
+        .main-form-table thead th {
+            font-weight: bold;
+            padding: 4px 2px;
+        }
+
+        .th-main-row th {
+            vertical-align: bottom;
+        }
+
+        .box-th-main {
+            border: 1px solid #000 !important;
+            text-align: center;
+            font-size: 8pt;
+            padding: 2px !important;
+        }
+
+        .box-th-sub {
+            border: 1px solid #000 !important;
+            text-align: center;
+            font-size: 8pt;
+            padding: 2px !important;
+        }
+
+        .main-form-table tbody td {
+            padding: 4px 2px;
+            vertical-align: middle;
+            border-bottom: 1px solid #000;
+        }
+
+        .th-sub-row th {
+            border-bottom: 1px solid #000;
+        }
+
+        .cell-label {
+            width: 24%;
+            font-size: 8.5pt;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 4px;
+        }
+
+        .cell-currency {
+            width: 21%;
+            white-space: nowrap;
+        }
+
+        .prefix {
+            display: inline-block;
+            width: 30px;
+            font-size: 8.5pt;
+        }
+
+        .val-line {
+            display: inline-block;
+            width: calc(100% - 56px);
+            text-align: right;
+            padding-right: 4px;
+            min-height: 16px;
+            line-height: 15px;
+            font-size: 8.5pt;
+        }
+
+        .suffix {
+            display: inline-block;
+            width: 18px;
+            text-align: right;
+            font-size: 8.5pt;
+        }
+
+        .cell-notes {
+            width: 21%;
+            padding: 0 4px;
+        }
+
+        .val-line.notes {
+            width: 100%;
+            text-align: left;
+            padding-left: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .cell-box {
+            border: 1px solid #000;
+            text-align: center;
+            font-size: 8pt;
+            padding: 2px;
+            width: 7%;
+        }
+
+        .cell-box.checked {
+            font-weight: bold;
+        }
+
+        /* Total Row */
+        .total-row-bar {
+            border-top: 1.5px solid #000;
+            margin-top: 5px;
+            padding-top: 5px;
+            display: flex;
+            align-items: center;
+            font-size: 8.5pt;
+            width: 100%;
+        }
+
+        .total-col-label {
+            width: 24%;
+            font-weight: bold;
+            font-size: 9pt;
+        }
+
+        .total-col-claim {
+            width: 21%;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .total-col-paid {
+            width: 21%;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .total-col-grand {
+            width: 34%;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        /* Signatures */
+        .sign-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            margin-top: 28px;
+            font-size: 8.5pt;
+        }
+
+        .sign-table td {
+            width: 33.33%;
+            vertical-align: top;
+            padding: 0 8px;
+        }
+
+        .sign-space {
+            height: 52px;
+        }
+
+        .sign-name {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .sign-role {
+            font-size: 8.5pt;
+            margin-top: 4px;
+        }
+
+        /* Bottom Footer */
+        .bottom-separator {
+            border-top: 1px solid #000;
+            margin-top: 24px;
+            margin-bottom: 4px;
+        }
+
+        .form-footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7.8pt;
+        }
+
+        .form-footer-table td {
+            padding: 0;
+        }
+
+        /* Attachment Section */
+        .attachment-page {
+            page-break-before: always;
+            padding: 10mm 5mm;
+        }
+
+        .attachment-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1.5px solid #000;
+            padding-bottom: 5px;
+        }
+
+        .attachment-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .attachment-item {
+            width: 31%;
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .attachment-item img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+        }
+
+        .attachment-item .pdf-notice {
+            padding: 40px 10px;
+            background: #f4f4f4;
+            font-size: 8.5pt;
+            color: #444;
+            border: 1px dashed #bbb;
+        }
+
+        .attachment-item .file-caption {
+            font-size: 7.5pt;
+            margin-top: 6px;
+            word-wrap: break-word;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<%
+    // Helper formatting
+    const formatRp = (num) => {
+        if (num === null || num === undefined || num === '' || isNaN(Number(num))) return '';
+        const val = Number(num);
+        if (val === 0) return '';
+        return new Intl.NumberFormat('id-ID').format(val);
+    };
+
+    let totalClaim = 0;
+    let totalPaid = 0;
+    const details = (request && request.details) ? request.details : [];
+
+    details.forEach(d => {
+        totalClaim += parseFloat(d.claim_amount) || 0;
+        totalPaid += parseFloat(d.paid_amount) || 0;
+    });
+
+    const grandTotal = totalClaim + totalPaid;
+
+    // Destination matching
+    const dest = (request.destination || '').trim().toLowerCase();
+    const isBandung = dest === 'bandung';
+    const isJakarta = dest === 'jakarta';
+    const isPurwakarta = dest === 'purwakarta';
+    const isPasuruan = dest === 'pasuruan';
+    const isLainnya = !isBandung && !isJakarta && !isPurwakarta && !isPasuruan && dest !== '';
+    const lainnyaValue = isLainnya ? request.destination : '';
+
+    // Date formatting
+    const startDateStr = request.start_date ? moment(request.start_date).format('DD/MM/YYYY') : '';
+    const endDateStr = request.end_date ? moment(request.end_date).format('DD/MM/YYYY') : '';
+    const durationCount = request.duration || '';
+    const durationUnit = request.duration_type || 'Hari';
+
+    // Department & Jabatan
+    const deptName = request.department?.nama_dept || '';
+    const userJabatan = (typeof jabatan !== 'undefined' && jabatan && jabatan !== '-') ? jabatan : '';
+
+    // Signatures
+    let managerName = '';
+    let hrgaName = '';
+    if (request.approvals && request.approvals.length > 0) {
+        const managerApp = request.approvals.find(a => a.approver_type === 'MANAGER');
+        if (managerApp && managerApp.assigned_user) {
+            managerName = managerApp.assigned_user.nama_user;
+        }
+        const hrgaApp = request.approvals.find(a => a.approver_type === 'GA_ADMIN');
+        if (hrgaApp && hrgaApp.assigned_user) {
+            hrgaName = hrgaApp.assigned_user.nama_user;
+        }
+    }
+    const requesterName = request.requester?.nama_user || '';
+%>
+
+    <div class="page-container">
+        <div class="form-title">FORM DINAS LUAR KOTA</div>
+
+        <!-- Bagian Informasi Pemohon -->
+        <table class="identity-table">
+            <tr>
+                <td class="lbl">Nama</td>
+                <td class="colon">:</td>
+                <td colspan="4">
+                    <span class="underline-line" style="width: 320px;"><%= requesterName %></span>
+                </td>
+            </tr>
+            <tr>
+                <td class="lbl">Jabatan</td>
+                <td class="colon">:</td>
+                <td style="width: 250px;">
+                    <span class="underline-line" style="width: 230px;"><%= userJabatan %></span>
+                </td>
+                <td style="width: 90px; text-align: right; padding-right: 8px;">Departemen</td>
+                <td class="colon">:</td>
+                <td>
+                    <span class="underline-line" style="width: 230px;"><%= deptName %></span>
+                </td>
+            </tr>
+            <tr>
+                <td class="lbl" style="vertical-align: top; padding-top: 4px;">Tujuan</td>
+                <td class="colon" style="vertical-align: top; padding-top: 4px;">:</td>
+                <td colspan="4" style="padding: 2px 0;">
+                    <table class="dest-table">
+                        <tr>
+                            <td style="width: 140px;">
+                                <span class="rect-box"><%= isBandung ? 'X' : '' %></span>
+                                <span>Bandung</span>
+                            </td>
+                            <td style="width: 140px;">
+                                <span class="rect-box"><%= isJakarta ? 'X' : '' %></span>
+                                <span>Jakarta</span>
+                            </td>
+                            <td>
+                                <span class="rect-box"><%= isLainnya ? 'X' : '' %></span>
+                                <span>Lainnya</span>
+                                <span class="underline-line" style="width: 210px;"><%= lainnyaValue %></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="rect-box"><%= isPurwakarta ? 'X' : '' %></span>
+                                <span>Purwakarta</span>
+                            </td>
+                            <td colspan="2">
+                                <span class="rect-box"><%= isPasuruan ? 'X' : '' %></span>
+                                <span>Pasuruan</span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td class="lbl" style="vertical-align: top; padding-top: 4px;">Tanggal Dinas</td>
+                <td class="colon" style="vertical-align: top; padding-top: 4px;">:</td>
+                <td colspan="3" style="vertical-align: top; padding-top: 4px; white-space: nowrap;">
+                    Dari <span class="underline-line" style="width: 80px; text-align: center;"><%= startDateStr %></span>
+                    Sampai <span class="underline-line" style="width: 80px; text-align: center;"><%= endDateStr %></span>
+                    ( <span class="underline-line" style="width: 35px; text-align: center;"><%= durationCount %></span> Hari / Malam )<sup>(*)</sup>
+                </td>
+                <td style="vertical-align: top; font-size: 7.8pt; font-style: italic; line-height: 1.25; padding-left: 10px;">
+                    <div>(*) DLKS Antar Site Hitungan Malam</div>
+                    <div style="padding-left: 14px;">DLK Lainnya Hitungan Hari</div>
+                </td>
+            </tr>
+            <tr>
+                <td class="lbl">Keperluan</td>
+                <td class="colon">:</td>
+                <td colspan="4">
+                    <span class="underline-line" style="width: 98%;"><%= request.purpose || '' %></span>
+                </td>
+            </tr>
+            <tr>
+                <td class="lbl" style="line-height: 1.15; padding-top: 5px;">
+                    Jumlah Orang yang ikut<br>perjalanan dinas
+                </td>
+                <td class="colon" style="vertical-align: bottom; padding-bottom: 4px;">:</td>
+                <td colspan="4" style="vertical-align: bottom; padding-bottom: 4px;">
+                    <span class="underline-line" style="width: 200px; text-align: center;"><%= request.participant_count || 1 %></span> orang
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-divider"></div>
+
+        <!-- Tabel Rincian Biaya -->
+        <table class="main-form-table">
+            <thead>
+                <tr class="th-main-row">
+                    <th style="width: 24%; border: none;"></th>
+                    <th style="width: 21%; text-align: center; border: none;">KLAIM</th>
+                    <th style="width: 21%; text-align: center; border: none;">SUDAH TERBAYAR</th>
+                    <th style="width: 21%; text-align: center; border: none;">Keterangan</th>
+                    <th colspan="2" class="box-th-main" style="width: 13%;">
+                        Bon / Nota / Invoice :
+                    </th>
+                </tr>
+                <tr class="th-sub-row">
+                    <th style="border: none;"></th>
+                    <th style="border: none;"></th>
+                    <th style="border: none;"></th>
+                    <th style="border: none;"></th>
+                    <th class="box-th-sub" style="width: 6.5%;">Ada</th>
+                    <th class="box-th-sub" style="width: 6.5%;">Tidak</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% details.forEach(function(d) { 
+                    const claimVal = formatRp(d.claim_amount);
+                    const paidVal = formatRp(d.paid_amount);
+                    const hasReceipt = Number(d.claim_amount) > 0 || !!d.notes;
+                    const label = d.item ? d.item.item_name : '';
+                %>
+                <tr>
+                    <td class="cell-label"><%= label %></td>
+                    <td class="cell-currency">
+                        <span class="prefix">: Rp.</span>
+                        <span class="val-line"><%= claimVal %></span>
+                        <span class="suffix">, -</span>
+                    </td>
+                    <td class="cell-currency">
+                        <span class="prefix">: Rp.</span>
+                        <span class="val-line"><%= paidVal %></span>
+                        <span class="suffix">, -</span>
+                    </td>
+                    <td class="cell-notes">
+                        <span class="val-line notes"><%= d.notes || '' %></span>
+                    </td>
+                    <td class="cell-box <%= hasReceipt ? 'checked' : '' %>">
+                        <%= hasReceipt ? 'Ada' : 'Ada' %>
+                    </td>
+                    <td class="cell-box">
+                        Tidak
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <!-- Baris TOTAL -->
+        <div class="total-row-bar">
+            <div class="total-col-label" style="padding: 0 2px;">TOTAL</div>
+            <div class="total-col-claim" style="padding: 0 2px;">
+                <span class="prefix">: Rp.</span>
+                <span class="val-line total-val" style="border: none;"><%= formatRp(totalClaim) %></span>
+                <span class="suffix">, -</span>
+            </div>
+            <div class="total-col-paid" style="padding: 0 2px; position: relative;">
+                <span style="position: absolute; left: -10px; font-weight: bold;">+</span>
+                <span class="prefix">: Rp.</span>
+                <span class="val-line total-val" style="border: none;"><%= totalPaid > 0 ? formatRp(totalPaid) : '' %></span>
+                <span class="suffix">, -</span>
+            </div>
+            <div class="total-col-grand" style="padding: 0 2px; position: relative;">
+                <span style="position: absolute; left: -10px; font-weight: bold;">=</span>
+                <span style="font-weight: bold; margin-left: 10px;">Grand Total : Rp. <%= formatRp(grandTotal) %> ,-</span>
+            </div>
+        </div>
+
+        <!-- Tanda Tangan -->
+        <table class="sign-table">
+            <tr>
+                <td>Mengetahui,</td>
+                <td>Menyetujui,</td>
+                <td>Memohon,</td>
+            </tr>
+            <tr>
+                <td class="sign-space"></td>
+                <td class="sign-space"></td>
+                <td class="sign-space"></td>
+            </tr>
+            <tr>
+                <td>
+                    ( <span class="sign-name" style="display:inline-block; width:150px; text-align:center;"><%= hrgaName %></span> )
+                </td>
+                <td>
+                    ( <span class="sign-name" style="display:inline-block; width:150px; text-align:center;"><%= managerName %></span> )
+                </td>
+                <td>
+                    ( <span class="sign-name" style="display:inline-block; width:150px; text-align:center;"><%= requesterName %></span> )
+                </td>
+            </tr>
+            <tr>
+                <td class="sign-role">HR &amp; GA Manager</td>
+                <td class="sign-role">Atasan User</td>
+                <td class="sign-role">User</td>
+            </tr>
+        </table>
+
+        <!-- Footer Form -->
+        <div class="bottom-separator"></div>
+        <table class="form-footer-table">
+            <tr>
+                <td style="text-align: left;">Update Form Tanggal : 12 September 2019</td>
+                <td style="text-align: right;">[FRM-CSK-HRD-41.01]</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Halaman Lampiran Nota/Struk Digital (Jika ada file di-upload) -->
+    <% if (request.attachments && request.attachments.length > 0) { %>
+    <div class="attachment-page">
+        <div class="attachment-title">Lampiran Bukti Pengeluaran (Nota / Invoice / Bon) - <%= request.document_number %></div>
+        <div class="attachment-grid">
+            <% request.attachments.forEach(function(attachment) { %>
+            <div class="attachment-item" style="<% if (attachment.file_type === 'application/pdf') { %>width: 100%; border: none;<% } %>">
+                <% if (attachment.file_type === 'application/pdf') { %>
+                    <iframe src="https://api-garis.cisangkan.co.id/<%= attachment.file_url.replace(/^\/+/, '') %>" style="width: 100%; height: 800px; border: 1px solid #ccc;"></iframe>
+                <% } else { %>
+                    <img src="https://api-garis.cisangkan.co.id/<%= attachment.file_url.replace(/^\/+/, '') %>" alt="<%= attachment.file_name %>"/>
+                <% } %>
+                <div class="file-caption"><%= attachment.file_name %></div>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <% } %>
+</body>
+</html>
