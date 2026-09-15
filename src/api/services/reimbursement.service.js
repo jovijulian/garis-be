@@ -65,7 +65,7 @@ class ReimbursementService {
             // Insert Details
             if (parsedDetails.length > 0) {
                 const detailsPayload = parsedDetails.map(detail => ({
-                    reimbursement_id: newRequest.id,
+                    reimbursement_id: Number(newRequest.id),
                     item_id: detail.item_id,
                     claim_amount: detail.claim_amount,
                     notes: detail.notes || null,
@@ -77,7 +77,7 @@ class ReimbursementService {
             // Insert Attachments
             if (files && files.length > 0) {
                 const attachmentsPayload = files.map(file => ({
-                    reimbursement_id: newRequest.id,
+                    reimbursement_id: Number(newRequest.id),
                     file_url: `uploads/${file.filename}`,
                     file_name: file.originalname,
                     file_type: file.mimetype
@@ -293,7 +293,7 @@ class ReimbursementService {
                 await reimbursementRepository.deleteDetailsByRequestId(id, trx); 
                 if (parsedDetails.length > 0) {
                     const detailsPayload = parsedDetails.map(detail => ({
-                        reimbursement_id: id,
+                        reimbursement_id: Number(id),
                         item_id: detail.item_id,
                         claim_amount: detail.claim_amount,
                         notes: detail.notes || null,
@@ -316,7 +316,7 @@ class ReimbursementService {
                 await reimbursementRepository.deleteAttachmentsByRequestId(id, trx);
 
                 const attachmentsPayload = files.map(file => ({
-                    reimbursement_id: id,
+                    reimbursement_id: Number(id),
                     file_url: `uploads/${file.filename}`,
                     file_name: file.originalname,
                     file_type: file.mimetype
