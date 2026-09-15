@@ -68,7 +68,8 @@ class ReimbursementService {
                     reimbursement_id: newRequest.id,
                     item_id: detail.item_id,
                     claim_amount: detail.claim_amount,
-                    notes: detail.notes || null
+                    notes: detail.notes || null,
+                    has_receipt: Number(detail.has_receipt) || 0,
                 }));
                 await reimbursementRepository.createDetails(detailsPayload, trx);
             }
@@ -295,7 +296,8 @@ class ReimbursementService {
                         reimbursement_id: id,
                         item_id: detail.item_id,
                         claim_amount: detail.claim_amount,
-                        notes: detail.notes || null
+                        notes: detail.notes || null,
+                        has_receipt: Number(detail.has_receipt) || 0,
                     }));
                     await reimbursementRepository.createDetails(detailsPayload, trx); 
                 }

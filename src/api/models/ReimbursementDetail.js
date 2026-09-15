@@ -13,9 +13,10 @@ class ReimbursementDetail extends BaseModelBooking {
                 id: { type: 'integer' },
                 reimbursement_id: { type: 'integer' },
                 item_id: { type: 'integer' },
-                claim_amount: { type: ['number', 'string'], default: 0 }, 
+                claim_amount: { type: ['number', 'string'], default: 0 },
                 paid_amount: { type: ['number', 'string'], default: 0 },
-                notes: { type: 'string', nullable: true }
+                notes: { type: 'string', nullable: true },
+                has_receipt: { type: 'integer', default: 0 }
             }
         };
     }

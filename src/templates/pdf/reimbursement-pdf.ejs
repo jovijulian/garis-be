@@ -507,7 +507,7 @@
                 <% details.forEach(function(d) { 
                     const claimVal = formatRp(d.claim_amount);
                     const paidVal = formatRp(d.paid_amount);
-                    const hasReceipt = Number(d.claim_amount) > 0 || !!d.notes;
+                    const hasReceipt = !!d.has_receipt;
                     const label = d.item ? d.item.item_name : '';
                 %>
                 <tr>
