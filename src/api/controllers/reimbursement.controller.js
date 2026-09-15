@@ -74,24 +74,13 @@ class ReimbursementController {
         try {
             const id = req.params.id;
 
-            if (req.query.format === 'html') {
-                const htmlContent = await reimbursementService.generateReimbursementHtml(id);
-                res.setHeader('Content-Type', 'text/html');
-                return res.send(htmlContent);
-            }
-
-            const pdfBuffer = await reimbursementService.generateReimbursementPdf(id);
-            const data = await reimbursementService.getRequestById(id);
-            const docNum = (data?.document_number || `REQ-${id}`).replace(/[\/\\:]/g, '_');
-
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="reimbursement_${docNum}.pdf"`);
-            res.setHeader('Content-Length', pdfBuffer.length);
-            return res.send(pdfBuffer);
+            const htmlContent = await reimbursementService.generateReimbursementHtml(id);
+            res.setHeader('Content-Type', 'text/html');
+            return res.send(htmlContent);
 
         } catch (err) {
             console.error("Error in downloadPDF:", err);
-            return error(res, err.statusCode || 500, err.message || "Failed to generate Reimbursement PDF.");
+            return error(res, err.statusCode || 500, err.message || "Failed to generate Reimbursement HTML.");
         }
     }
 }
