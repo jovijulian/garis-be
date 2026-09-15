@@ -369,6 +369,28 @@ class ReimbursementService {
             }
         }
 
+        // Process attachments to convert to base64 if local file exists
+        if (data.attachments && data.attachments.length > 0) {
+            data.attachments = data.attachments.map(att => {
+                const cleanUrl = (att.file_url || '').replace(/^\/+/, '');
+                const localPath = path.join(process.cwd(), 'public', cleanUrl);
+                let base64Data = null;
+                try {
+                    if (fs.existsSync(localPath)) {
+                        const fileBuf = fs.readFileSync(localPath);
+                        base64Data = `data:${att.file_type || 'application/octet-stream'};base64,${fileBuf.toString('base64')}`;
+                    }
+                } catch (e) {
+                    console.warn(`Could not read local attachment file: ${localPath}`, e.message);
+                }
+                return {
+                    ...att,
+                    base64Data: base64Data,
+                    directUrl: `https://api-garis.cisangkan.co.id/${cleanUrl}`
+                };
+            });
+        }
+
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'pdf', 'reimbursement-pdf.ejs');
 
         const templateData = {
