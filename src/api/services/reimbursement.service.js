@@ -423,16 +423,18 @@ class ReimbursementService {
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage'
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu'
                 ]
             });
             const page = await browser.newPage();
-            await page.setContent(html, { waitUntil: 'networkidle0' });
-            mainPdfBuffer = await page.pdf({
+            await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
+            const rawPdf = await page.pdf({
                 format: 'A4',
                 printBackground: true,
                 preferCSSPageSize: true
             });
+            mainPdfBuffer = Buffer.from(rawPdf);
         } catch (err) {
             console.error('Error generating base PDF with puppeteer:', err);
             throw new Error('Failed to generate Reimbursement base PDF: ' + err.message);
@@ -450,7 +452,7 @@ class ReimbursementService {
         });
 
         if (pdfAttachments.length === 0) {
-            return mainPdfBuffer;
+            return Buffer.from(mainPdfBuffer);
         }
 
         try {

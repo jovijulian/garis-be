@@ -23,7 +23,7 @@ router.post('/',
 router.get('/', ReimbursementController.getAll);
 router.get('/user', ReimbursementController.getAllUser);
 router.get('/:id', validate(requestIdSchema), ReimbursementController.detail);
-router.get('/:id/print', ReimbursementController.downloadPDF);
+router.get('/:id/print', validate(requestIdSchema), ReimbursementController.downloadPDF);
 router.post('/:id', 
     upload.array('files', 10), 
     validate(updateSchema), 

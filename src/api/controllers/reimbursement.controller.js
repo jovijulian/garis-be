@@ -91,7 +91,7 @@ class ReimbursementController {
 
         } catch (err) {
             console.error("Error in downloadPDF:", err);
-            return error(res, err.statusCode || 500, "Failed to generate Reimbursement PDF.");
+            return error(res, err.statusCode || 500, err.message || "Failed to generate Reimbursement PDF.");
         }
     }
 }
