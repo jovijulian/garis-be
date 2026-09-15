@@ -8,6 +8,9 @@ const moment = require('moment');
 const fs = require('fs');
 const ejs = require('ejs');
 const path = require('path');
+const puppeteer = require('puppeteer');
+const { PDFDocument } = require('pdf-lib');
+const axios = require('axios');
 
 class ReimbursementService {
 
@@ -405,6 +408,93 @@ class ReimbursementService {
         } catch (error) {
             console.error("Error rendering EJS:", error);
             throw new Error("Failed to render Reimbursement HTML.");
+        }
+    }
+
+    async generateReimbursementPdf(id) {
+        const html = await this.generateReimbursementHtml(id);
+        const data = await this.getRequestById(id);
+
+        let browser;
+        let mainPdfBuffer;
+        try {
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage'
+                ]
+            });
+            const page = await browser.newPage();
+            await page.setContent(html, { waitUntil: 'networkidle0' });
+            mainPdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                preferCSSPageSize: true
+            });
+        } catch (err) {
+            console.error('Error generating base PDF with puppeteer:', err);
+            throw new Error('Failed to generate Reimbursement base PDF: ' + err.message);
+        } finally {
+            if (browser) {
+                await browser.close();
+            }
+        }
+
+        // Filter PDF attachments to merge
+        const pdfAttachments = (data.attachments || []).filter(att => {
+            const isPdfType = att.file_type === 'application/pdf';
+            const isPdfExt = (att.file_name || '').toLowerCase().endsWith('.pdf') || (att.file_url || '').toLowerCase().endsWith('.pdf');
+            return isPdfType || isPdfExt;
+        });
+
+        if (pdfAttachments.length === 0) {
+            return mainPdfBuffer;
+        }
+
+        try {
+            const mergedPdf = await PDFDocument.create();
+
+            // Copy all pages from main form PDF
+            const mainPdfDoc = await PDFDocument.load(mainPdfBuffer);
+            const mainPages = await mergedPdf.copyPages(mainPdfDoc, mainPdfDoc.getPageIndices());
+            mainPages.forEach(p => mergedPdf.addPage(p));
+
+            // Append each PDF attachment
+            for (const att of pdfAttachments) {
+                const cleanUrl = (att.file_url || '').replace(/^\/+/, '');
+                const localPath = path.join(process.cwd(), 'public', cleanUrl);
+                let attBuffer = null;
+
+                if (fs.existsSync(localPath)) {
+                    attBuffer = fs.readFileSync(localPath);
+                } else {
+                    try {
+                        const fileUrl = `https://api-garis.cisangkan.co.id/${cleanUrl}`;
+                        const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+                        attBuffer = response.data;
+                    } catch (fetchErr) {
+                        console.warn(`Could not fetch attachment PDF ${att.file_name}:`, fetchErr.message);
+                    }
+                }
+
+                if (attBuffer) {
+                    try {
+                        const attDoc = await PDFDocument.load(attBuffer, { ignoreEncryption: true });
+                        const attPages = await mergedPdf.copyPages(attDoc, attDoc.getPageIndices());
+                        attPages.forEach(p => mergedPdf.addPage(p));
+                    } catch (loadErr) {
+                        console.error(`Error loading attachment PDF ${att.file_name} into pdf-lib:`, loadErr.message);
+                    }
+                }
+            }
+
+            const mergedPdfBytes = await mergedPdf.save();
+            return Buffer.from(mergedPdfBytes);
+        } catch (mergeErr) {
+            console.error('Error merging PDF attachments:', mergeErr);
+            return mainPdfBuffer;
         }
     }
 }

@@ -74,10 +74,20 @@ class ReimbursementController {
         try {
             const id = req.params.id;
 
-            const htmlContent = await reimbursementService.generateReimbursementHtml(id);
-            
-            res.setHeader('Content-Type', 'text/html');
-            res.send(htmlContent);
+            if (req.query.format === 'html') {
+                const htmlContent = await reimbursementService.generateReimbursementHtml(id);
+                res.setHeader('Content-Type', 'text/html');
+                return res.send(htmlContent);
+            }
+
+            const pdfBuffer = await reimbursementService.generateReimbursementPdf(id);
+            const data = await reimbursementService.getRequestById(id);
+            const docNum = (data?.document_number || `REQ-${id}`).replace(/[\/\\:]/g, '_');
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="reimbursement_${docNum}.pdf"`);
+            res.setHeader('Content-Length', pdfBuffer.length);
+            return res.send(pdfBuffer);
 
         } catch (err) {
             console.error("Error in downloadPDF:", err);

@@ -3,13 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Form Dinas Luar Kota - <%= request.document_number %></title>
-    <!-- PDF.js library untuk render lampiran PDF ke Canvas agar tajam & sempurna saat di-print -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        }
-    </script>
     <style>
         * {
             margin: 0;
@@ -321,43 +314,18 @@
             page-break-inside: avoid;
         }
 
-        .attachment-item.pdf-item {
-            width: 100% !important;
-            border: none !important;
-            padding: 0 !important;
-            margin-bottom: 25px;
-            page-break-before: always;
-        }
-
         .attachment-item img {
             max-width: 100%;
             max-height: 200px;
             object-fit: contain;
         }
 
-        .pdf-canvas-container {
-            width: 100%;
-            margin-top: 8px;
-        }
-
-        .pdf-canvas-container canvas {
-            width: 100% !important;
-            max-width: 100%;
-            height: auto !important;
-            display: block;
-            margin: 0 auto 15px auto;
-            border: 1px solid #e2e8f0;
-            page-break-inside: avoid;
-        }
-
-        .pdf-loading-indicator {
-            padding: 30px 15px;
+        .attachment-item .pdf-notice {
+            padding: 25px 10px;
             background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            font-size: 8.5pt;
-            color: #64748b;
-            text-align: center;
+            border: 1.5px dashed #94a3b8;
             border-radius: 4px;
+            color: #334155;
         }
 
         .attachment-item .file-caption {
@@ -639,108 +607,29 @@
         </table>
     </div>
 
-    <!-- Halaman Lampiran Nota/Struk Digital (Jika ada file di-upload) -->
-    <% if (request.attachments && request.attachments.length > 0) { %>
+    <!-- Halaman Lampiran Nota/Struk Gambar (HANYA tampil jika ada file GAMBAR seperti JPG/PNG) -->
+    <% 
+        const imageAttachments = (request.attachments || []).filter(attachment => {
+            const isPdf = attachment.file_type === 'application/pdf' || 
+                          (attachment.file_name && attachment.file_name.toLowerCase().endsWith('.pdf')) ||
+                          (attachment.file_url && attachment.file_url.toLowerCase().endsWith('.pdf'));
+            return !isPdf;
+        });
+    %>
+    <% if (imageAttachments.length > 0) { %>
     <div class="attachment-page">
         <div class="attachment-title">Lampiran Bukti Pengeluaran (Nota / Invoice / Bon) - <%= request.document_number %></div>
         <div class="attachment-grid">
-            <% request.attachments.forEach(function(attachment) { 
+            <% imageAttachments.forEach(function(attachment) { 
                 const fileSource = attachment.base64Data || attachment.directUrl || ('https://api-garis.cisangkan.co.id/' + (attachment.file_url || '').replace(/^\/+/, ''));
-                const isPdf = attachment.file_type === 'application/pdf' || (attachment.file_name && attachment.file_name.toLowerCase().endsWith('.pdf'));
             %>
-            <div class="attachment-item <%= isPdf ? 'pdf-item' : '' %>">
-                <% if (isPdf) { %>
-                    <div class="file-caption" style="text-align: left; font-size: 9pt; font-weight: bold; margin-bottom: 8px;">
-                        📄 Dokumen Lampiran: <%= attachment.file_name %>
-                    </div>
-                    <div class="pdf-container" data-pdf-source="<%= fileSource %>" data-pdf-name="<%= attachment.file_name %>">
-                        <div class="pdf-loading-indicator">
-                            Memuat pratinjau dokumen PDF: <strong><%= attachment.file_name %></strong>...
-                        </div>
-                        <div class="pdf-canvas-container"></div>
-                    </div>
-                <% } else { %>
-                    <img src="<%= fileSource %>" alt="<%= attachment.file_name %>"/>
-                    <div class="file-caption"><%= attachment.file_name %></div>
-                <% } %>
+            <div class="attachment-item">
+                <img src="<%= fileSource %>" alt="<%= attachment.file_name %>"/>
+                <div class="file-caption"><%= attachment.file_name %></div>
             </div>
             <% }); %>
         </div>
     </div>
     <% } %>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', async function () {
-            if (typeof pdfjsLib === 'undefined') {
-                console.error('PDF.js library failed to load.');
-                return;
-            }
-
-            const pdfContainers = document.querySelectorAll('.pdf-container');
-            if (!pdfContainers.length) return;
-
-            for (const container of pdfContainers) {
-                const source = container.getAttribute('data-pdf-source');
-                const target = container.querySelector('.pdf-canvas-container');
-                const loadingIndicator = container.querySelector('.pdf-loading-indicator');
-                const fileName = container.getAttribute('data-pdf-name') || 'Lampiran';
-
-                if (!source) {
-                    if (loadingIndicator) loadingIndicator.textContent = 'File PDF tidak ditemukan di server.';
-                    continue;
-                }
-
-                try {
-                    let loadingTask;
-                    if (source.startsWith('data:')) {
-                        const base64Index = source.indexOf(';base64,');
-                        if (base64Index !== -1) {
-                            const raw = atob(source.substring(base64Index + 8));
-                            const uint8Array = new Uint8Array(raw.length);
-                            for (let i = 0; i < raw.length; i++) {
-                                uint8Array[i] = raw.charCodeAt(i);
-                            }
-                            loadingTask = pdfjsLib.getDocument({ data: uint8Array });
-                        } else {
-                            loadingTask = pdfjsLib.getDocument(source);
-                        }
-                    } else {
-                        loadingTask = pdfjsLib.getDocument({
-                            url: source,
-                            withCredentials: false
-                        });
-                    }
-
-                    const pdf = await loadingTask.promise;
-                    if (loadingIndicator) loadingIndicator.style.display = 'none';
-
-                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                        const page = await pdf.getPage(pageNum);
-                        // Scale 2.0 ensures crisp text when printed on paper
-                        const viewport = page.getViewport({ scale: 2.0 });
-
-                        const canvas = document.createElement('canvas');
-                        const context = canvas.getContext('2d');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-
-                        await page.render({
-                            canvasContext: context,
-                            viewport: viewport
-                        }).promise;
-
-                        target.appendChild(canvas);
-                    }
-                } catch (err) {
-                    console.error('Error rendering PDF:', fileName, err);
-                    if (loadingIndicator) {
-                        loadingIndicator.style.display = 'block';
-                        loadingIndicator.style.color = '#333';
-                        loadingIndicator.innerHTML = '<div style="padding: 10px;">📄 <strong>' + fileName + '</strong><br><span style="font-size:8pt; color:#666;">(Dokumen PDF tersimpan di server)</span></div>';
-                    }
-                }
-            }
-        });
-    </script>
 </body>
 </html>
