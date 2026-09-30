@@ -20,6 +20,8 @@ const InventoryItem = require('../models/InventoryItem');
 const InventoryLoan = require('../models/InventoryLoan');
 const InventoryTransaction = require('../models/InventoryTransaction');
 const ProjectRequest = require('../models/ProjectRequest');
+const Reimbursement = require('../models/Reimbursement');
+const ReimbursementDetail = require('../models/ReimbursementDetail');
 const Department = require('../models/Department');
 const _ = require('lodash');
 const moment = require('moment');
@@ -677,6 +679,106 @@ class DashboardRepository {
             .orderBy('last_request_date', 'desc')
             .limit(limit);
     }
+
+    // reimbursement
+    getTotalReimbursementsInRange(startDate, endDate, siteId) {
+        return Reimbursement.query()
+            .whereBetween('created_at', [startDate, endDate])
+            .where('is_active', 1)
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .resultSize();
+    }
+
+    getPendingReimbursementsCount(siteId) {
+        return Reimbursement.query()
+            .whereIn('status', ['WAITING_MANAGER', 'WAITING_GA'])
+            .where('is_active', 1)
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .resultSize();
+    }
+
+    getReimbursementTrendInRange(startDate, endDate, siteId) {
+        return Reimbursement.query()
+            .select(
+                knexBooking.raw('DATE(created_at) as date'),
+                knexBooking.raw('count(id) as count'),
+                knexBooking.raw('sum(total_claim) as total_amount')
+            )
+            .where('is_active', 1)
+            .whereBetween('created_at', [startDate, endDate])
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .groupByRaw('DATE(created_at)')
+            .orderBy('date', 'asc');
+    }
+
+    getReimbursementStatusDistributionInRange(startDate, endDate, siteId) {
+        return Reimbursement.query()
+            .select('status', knexBooking.raw('count(id) as count'))
+            .where('is_active', 1)
+            .whereBetween('created_at', [startDate, endDate])
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .groupBy('status');
+    }
+
+    getTopReimbursementItemsInRange(startDate, endDate, siteId, limit = 5) {
+        return ReimbursementDetail.query()
+            .select(
+                'i.item_name',
+                knexBooking.raw('count(reimbursement_details.id) as claim_count'),
+                knexBooking.raw('sum(reimbursement_details.claim_amount) as total_amount')
+            )
+            .join('reimbursements as r', 'reimbursement_details.reimbursement_id', 'r.id')
+            .join('reimbursement_items as i', 'reimbursement_details.item_id', 'i.id')
+            .where('r.is_active', 1)
+            .whereBetween('r.created_at', [startDate, endDate])
+            .modify(q => {
+                if (siteId) q.where('r.cab_id', siteId);
+            })
+            .groupBy('i.item_name')
+            .orderBy('total_amount', 'desc')
+            .limit(limit);
+    }
+
+    getTopReimbursementDestinationsInRange(startDate, endDate, siteId, limit = 5) {
+        return Reimbursement.query()
+            .select('destination', knexBooking.raw('count(id) as visit_count'))
+            .where('is_active', 1)
+            .whereNotNull('destination')
+            .whereBetween('created_at', [startDate, endDate])
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .groupBy('destination')
+            .orderBy('visit_count', 'desc')
+            .limit(limit);
+    }
+
+    getPendingReimbursementCount(siteId) {
+        return Reimbursement.query().where('status', 'WAITING_GA').where('is_active', 1).where('cab_id', siteId).resultSize();
+    }
+
+    getTopReimbursementRequesterIdInRange(startDate, endDate, siteId) {
+        return Reimbursement.query()
+            .select('user_id')
+            .count('id as request_count')
+            .where('is_active', 1)
+            .whereBetween('created_at', [startDate, endDate])
+            .modify(q => {
+                if (siteId) q.where('cab_id', siteId);
+            })
+            .groupBy('user_id')
+            .orderBy('request_count', 'desc')
+            .first();
+    }
+
 
 }
 

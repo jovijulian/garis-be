@@ -227,20 +227,23 @@ class DashboardService {
             pendingVehicles,
             pendingOrders,
             alertReminders,
-            pendingRequestProjects
+            pendingRequestProjects,
+            reimbursement
         ] = await Promise.all([
             dashboardRepository.getPendingBookingCount(status, siteId),
             dashboardRepository.getPendingVehiclesCount(status, siteId),
             dashboardRepository.getPendingOrderCount(status, siteId),
             dashboardRepository.getActiveUpcomingRemindersCount(currentDateOnly, siteId),
-            dashboardRepository.getPendingRequestProjectsCount(siteId)
+            dashboardRepository.getPendingRequestProjectsCount(siteId),
+            dashboardRepository.getPendingReimbursementCount(siteId)
         ]);
         return {
             pending_bookings: pendingBooking,
             pending_vehicle_requests: pendingVehicles,
             pending_orders: pendingOrders,
             alert_reminders: alertReminders,
-            pending_project_requests: pendingRequestProjects
+            pending_project_requests: pendingRequestProjects,
+            pending_reimbursements: reimbursement
         }
     }
 
@@ -384,7 +387,7 @@ class DashboardService {
 
     async getProjectRequestDashboardData(queryParams = {}, request) {
         const siteId = request.user.sites;
-        
+
         const startDate = queryParams.startDate ?
             moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
             moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
@@ -421,7 +424,7 @@ class DashboardService {
             department_name: t.department ? t.department.nama_dept : 'Unknown Department',
             request_count: Number(t.request_count)
         }));
-        
+
         const mostProblematicDepartment = formattedTopDepartments.length > 0 ? formattedTopDepartments[0].department_name : 'N/A';
 
         return {
@@ -437,6 +440,61 @@ class DashboardService {
             },
             rankings: {
                 top_departments_requested: formattedTopDepartments,
+            }
+        };
+    }
+
+    async getReimbursementDashboardData(queryParams = {}, request) {
+        const siteId = request.user.sites;
+
+        const startDate = queryParams.startDate ?
+            moment(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss') :
+            moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+        const endDate = queryParams.endDate ?
+            moment(queryParams.endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss') :
+            moment().endOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+        const [
+            totalReimbursements,
+            pendingReimbursementsCount,
+            reimbursementTrend,
+            statusDistribution,
+            topItems,
+            topDestinations,
+            topRequesterResult
+        ] = await Promise.all([
+            dashboardRepository.getTotalReimbursementsInRange(startDate, endDate, siteId),
+            dashboardRepository.getPendingReimbursementsCount(siteId),
+            dashboardRepository.getReimbursementTrendInRange(startDate, endDate, siteId),
+            dashboardRepository.getReimbursementStatusDistributionInRange(startDate, endDate, siteId),
+            dashboardRepository.getTopReimbursementItemsInRange(startDate, endDate, siteId),
+            dashboardRepository.getTopReimbursementDestinationsInRange(startDate, endDate, siteId),
+            dashboardRepository.getTopReimbursementRequesterIdInRange(startDate, endDate, siteId),
+        ]);
+
+        const mostFrequentDestination = topDestinations.length > 0 ? topDestinations[0].destination : 'N/A';
+        let topRequesterName = 'N/A';
+        if (topRequesterResult && topRequesterResult.user_id) {
+            const topUser = await userRepository.findById(topRequesterResult.user_id);
+            if (topUser) {
+                topRequesterName = topUser.nama_user;
+            }
+        }
+        return {
+            kpi: {
+                total_reimbursements_in_range: totalReimbursements,
+                pending_reimbursements_count: pendingReimbursementsCount,
+                most_frequent_destination: mostFrequentDestination,
+                top_requester: topRequesterName,
+            },
+            charts: {
+                reimbursement_trend: reimbursementTrend,
+                status_distribution: statusDistribution,
+            },
+            rankings: {
+                top_claimed_items: topItems,
+                top_destinations: topDestinations,
             }
         };
     }
