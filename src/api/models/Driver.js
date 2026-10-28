@@ -8,10 +8,10 @@ class Driver extends BaseModelBooking {
     static get jsonSchema() {
         return {
             type: 'object',
-            required: ['id_user', 'name', 'phone_number', 'cab_id'],
+            required: ['name', 'phone_number', 'cab_id'],
             properties: {
                 id: { type: 'integer' },
-                id_user: { type: 'string' },
+                id_user: { type: ['string', 'null'] },
                 name: { type: 'string' },
                 cab_id: { type: 'integer' },
                 phone_number: { type: 'string' },
@@ -20,7 +20,8 @@ class Driver extends BaseModelBooking {
                     enum: ['Available', 'Not Available'],
                     default: 'Available'
                 },
-                is_active: { type: 'integer' }
+                is_active: { type: 'integer' },
+                is_external: { type: 'integer' }
             },
         }
     };

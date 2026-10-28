@@ -19,11 +19,15 @@ class DriverService {
     }
 
     async create(payload) {
-        const existingUser = await userRepository.findByUserId(payload.id_user);
-        if (!existingUser) {
-            const error = new Error('User not found.');
-            error.statusCode = 404;
-            throw error;
+        if (payload.id_user) {
+            const existingUser = await userRepository.findByUserId(payload.id_user);
+            if (!existingUser) {
+                const error = new Error('User not found.');
+                error.statusCode = 404;
+                throw error;
+            }
+        } else {
+            payload.id_user = null;
         }
         return knexBooking.transaction(async (trx) => {
             payload.created_at = formatDateTime();
@@ -36,11 +40,15 @@ class DriverService {
 
     async update(id, payload) {
         await this.detail(id);
-        const existingUser = await userRepository.findByUserId(payload.id_user);
-        if (!existingUser) {
-            const error = new Error('User not found.');
-            error.statusCode = 404;
-            throw error;
+        if (payload.id_user) {
+            const existingUser = await userRepository.findByUserId(payload.id_user);
+            if (!existingUser) {
+                const error = new Error('User not found.');
+                error.statusCode = 404;
+                throw error;
+            }
+        } else if (payload.id_user === null || payload.id_user === '') {
+            payload.id_user = null;
         }
         return knexBooking.transaction(async (trx) => {
             payload.updated_at = formatDateTime();
