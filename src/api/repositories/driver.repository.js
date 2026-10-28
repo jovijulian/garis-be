@@ -42,7 +42,7 @@ class DriverRepository extends BaseRepository {
         const status = params.status || null;
         const cab_id = params.cab_id || null;
         const query = Driver.query()
-            .select('id', 'name', 'phone_number', 'status', 'cab_id')
+            .select('id', 'name', 'phone_number', 'status', 'cab_id', 'is_external')
             .withGraphFetched('[cabang]')
             .modifyGraph('cabang', builder => {
                 builder.select('id_cab', 'nama_cab');
