@@ -12,7 +12,7 @@ class Driver extends BaseModelBooking {
             properties: {
                 id: { type: 'integer' },
                 id_user: { type: ['string', 'null'] },
-                intern_id: { type: ['string', 'null'] },
+                intern_id: { type: ['integer', 'null'] },
                 name: { type: 'string' },
                 cab_id: { type: 'integer' },
                 phone_number: { type: 'string' },
