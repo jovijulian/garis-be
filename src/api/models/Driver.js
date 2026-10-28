@@ -12,6 +12,7 @@ class Driver extends BaseModelBooking {
             properties: {
                 id: { type: 'integer' },
                 id_user: { type: ['string', 'null'] },
+                intern_id: { type: ['string', 'null'] },
                 name: { type: 'string' },
                 cab_id: { type: 'integer' },
                 phone_number: { type: 'string' },
@@ -29,6 +30,7 @@ class Driver extends BaseModelBooking {
     static get relationMappings() {
         const User = require('./User');
         const Site = require('./Site')
+        const Intern = require('./Intern')
         return {
             user: {
                 relation: BaseModelBooking.BelongsToOneRelation,
@@ -36,6 +38,14 @@ class Driver extends BaseModelBooking {
                 join: {
                     from: 'drivers.id_user',
                     to: 'tb_user.id_user',
+                },
+            },
+            intern: {
+                relation: BaseModelBooking.BelongsToOneRelation,
+                modelClass: Intern,
+                join: {
+                    from: 'drivers.intern_id',
+                    to: 'interns.id',
                 },
             },
             cabang: {

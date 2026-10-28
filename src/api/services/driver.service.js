@@ -9,7 +9,7 @@ class DriverService {
     }
 
     async detail(id) {
-        const data = await driverRepository.findByIdWithRelations(id, '[user, cabang]');
+        const data = await driverRepository.findByIdWithRelations(id, '[user, cabang, intern]');
         if (!data) {
             const error = new Error('Driver not found.');
             error.statusCode = 404;
@@ -26,10 +26,18 @@ class DriverService {
                 error.statusCode = 404;
                 throw error;
             }
-        } else {
-            payload.id_user = null;
-        }
+        } 
+
+        if (payload.intern_id) {
+            const existingIntern = await userRepository.findById(payload.intern_id);
+            if (!existingIntern) {
+                const error = new Error('User not found.');
+                error.statusCode = 404;
+                throw error;
+            }
+        } 
         return knexBooking.transaction(async (trx) => {
+            payload.is_external = payload.intern_id ? 1 : 0;
             payload.created_at = formatDateTime();
             payload.updated_at = formatDateTime();
 
@@ -47,10 +55,18 @@ class DriverService {
                 error.statusCode = 404;
                 throw error;
             }
-        } else if (payload.id_user === null || payload.id_user === '') {
-            payload.id_user = null;
-        }
+        } 
+
+        if (payload.intern_id) {
+            const existingIntern = await userRepository.findById(payload.intern_id);
+            if (!existingIntern) {
+                const error = new Error('User not found.');
+                error.statusCode = 404;
+                throw error;
+            }
+        } 
         return knexBooking.transaction(async (trx) => {
+            payload.is_external = payload.intern_id ? 1 : 0;
             payload.updated_at = formatDateTime();
 
             const data = await driverRepository.update(id, payload, trx);
