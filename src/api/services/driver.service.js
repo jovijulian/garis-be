@@ -2,6 +2,7 @@ const driverRepository = require('../repositories/driver.repository');
 const { formatDateTime } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
 const userRepository = require('../repositories/user.repository');
+const internRepository = require('../repositories/intern.repository');
 class DriverService {
 
     async getAll(queryParams) {
@@ -29,7 +30,7 @@ class DriverService {
         } 
 
         if (payload.intern_id) {
-            const existingIntern = await userRepository.findById(payload.intern_id);
+            const existingIntern = await internRepository.findById(payload.intern_id);
             if (!existingIntern) {
                 const error = new Error('User not found.');
                 error.statusCode = 404;
