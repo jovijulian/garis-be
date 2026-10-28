@@ -4,7 +4,7 @@ const createSchema = z.object({
     body: z.object({
         name: z.string({ required_error: 'Driver name is required' }),
         id_user: z.string().optional().nullable(),
-        intern_id: z.string().optional().nullable(),
+        intern_id: z.number().optional().nullable(),
         phone_number: z.string({ required_error: 'Phone number is required' }),
         cab_id: z.number(),
         is_external: z.number(),
@@ -18,7 +18,7 @@ const updateSchema = z.object({
     body: z.object({
         name: z.string({ required_error: 'Driver name is required' }),
         id_user: z.string().optional().nullable(),
-        intern_id: z.string().optional().nullable(),
+        intern_id: z.number().optional().nullable(),
         phone_number: z.string({ required_error: 'Phone number is required' }),
         cab_id: z.number(),
         is_external: z.number(),
