@@ -7,7 +7,6 @@ const createSchema = z.object({
         intern_id: z.number().optional().nullable(),
         phone_number: z.string({ required_error: 'Phone number is required' }),
         cab_id: z.number(),
-        is_external: z.number(),
     }),
 });
 
@@ -21,7 +20,6 @@ const updateSchema = z.object({
         intern_id: z.number().optional().nullable(),
         phone_number: z.string({ required_error: 'Phone number is required' }),
         cab_id: z.number(),
-        is_external: z.number(),
     }).refine(data => Object.keys(data).length > 0, {
         message: 'At least one field must be provided for an update',
     }),
