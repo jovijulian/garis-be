@@ -18,8 +18,11 @@ class InventoryItemRepository extends BaseRepository {
                 InventoryItem.relatedQuery('transactions').count().as('total_transactions')
             ])
             .where('is_active', 1)
-            .withGraphFetched('[category(selectName), base_unit(selectName), uoms.[unit(selectName)]]')
+            .withGraphFetched('[cabang(selectCabang), category(selectName), base_unit(selectName), uoms.[unit(selectName)]]')
             .modifiers({
+                selectCabang: (builder) => {
+                    builder.select('id_cab', 'nama_cab');
+                },
                 selectName: (builder) => {
                     builder.select('id', 'name');
                 }

@@ -35,7 +35,7 @@ class InventoryItemController {
 
     async getAll(req, res) {
         try {
-            const paginatedData = await inventoryItemService.getAll(req.query);
+            const paginatedData = await inventoryItemService.getAll(req.query, req);
             return paginated(res, 200, paginatedData, 'Inventory Items retrieved successfully');
         } catch (err) {
             return error(res, 500, err);

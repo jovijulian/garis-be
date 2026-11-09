@@ -1,6 +1,6 @@
 const inventoryItemRepository = require('../repositories/inventory-item.repository');
 const inventoryTransactionRepository = require('../repositories/inventory-transaction.repository');
-const { formatDateTime, getUserId, getCabId } = require("../helpers/dataHelpers");
+const { formatDateTime, getUserId, getCabId, getRoleUser } = require("../helpers/dataHelpers");
 const { knexBooking } = require('../../config/database');
 const itemUomRepository = require('../repositories/item-uom.repository');
 const ExcelJS = require('exceljs');
@@ -71,8 +71,18 @@ class InventoryItemService {
         };
     }
 
-    async getAll(queryParams) {
-        return inventoryItemRepository.findAllWithFilters(queryParams);
+    async getAll(queryParams, request) {
+        const userRole = request ? getRoleUser(request) : null;
+        const siteId = request ? getCabId(request) : null;
+
+        if (userRole === 1) {
+            return inventoryItemRepository.findAllWithFilters(queryParams);
+        } else {
+            return inventoryItemRepository.findAllWithFilters({
+                ...queryParams,
+                cab_id: siteId || queryParams?.cab_id
+            });
+        }
     }
 
     async detail(id) {
@@ -87,7 +97,15 @@ class InventoryItemService {
 
     async create(payload, request) {
         const getUser = getUserId(request);
-        const cabId = getCabId(request);
+        const userRole = getRoleUser(request);
+        const tokenCabId = getCabId(request);
+        const cabId = (userRole === 1 && payload.cab_id) ? Number(payload.cab_id) : tokenCabId;
+
+        if (!cabId) {
+            const error = new Error('Cabang / Site wajib ditentukan.');
+            error.statusCode = 400;
+            throw error;
+        }
 
         return await knexBooking.transaction(async (trx) => {
             const now = formatDateTime();
@@ -192,13 +210,22 @@ class InventoryItemService {
 
     async bulkCreate(payloads, request) {
         const getUser = getUserId(request);
-        const cabId = getCabId(request);
+        const userRole = getRoleUser(request);
+        const tokenCabId = getCabId(request);
 
         return await knexBooking.transaction(async (trx) => {
             const results = [];
             const now = formatDateTime();
 
             for (let [index, payload] of payloads.entries()) {
+                const cabId = (userRole === 1 && payload.cab_id) ? Number(payload.cab_id) : (tokenCabId || payload.cab_id);
+
+                if (!cabId) {
+                    const error = new Error(`Gagal pada baris ${index + 1}: Cabang / Site wajib ditentukan.`);
+                    error.statusCode = 400;
+                    throw error;
+                }
+
                 const uomConversions = payload.uoms || [];
                 delete payload.uoms;
 
@@ -248,6 +275,13 @@ class InventoryItemService {
     }
 
     async exportToExcel(queryParams, request) {
+        const userRole = request ? getRoleUser(request) : null;
+        if (userRole !== 1) {
+            const error = new Error('Akses ditolak. Fitur export hanya dapat diakses oleh Super Admin.');
+            error.statusCode = 403;
+            throw error;
+        }
+
         const items = await inventoryItemRepository.findAllForExport(queryParams);
 
         const workbook = new ExcelJS.Workbook();
