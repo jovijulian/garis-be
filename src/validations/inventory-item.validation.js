@@ -8,7 +8,7 @@ const uomConversionSchema = z.object({
 });
 
 const inventoryItemBody = {
-    cab_id: z.number({ required_error: 'Cabang ID is required' }).int(),
+    cab_id: z.number().int().optional().nullable(),
     category_id: z.number({ required_error: 'Category ID is required' }).int(),
     barcode: z.string().optional().or(z.literal('')).nullable(), 
     name: z.string({ required_error: 'Item name is required' }).min(1),
