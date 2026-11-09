@@ -5,12 +5,16 @@ class InventoryItemController {
 
     async checkBarcode(req, res) {
         try {
-            const { barcode } = req.params;
+            let { barcode } = req.params;
             const { cab_id } = req.query;
 
-            // if (!cab_id) {
-            //     return error(res, 400, 'cab_id (Cabang) wajib disertakan dalam query.');
-            // }
+            if (!barcode && req.query.barcode) {
+                barcode = req.query.barcode;
+            }
+
+            if (Array.isArray(barcode)) {
+                barcode = barcode.join('/');
+            }
 
             const data = await inventoryItemService.checkBarcode(barcode, cab_id);
             return success(res, 200, data, data.message);
