@@ -264,7 +264,11 @@ class InventoryItemService {
     }
 
     async options(query, request) {
-        const cabId = getCabId(request);
+        const userRole = request ? getRoleUser(request) : null;
+        let cabId = query.cab_id ? Number(query.cab_id) : (request ? getCabId(request) : null);
+        if (userRole === 1 && !query.cab_id) {
+            cabId = null;
+        }
         const search = query.search || '';
 
         const items = await inventoryItemRepository.options(cabId, search);

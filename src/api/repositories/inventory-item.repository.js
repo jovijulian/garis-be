@@ -37,7 +37,11 @@ class InventoryItemRepository extends BaseRepository {
         if (search) {
             query.where(builder => {
                 builder.where('name', 'like', `%${search}%`)
-                    .orWhere('barcode', 'like', `%${search}%`);
+                    .orWhere('barcode', 'like', `%${search}%`)
+                    .orWhere('size', 'like', `%${search}%`)
+                    .orWhere('color', 'like', `%${search}%`)
+                    .orWhere('style', 'like', `%${search}%`)
+                    .orWhere('version', 'like', `%${search}%`);
             });
         }
 
@@ -103,7 +107,11 @@ class InventoryItemRepository extends BaseRepository {
         if (search) {
             query.where(builder => {
                 builder.where('name', 'like', `%${search}%`)
-                    .orWhere('barcode', 'like', `%${search}%`);
+                    .orWhere('barcode', 'like', `%${search}%`)
+                    .orWhere('size', 'like', `%${search}%`)
+                    .orWhere('color', 'like', `%${search}%`)
+                    .orWhere('style', 'like', `%${search}%`)
+                    .orWhere('version', 'like', `%${search}%`);
             });
         }
 
