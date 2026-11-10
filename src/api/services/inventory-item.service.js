@@ -275,14 +275,21 @@ class InventoryItemService {
     }
 
     async exportToExcel(queryParams, request) {
-        const userRole = request ? getRoleUser(request) : null;
-        if (userRole !== 1) {
-            const error = new Error('Akses ditolak. Fitur export hanya dapat diakses oleh Super Admin.');
-            error.statusCode = 403;
-            throw error;
-        }
 
-        const items = await inventoryItemRepository.findAllForExport(queryParams);
+        const userRole = request ? getRoleUser(request) : null;
+        const siteId = request ? getCabId(request) : null;
+
+        let items
+        if (userRole === 1) {
+            items = await inventoryItemRepository.findAllForExport(queryParams);
+        } else {
+            items = await inventoryItemRepository.findAllForExport({
+                ...queryParams,
+                cab_id: siteId || queryParams?.cab_id
+            });
+
+        }
+        // const items = await inventoryItemRepository.findAllForExport(queryParams);
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Laporan Master Barang');

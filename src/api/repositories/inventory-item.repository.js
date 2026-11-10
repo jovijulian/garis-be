@@ -89,7 +89,7 @@ class InventoryItemRepository extends BaseRepository {
 
     async options(cabId, search = '') {
         const query = this.model.query()
-            .select('id', 'name', 'barcode', 'stock_available', 'base_unit_id' ,'cab_id')
+            .select('id', 'name', 'barcode', 'stock_available', 'base_unit_id' ,'cab_id', 'size', 'color', 'style', 'version')
             .withGraphFetched('[base_unit, uoms.[unit]]')
             .modifyGraph('base_unit', builder => builder.select('id', 'name'))
             .modifyGraph('uoms.unit', builder => builder.select('id', 'name'))
@@ -130,9 +130,14 @@ class InventoryItemRepository extends BaseRepository {
             })
             .orderBy('inventory_items.name', 'ASC');
 
+        // if (cabId) {
+        //     query.where('inventory_items.cab_id', cabId);
+        // }
+
         if (cab_id) {
             query.where('inventory_items.cab_id', cab_id);
         }
+
 
         if (search) {
             query.where(builder => {
